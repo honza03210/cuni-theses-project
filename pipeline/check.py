@@ -74,6 +74,11 @@ def main() -> None:
                 c = F * pre + (f * post + (y - meta["aiYear"])) * A + a
             denom[c] += 1
         check(bool(np.all(mat.max(axis=0) <= denom)), f"words-{lg}: no cell exceeds its thesis count")
+        if lg in ("cs", "sk"):
+            for suffix in ("", "-lemma"):
+                ws = json.loads((OUT / f"words-{lg}{suffix}.json").read_text())["words"]
+                bad = [w for w in ws if any(c in w for c in "ţĝŧˇı")]
+                check(not bad, f"words-{lg}{suffix}: no extraction artefacts (found {bad[:5]})")
 
     for name, budget in BUDGET_MB.items():
         size = (OUT / f"{name}.bin.gz").stat().st_size / 1e6

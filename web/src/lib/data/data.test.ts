@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { filterMask, countMask } from './select';
 import { gradesByYear, metricSeries } from './aggregate';
-import { buildWordContext, cellIndex, clampComparison, fitLine, rampFor, rampStep, scoreWords, topMovers } from './excess';
+import { buildWordContext, cellIndex, clampComparison, fitLine, isNoise, rampFor, rampStep, scoreWords, topMovers } from './excess';
 import { decode, encode, defaults, type Domain } from '../state/url';
 import type { Theses, WordCube } from './types';
 
@@ -80,9 +80,9 @@ describe('excess vocabulary', () => {
     const rows: { fac: number; year: number; ai?: number }[] = [];
     for (let y = 2018; y <= 2024; y++) for (let i = 0; i < 100; i++) rows.push({ fac: 0, year: y, ai: y >= 2023 ? 4 : 0 });
     const t = makeTheses(rows);
-    const meta = { lang: 'cs', words: ['x', 'y'], cells: 2 * 17 + 2 * 4 * 5, preYears: 17, postYears: 4, aiValues: 5, faculties: 2 };
+    const meta = { lang: 'cs', words: ['xx', 'yy'], cells: 2 * 17 + 2 * 4 * 5, preYears: 17, postYears: 4, aiValues: 5, faculties: 2 };
     const counts = new Uint16Array(meta.words.length * meta.cells);
-    const cube: WordCube = { meta, langIndex: 0, lemma: false, counts, index: new Map([['x', 0], ['y', 1]]) };
+    const cube: WordCube = { meta, langIndex: 0, lemma: false, counts, index: new Map([['xx', 0], ['yy', 1]]) };
     for (let y = 2018; y <= 2022; y++) counts[0 * meta.cells + cellIndex(cube, t, 0, y, 0)] = 10;
     counts[0 * meta.cells + cellIndex(cube, t, 0, 2023, 4)] = 40;
     for (let y = 2018; y <= 2022; y++) counts[1 * meta.cells + cellIndex(cube, t, 0, y, 0)] = 30;
@@ -91,11 +91,11 @@ describe('excess vocabulary', () => {
     const ctx = buildWordContext(t, cube, f, false);
     const r = scoreWords(cube, ctx, { from: 2023, to: 2023, base: 5 }, 0.01);
     expect(r.baseline).toEqual([2018, 2019, 2020, 2021, 2022]);
-    const x = r.scores.find((s) => s.word === 'x')!;
+    const x = r.scores.find((s) => s.word === 'xx')!;
     expect(x.observed).toBeCloseTo(0.4);
     expect(x.expected).toBeCloseTo(0.1);
     expect(x.score).toBeGreaterThan(1.9);
-    const y = r.scores.find((s) => s.word === 'y')!;
+    const y = r.scores.find((s) => s.word === 'yy')!;
     expect(Math.abs(y.score)).toBeLessThan(0.01);
     const ramp = rampFor([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, x.score]);
     expect(rampStep(x.score, ramp)).toBe(4);
@@ -104,7 +104,7 @@ describe('excess vocabulary', () => {
 
     // block 2023–2024 (2024 has no uses of x): pooled observed = 40/200, expected ≈ 0.1
     const b = scoreWords(cube, ctx, { from: 2023, to: 2024, base: 5 }, 0.01);
-    const xb = b.scores.find((s) => s.word === 'x')!;
+    const xb = b.scores.find((s) => s.word === 'xx')!;
     expect(b.targetTotal).toBe(200);
     expect(xb.observed).toBeCloseTo(0.2);
     expect(xb.expected).toBeCloseTo(0.1);
@@ -123,6 +123,13 @@ describe('excess vocabulary', () => {
     expect(topMovers([rare, common, falls], 5, 'gap').falling.map((s) => s.word)).toEqual(['covid']);
   });
 
+  it('treats fragments and link debris as noise', () => {
+    expect(isNoise('á')).toBe(true);
+    expect(isNoise('https')).toBe(true);
+    expect(isNoise('ai')).toBe(false);
+    expect(isNoise('klíčový')).toBe(false);
+  });
+
   it('clamps comparisons into valid ranges', () => {
     expect(clampComparison({ from: 2007, to: 2005, base: 5 }, 2006, 2026)).toEqual({ from: 2009, to: 2009, base: 3 });
     expect(clampComparison({ from: 2023, to: 2030, base: 12 }, 2006, 2026)).toEqual({ from: 2023, to: 2026, base: 8 });
@@ -130,8 +137,8 @@ describe('excess vocabulary', () => {
 
   it('reports a target year too early for a baseline', () => {
     const t = makeTheses([{ fac: 0, year: 2008 }]);
-    const meta = { lang: 'cs', words: ['x'], cells: 2 * 17 + 2 * 4 * 5, preYears: 17, postYears: 4, aiValues: 5, faculties: 2 };
-    const cube: WordCube = { meta, langIndex: 0, lemma: false, counts: new Uint16Array(meta.cells), index: new Map([['x', 0]]) };
+    const meta = { lang: 'cs', words: ['xx'], cells: 2 * 17 + 2 * 4 * 5, preYears: 17, postYears: 4, aiValues: 5, faculties: 2 };
+    const cube: WordCube = { meta, langIndex: 0, lemma: false, counts: new Uint16Array(meta.cells), index: new Map([['xx', 0]]) };
     const ctx = buildWordContext(t, cube, { ...ALL, fac: [0] }, false);
     expect(scoreWords(cube, ctx, { from: 2008, to: 2008, base: 5 }, 0.01).reason).toBe('too-early');
   });

@@ -16,8 +16,10 @@
     table?: Snippet;
     children: Snippet;
     grow?: boolean;
+    /** keep the header (title, legend, tools) visible while the body scrolls */
+    stickyHead?: boolean;
   }
-  let { id, title, unit, foot, tools, lead, footTable, table, children, grow = false }: Props = $props();
+  let { id, title, unit, foot, tools, lead, footTable, table, children, grow = false, stickyHead = false }: Props = $props();
 
   const showTable = $derived(!!table && !!app.table[id]);
   function setTable(v: boolean) {
@@ -28,7 +30,7 @@
 </script>
 
 <section class="plate" class:grow aria-labelledby="{id}-title">
-  <header class="head">
+  <header class="head" class:sticky={stickyHead}>
     <div class="titles">
       <h2 id="{id}-title">{title}</h2>
       {#if unit}<p class="unit">{unit}</p>{/if}
@@ -75,6 +77,7 @@
     border-bottom: 1px solid var(--rule);
     border-radius: 4px 4px 0 0;
   }
+  .head.sticky { position: sticky; top: var(--band-h, 58px); z-index: 6; }
   .titles { min-width: 0; flex: 1 1 340px; }
   h2 {
     margin: 0;
@@ -106,7 +109,12 @@
   .table-wrap { overflow: auto; max-height: 560px; }
   @media (max-width: 639px) {
     .head { flex-direction: column; align-items: stretch; gap: var(--s2); }
+    .titles { flex: 0 0 auto; }
     .tools { justify-content: flex-start; }
+  }
+  /* touch screens: comfortable targets for the plate's toggles */
+  @media (pointer: coarse) {
+    .seg button { min-height: 40px; padding: 6px 14px; }
   }
   .foot {
     display: flex;

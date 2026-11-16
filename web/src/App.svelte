@@ -15,6 +15,16 @@
   let error: string | null = $state(null);
   let drawerOpen = $state(false);
   let bandH = $state(58);
+  let drawerBtn: HTMLButtonElement | undefined = $state();
+  function closeDrawer() { drawerOpen = false; drawerBtn?.focus(); }
+  $effect(() => {
+    if (!drawerOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeDrawer(); };
+    addEventListener('keydown', onKey);
+    // move focus into the drawer
+    queueMicrotask(() => document.querySelector<HTMLElement>('.drawer-close')?.focus());
+    return () => removeEventListener('keydown', onKey);
+  });
 
   // Theme: follows the OS until the viewer picks one; the pick is remembered per browser.
   const THEME_KEY = 'cuni-theses-theme';
@@ -123,7 +133,7 @@
       {/each}
     </div>
     <div class="right">
-      <button type="button" class="drawer-btn" aria-expanded={drawerOpen} aria-controls="filters"
+      <button type="button" class="drawer-btn" bind:this={drawerBtn} aria-expanded={drawerOpen} aria-controls="filters"
         onclick={() => (drawerOpen = !drawerOpen)}>
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         {L.t['filters.open']}
@@ -133,6 +143,10 @@
   </header>
 
   <aside id="filters" class="filters" aria-label={L.t['filters.title']}>
+    <div class="drawer-head">
+      <span class="drawer-title">{L.t['filters.title']}</span>
+      <button type="button" class="drawer-close" onclick={closeDrawer}>{L.t['filters.done']}</button>
+    </div>
     <div class="prefs drawer-prefs">{@render prefsCtl()}</div>
     {#if theses}
       <FilterPanel {theses} {matched} yearsLocked={app.view === 'words'}
@@ -140,7 +154,7 @@
     {/if}
   </aside>
   {#if drawerOpen}
-    <button type="button" class="scrim" aria-label={L.t['filters.close']} onclick={() => (drawerOpen = false)}></button>
+    <button type="button" class="scrim" aria-label={L.t['filters.close']} tabindex="-1" onclick={closeDrawer}></button>
   {/if}
 
   <main>
@@ -258,6 +272,7 @@
   .scrim { display: none; }
   .prefs { display: flex; align-items: center; gap: var(--s3); }
   .drawer-prefs { display: none; }
+  .drawer-head { display: none; }
   #view-panel:focus { outline: none; }
   .skip {
     position: fixed; left: 12px; top: -60px; z-index: 100;
@@ -279,6 +294,16 @@
       box-shadow: 4px 0 24px var(--shadow);
     }
     .drawer-open .filters { transform: none; }
+    .drawer-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--s3) var(--s4); border-bottom: 1px solid var(--rule);
+      position: sticky; top: 0; z-index: 2; background: var(--paper-2);
+    }
+    .drawer-title { font-weight: 700; font-size: var(--fs-lg); }
+    .drawer-close {
+      min-height: 40px; padding: 6px 16px; border-radius: 3px; cursor: pointer;
+      border: 1px solid var(--ink); background: var(--ink); color: var(--paper); font-weight: 600;
+    }
     .scrim { display: block; position: fixed; inset: 0; z-index: 30; border: 0; background: rgb(28 31 36 / 0.3); }
     main { padding: var(--s4) var(--s4) var(--s6); }
   }

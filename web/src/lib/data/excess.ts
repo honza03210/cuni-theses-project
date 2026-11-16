@@ -94,6 +94,10 @@ export interface Comparison {
 }
 
 export const BASE_MIN = 3;
+
+/** Tokens that are not vocabulary: single letters, link and citation debris. */
+const NOISE = new Set(['http', 'https', 'www', 'doi', 'isbn', 'issn', 'vyd', 'rozš', 'et', 'al', 'pp', 'tab', 'obr']);
+export const isNoise = (w: string) => w.length < 2 || NOISE.has(w);
 export const BASE_MAX = 8;
 
 export interface ScoreResult {
@@ -130,6 +134,7 @@ export function scoreWords(cube: WordCube, ctx: WordContext, cmp: Comparison, mi
   const C = cube.meta.cells;
   const shares = new Array<number>(nb);
   for (let wi = 0; wi < cube.meta.words.length; wi++) {
+    if (isNoise(cube.meta.words[wi])) continue;
     const row = wi * C;
     for (let k = 0; k < nb; k++) {
       let s = 0;

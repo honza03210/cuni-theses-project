@@ -42,6 +42,14 @@ export async function loadTheses(): Promise<Theses> {
 
 const cubeCache = new Map<string, Promise<WordCube>>();
 
+let glossPromise: Promise<Record<string, string>> | null = null;
+/** Curated English glosses for Czech words (base forms and their main inflected forms). */
+export function loadGlosses(): Promise<Record<string, string>> {
+  glossPromise ??= fetchOk(`${BASE}glosses-cs.json`).then((r) => r.json() as Promise<Record<string, string>>);
+  glossPromise.catch(() => (glossPromise = null));
+  return glossPromise;
+}
+
 /** Languages with a lemmatised cube (inflected forms merged) */
 export const LEMMA_LANGS = ['cs', 'en', 'sk'];
 

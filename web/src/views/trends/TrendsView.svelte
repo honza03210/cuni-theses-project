@@ -15,8 +15,23 @@
 
   const meta = $derived(theses.meta);
   const metric = $derived(meta.metrics.find((m) => m.key === app.metric) ?? meta.metrics[0]);
-  const facs = $derived([...app.fac].sort((a, b) => a - b));
-  const series = $derived(metricSeries(theses, mask, metric.key, facs, app.yearFrom, app.yearTo));
+  let showOthers = $state(true);
+  let gridW = $state(900);
+  const cols = $derived(Math.max(1, Math.floor((gridW + 16) / (220 + 16))));
+  const series = $derived(metricSeries(theses, mask, metric.key, [...app.fac].sort((a, b) => a - b), app.yearFrom, app.yearTo));
+  /** change after ChatGPT per faculty: mean of 2023+ points minus mean of 2018–2022 points */
+  const change = (f: number) => {
+    const pts = series.byFac.get(f) ?? [];
+    const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
+    return avg(pts.filter((p) => p.year >= 2023 && p.year < meta.yearMax).map((p) => p.mean))
+      - avg(pts.filter((p) => p.year >= 2018 && p.year <= 2022).map((p) => p.mean));
+  };
+  // panels ordered by change after 2022 (largest rise first); faculties without both windows last
+  const facs = $derived([...app.fac].sort((a, b) => {
+    const ca = change(a), cb = change(b);
+    if (Number.isNaN(ca) !== Number.isNaN(cb)) return Number.isNaN(ca) ? 1 : -1;
+    return Number.isNaN(ca) ? a - b : cb - ca;
+  }));
 
   // With a single faculty, compare against the whole university under the same other filters
   const uniRef = $derived.by(() => {
@@ -58,14 +73,14 @@
         <span class="muted">{L.t['trends.lede.na']}</span>
       {/if}
     </Lede>
-    <Plate id="trends" title={L.t['trends.title'](L.pick(metric.label))} unit={`${L.pick(metric.unit)} · ${app.yearFrom}–${app.yearTo}`} foot={L.t['trends.foot']}>
+    <Plate id="trends" stickyHead title={L.t['trends.title'](L.pick(metric.label))} unit={`${L.pick(metric.unit)} · ${app.yearFrom}–${app.yearTo} · ${L.t['trends.sorted']}`} foot={L.t['trends.foot']}>
       {#snippet tools()}
         <ul class="legend" aria-label="Legend">
           <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--ink)" stroke-width="2.25"/></svg>{L.t['trends.this']}</li>
           {#if facs.length === 1}
             <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--avg)" stroke-width="2.25" stroke-dasharray="5 3"/></svg>{L.t['trends.uni']}</li>
           {:else}
-            <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--context)" stroke-width="1.25"/></svg>{L.t['trends.other']}</li>
+            <li><label class="others"><input type="checkbox" bind:checked={showOthers} /><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--context)" stroke-width="1.25"/></svg>{L.t['trends.other']}</label></li>
             <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--avg)" stroke-width="2.25" stroke-dasharray="5 3"/></svg>{L.t['trends.avg']}</li>
           {/if}
         </ul>
@@ -92,9 +107,9 @@
       {#if !facs.length || !hasData}
         <p class="empty">{L.t['common.empty']} <button type="button" class="fix" onclick={() => (app.fac = meta.faculties.map((_, i) => i))}>{L.t['common.selectAll']}</button></p>
       {:else}
-        <div class="grid" class:single={facs.length === 1}>
+        <div class="grid" class:single={facs.length === 1} bind:clientWidth={gridW}>
           {#each facs as f, fi (f)}
-            <TrendPanel first={fi === 0}
+            <TrendPanel first={fi < cols} {showOthers}
               fac={f} faculty={meta.faculties[f]} {series} {facs} {yDomain} {metric} {aiOn}
               yearFrom={app.yearFrom} yearTo={app.yearTo} yearMax={meta.yearMax} aiYear={meta.aiYear}
               faculties={meta.faculties} uniRef={uniRef} large={facs.length === 1}
@@ -134,6 +149,8 @@
   .grid.single { grid-template-columns: minmax(0, 1fr); }
   .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; list-style: none; margin: 0; padding: 0; font-size: var(--fs-sm); color: var(--ink-2); }
   .legend li { display: inline-flex; align-items: center; gap: 6px; }
+  .others { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+  .others input { margin: 0; }
   .warn { margin: 0 0 var(--s3); font-size: var(--fs-sm); color: var(--warn); font-weight: 600; }
   .empty { color: var(--ink-2); padding: var(--s6) 0; }
   .fix { margin-left: 6px; border: 1px solid var(--ink-3); background: var(--paper); color: var(--ink); border-radius: 3px; padding: 3px 10px; font-size: var(--fs-sm); cursor: pointer; }

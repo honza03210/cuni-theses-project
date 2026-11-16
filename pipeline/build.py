@@ -173,10 +173,18 @@ def build_words(con: duckdb.DuckDBPyConnection) -> None:
         FROM read_parquet('{DATA / "theses.parquet"}')
         WHERE usable AND year BETWEEN {YEAR_MIN} AND {YEAR_MAX}
     """)
+    # Repair PDF-extraction artefacts in Czech/Slovak text (older PDFs): ţ->ž, ĝ->ř, ŧ->ů.
+    # Words with characters that cannot occur in cs/sk prose (detached carons "zˇe", dotless "ı",
+    # Cyrillic/Greek, ...) are fragments of broken extraction and are dropped.
+    # After repair, "že" and "ţe" are the same word, so counts are DISTINCT theses.
     con.sql(f"""
         CREATE OR REPLACE TEMP TABLE wc AS
-        SELECT t.lg, t.year, t.cell, t.tid, w.word
-        FROM read_parquet('{wc}') w JOIN (SELECT *, row_number() OVER () AS tid FROM t) t USING (item_id)
+        SELECT lg, year, cell, tid, word FROM (
+            SELECT t.lg, t.year, t.cell, t.tid,
+                   CASE WHEN t.lg IN ('cs', 'sk') THEN translate(w.word, '{BROKEN_FROM}', '{BROKEN_TO}') ELSE w.word END AS word
+            FROM read_parquet('{wc}') w JOIN (SELECT *, row_number() OVER () AS tid FROM t) t USING (item_id)
+        )
+        WHERE lg NOT IN ('cs', 'sk') OR regexp_full_match(word, '[{CS_SK_LETTERS}]+')
     """)
     for lang in LANGS:
         cap, min_docs = VOCAB[lang]
@@ -184,14 +192,14 @@ def build_words(con: duckdb.DuckDBPyConnection) -> None:
         vocab = con.sql(f"""
             SELECT word FROM wc WHERE lg = '{lang}'
             GROUP BY word
-            HAVING count(*) >= {min_docs}
-            ORDER BY count(*) FILTER (WHERE year >= {VOCAB_RANK_FROM}) DESC, word
+            HAVING count(DISTINCT tid) >= {min_docs}
+            ORDER BY count(DISTINCT tid) FILTER (WHERE year >= {VOCAB_RANK_FROM}) DESC, word
             LIMIT {cap}
         """).df()["word"].tolist()
         con.register("vocab", con.sql("SELECT unnest($v) AS word, generate_subscripts($v, 1) - 1 AS wi",
                                       params={"v": vocab}).df())
         counts = con.sql(f"""
-            SELECT v.wi, wc.cell, count(*) AS n
+            SELECT v.wi, wc.cell, count(DISTINCT wc.tid) AS n
             FROM wc JOIN vocab v USING (word)
             WHERE wc.lg = '{lang}'
             GROUP BY 1, 2
@@ -202,7 +210,7 @@ def build_words(con: duckdb.DuckDBPyConnection) -> None:
         # 2) lemmas: inflected forms merged; a thesis counts once per lemma
         if lang not in LEMMA_LANGS:
             continue
-        forms = con.sql(f"SELECT word, count(*) AS n FROM wc WHERE lg = '{lang}' GROUP BY word HAVING count(*) >= 3").df()
+        forms = con.sql(f"SELECT word, count(DISTINCT tid) AS n FROM wc WHERE lg = '{lang}' GROUP BY word HAVING count(DISTINCT tid) >= 3").df()
         mapping = lemmatize_vocab(forms["word"].tolist(), lang)
         forms["lemma"] = forms["word"].map(mapping)
         con.register("lmap", forms[["word", "lemma"]])
@@ -232,6 +240,9 @@ def build_words(con: duckdb.DuckDBPyConnection) -> None:
 
 
 LEMMA_LANGS = {"cs": "cs", "en": "en", "sk": "sk"}
+BROKEN_FROM, BROKEN_TO = "ţĝŧ", "žřů"
+# letters of Czech and Slovak prose, plus plain Latin and common German loans
+CS_SK_LETTERS = "a-záäčďéěíĺľňóôŕřšťúůýžöüß"
 VERB_ENDINGS = ("uje", "ují", "ujících", "ující", "ujícím", "ujíc", "oval", "ovala", "ovali", "ovalo", "ovaly",
                 "ujeme", "ujete", "uju", "uji", "ujme", "ujte", "ován", "ována", "ováno", "ováni", "ovány")
 
@@ -276,13 +287,31 @@ def write_cube(lang: str, suffix: str, vocab: list[str], counts, n_cells: int, f
     print(f"words-{lang}{suffix}: {len(vocab)} x {n_cells} cells, {size / 1e6:.2f} MB gz")
 
 
+def build_glosses() -> None:
+    """English glosses for Czech words (curated in pipeline/glosses_cs.json, keyed by base form),
+    expanded to the main inflected forms listed in words-cs-lemma.json."""
+    glosses = json.loads((ROOT / "pipeline" / "glosses_cs.json").read_text())
+    lemma = json.loads((OUT / "words-cs-lemma.json").read_text())
+    out = dict(glosses)
+    for word, forms in zip(lemma["words"], lemma["forms"]):
+        if word in glosses:
+            for f in forms:
+                out.setdefault(f, glosses[word])
+    (OUT / "glosses-cs.json").write_text(json.dumps(out, ensure_ascii=False, sort_keys=True))
+    print(f"glosses-cs: {len(glosses)} base forms, {len(out)} entries")
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
+    if "--glosses-only" in sys.argv:
+        build_glosses()
+        return
     con = duckdb.connect()
     con.sql("SET memory_limit='10GB'")
     build_theses(con)
     if "--theses-only" not in sys.argv:
         build_words(con)
+        build_glosses()
 
 
 if __name__ == "__main__":

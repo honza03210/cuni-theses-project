@@ -305,3 +305,25 @@ aggregation code); the other takes phase 1's word cube and 3c.
   - Czech is picked automatically for cs/sk browsers.
 - **Type:** plate titles are 20px and the answer line 21px, over 16px body text.
 - **Word ranking (2026-11-16):** the cloud ranks and sizes words by the absolute change in share of theses (percentage points, observed − expected) by default. Ratios over-reward rare words (1 % → 3 % = 3×, while *klíčový* 49 % → 67 % = 1.4×). A toggle switches to the relative change (×), as in Kobak et al. 2024, which uses both measures. The answer line, table and tooltip show both numbers. Movers need ≥ 0.2 pp (gap mode) or ≥ 1.11× (ratio mode).
+
+### Critique round 2 (2026-11-16): changes
+- **Play removed** from Words; the ◀ ▶ step buttons stay.
+- **Extraction artefacts repaired** in the pipeline:
+  - *ţ→ž*, *ĝ→ř*, *ŧ→ů*.
+  - cs/sk words with characters impossible in Czech or Slovak prose (detached carons, dotless ı, Cyrillic, …) are dropped.
+  - Counts are distinct theses after the merge.
+  - `check.py` fails if any artefact survives.
+  - The client also skips noise tokens (single letters, http/https, citation shorthand).
+- **English glosses:** curated in `pipeline/glosses_cs.json` (216 base forms, expanded to their main forms in `glosses-cs.json`). Shown in English mode in the answer line, tooltip, table, detail and search.
+- **Framing:** a cautious note under the Words answer line on AI-associated vocabulary. Search explains why there is no match and points to the AI filter.
+- **Filter panel:** the AI-use declaration group comes first, with definitions. A note explains the option counts. Years are hidden in the Words view.
+- **Words controls:** the timeline plus a plain sentence lead. The year dropdowns sit behind "Precise years"; ranking, forms and minimum share behind "Options".
+- **Trends:** panels sorted by change after 2022, other faculties fainter with a toggle, ChatGPT labelled on the top row, sticky plate header.
+- **Mobile and accessibility:**
+  - Fixed the 340px plate-header gap.
+  - 40–44px touch targets on coarse pointers.
+  - Drawer gets a "Done" button and closes on Escape, with focus returned to the Filters button.
+  - Scroll hint for the parallel plot.
+  - Search is a combobox with arrow-key navigation.
+  - Small-faculty labels stay readable (only the bar fades).
+  - Ink contour on the medians, stronger swatch edges.

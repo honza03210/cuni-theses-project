@@ -45,6 +45,30 @@
     <strong>{L.f.int(matched)}</strong>
     <span>{L.t['filters.match']}</span>
   </div>
+  <p class="note counts-note">{L.t['filters.countsNote']}</p>
+
+  <fieldset disabled={!aiApplies}>
+    <legend><span>{L.t['filters.ai']}</span></legend>
+    <ul class="checks">
+      {#each [1, 2, 3, 4] as a (a)}
+        <li>
+          <label>
+            <input type="checkbox" checked={app.ai.includes(a)} onchange={() => (app.ai = toggle(app.ai, a))} />
+            <span class="name">{L.t[`ai.${a}` as 'ai.1']}</span>
+            <span class="n">{L.f.int(counts.ai[a])}</span>
+          </label>
+        </li>
+      {/each}
+    </ul>
+    <p class="note">{L.t['filters.aiNote']}</p>
+    <details class="defs">
+      <summary>{L.t['filters.aiWhat']}</summary>
+      <dl>
+        {#each [1, 2, 3, 4] as a (a)}<dt>{L.t[`ai.${a}` as 'ai.1']}</dt><dd>{L.t[`ai.def.${a}` as 'ai.def.1']}</dd>{/each}
+      </dl>
+    </details>
+    {#if !app.ai.length}<p class="warn" role="status">{L.t['filters.noAi']}</p>{/if}
+  </fieldset>
 
   <fieldset>
     <legend>
@@ -69,13 +93,14 @@
     {#if !app.fac.length}<p class="warn" role="status">{L.t['filters.noFaculty']}</p>{/if}
   </fieldset>
 
-  <fieldset disabled={yearsLocked}>
-    <legend><span>{L.t['filters.years']}</span></legend>
-    <YearRange min={meta.yearMin} max={meta.yearMax} from={app.yearFrom} to={app.yearTo}
-      onchange={(a, b) => { app.yearFrom = a; app.yearTo = b; }} />
-    {#if !yearsLocked && app.yearTo === meta.yearMax}<p class="note">{L.t['filters.incomplete']}</p>{/if}
-  </fieldset>
-  {#if yearsLocked}<p class="note locked">{L.t['filters.yearsWords']}</p>{/if}
+  {#if !yearsLocked}
+    <fieldset>
+      <legend><span>{L.t['filters.years']}</span></legend>
+      <YearRange min={meta.yearMin} max={meta.yearMax} from={app.yearFrom} to={app.yearTo}
+        onchange={(a, b) => { app.yearFrom = a; app.yearTo = b; }} />
+      {#if app.yearTo === meta.yearMax}<p class="note">{L.t['filters.incomplete']}</p>{/if}
+    </fieldset>
+  {/if}
 
   <fieldset>
     <legend><span>{L.t['filters.language']}</span></legend>
@@ -91,23 +116,6 @@
       {/each}
     </ul>
     {#if !app.langs.length}<p class="warn" role="status">{L.t['filters.noLang']}</p>{/if}
-  </fieldset>
-
-  <fieldset disabled={!aiApplies}>
-    <legend><span>{L.t['filters.ai']}</span></legend>
-    <ul class="checks">
-      {#each [1, 2, 3, 4] as a (a)}
-        <li>
-          <label>
-            <input type="checkbox" checked={app.ai.includes(a)} onchange={() => (app.ai = toggle(app.ai, a))} />
-            <span class="name">{L.t[`ai.${a}` as 'ai.1']}</span>
-            <span class="n">{L.f.int(counts.ai[a])}</span>
-          </label>
-        </li>
-      {/each}
-    </ul>
-    <p class="note">{L.t['filters.aiNote']}</p>
-    {#if !app.ai.length}<p class="warn" role="status">{L.t['filters.noAi']}</p>{/if}
   </fieldset>
 
   <button type="button" class="reset" onclick={reset}>{L.t['filters.reset']}</button>
@@ -164,7 +172,12 @@
   .checks label:not(:has(.abbr)) .name { color: var(--ink); }
   .n { color: var(--ink-3); font-size: var(--fs-xs); }
   .note { margin: 6px 0 0; font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.45; }
-  .note.locked { margin: calc(-1 * var(--s4)) 0 0; color: var(--ink-2); }
+  .counts-note { margin: calc(-1 * var(--s4)) 0 0; }
+  .defs { margin-top: 6px; font-size: var(--fs-xs); color: var(--ink-2); }
+  .defs summary { cursor: pointer; font-weight: 600; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+  .defs dl { margin: 6px 0 0; }
+  .defs dt { font-weight: 600; color: var(--ink); margin-top: 6px; }
+  .defs dd { margin: 1px 0 0; line-height: 1.45; }
   @media (max-width: 1023px) {
     label { padding: 8px 4px; min-height: 40px; }
     input[type='checkbox'] { width: 18px; height: 18px; }

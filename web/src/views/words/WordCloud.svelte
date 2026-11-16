@@ -4,8 +4,8 @@
   import { L } from '../../lib/locale.svelte';
   import Tooltip from '../../lib/ui/Tooltip.svelte';
 
-  interface Props { rising: WordScore[]; falling: WordScore[]; ramp: number[]; sizes: number[]; selected: string | null; onpick: (w: string) => void; forms?: ((w: string) => string[]) | null; mode?: RankMode }
-  let { rising, falling, ramp, sizes, selected, onpick, forms = null, mode = 'gap' }: Props = $props();
+  interface Props { rising: WordScore[]; falling: WordScore[]; ramp: number[]; sizes: number[]; selected: string | null; onpick: (w: string) => void; forms?: ((w: string) => string[]) | null; mode?: RankMode; gloss?: ((w: string) => string | undefined) | null }
+  let { rising, falling, ramp, sizes, selected, onpick, forms = null, mode = 'gap', gloss = null }: Props = $props();
 
   const FONT = 'Source Sans 3';
   let width = $state(800);
@@ -112,7 +112,7 @@
   {#if ready && dropped > 0}<p class="note">+{dropped}</p>{/if}
   {#if hover}
     <Tooltip x={hover.cx} y={hover.cy}>
-      <div class="tt-title">{hover.s.word}</div>
+      <div class="tt-title">{hover.s.word}{#if gloss?.(hover.s.word)}<span class="tt-gloss"> ‘{gloss(hover.s.word)}’</span>{/if}</div>
       {#if forms && forms(hover.s.word).length}<div class="tt-forms">{forms(hover.s.word).join(', ')}</div>{/if}
       <div class="tt-row"><span>{L.t['words.col.obs']}</span><b>{L.f.pct(hover.s.observed, 2)}</b></div>
       <div class="tt-row"><span>{L.t['words.col.exp']}</span><b>{L.f.pct(hover.s.expected, 2)}</b></div>
@@ -134,6 +134,7 @@
   .w:hover, .w:focus-visible { text-decoration: underline; text-decoration-thickness: 1.5px; outline: none; }
   .w.sel { fill: var(--petrol); text-decoration: underline; text-decoration-thickness: 2.5px; paint-order: stroke; stroke: var(--petrol-tint); stroke-width: 6px; }
   svg:has(.w:hover) .w:not(:hover):not(.sel) { opacity: 0.55; }
+  :global(.tt-gloss) { font-weight: 400; color: var(--ink-2); font-style: italic; }
   :global(.tt-forms) { font-size: var(--fs-xs); color: var(--ink-3); margin: -1px 0 4px; font-style: italic; }
   .note { position: absolute; right: 0; bottom: 0; margin: 0; font-size: var(--fs-xs); color: var(--ink-3); }
 </style>

@@ -295,6 +295,7 @@
       <span class="dk"><svg width="24" height="8" aria-hidden="true"><line x1="0" x2="24" y1="4" y2="4" stroke={GRADE_HEX[g - 1]} stroke-width="2.4" stroke-dasharray={['', '9 3', '5 3', '2 3'][g - 1]}/></svg>{g}</span>
     {/each}
   </p>
+  <p class="scroll-hint">{L.t['grades.par.scroll']}</p>
   <div class="scroll">
   <div class="wrap" bind:clientWidth={width} style:height="{height}px">
     <canvas bind:this={canvas} style:width="{width}px" style:height="{height}px" aria-hidden="true"></canvas>
@@ -332,10 +333,18 @@
 
 <style>
   .scroll { overflow-x: auto; }
+  .scroll-hint { display: none; margin: 0 0 4px; font-size: var(--fs-xs); color: var(--ink-3); }
+  @media (max-width: 720px) { .scroll-hint { display: block; } }
+  @media (pointer: coarse) {
+    .gtoggles button { min-height: 40px; min-width: 44px; }
+    .lines { min-height: 40px; }
+    .lines input { width: 20px; height: 20px; }
+  }
   .wrap { position: relative; width: 100%; min-width: 660px; }
   .band { fill-opacity: 0.13; stroke: none; }
   .median { fill: none; stroke-width: 2.4; stroke-linejoin: round; }
-  .median-halo { fill: none; stroke: var(--paper); stroke-width: 5; stroke-linejoin: round; opacity: 0.8; }
+  /* a thin ink contour gives the light grade-2 line enough contrast on paper (and on charcoal in dark mode) */
+  .median-halo { fill: none; stroke: var(--ink); stroke-width: 4.6; stroke-linejoin: round; opacity: 0.45; }
   .dk { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; }
   .bandkey { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 4px; font-size: var(--fs-sm); color: var(--ink-2); }
   .lines { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--ink-2); cursor: pointer; }

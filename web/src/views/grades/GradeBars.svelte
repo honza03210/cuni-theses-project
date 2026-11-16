@@ -85,7 +85,9 @@
   .wrap { width: 100%; }
   svg { display: block; overflow: visible; }
   .bar rect { stroke: var(--paper); stroke-width: 0.6; }
-  .bar.small { opacity: 0.4; }
+  /* small faculties: fade the bar, keep the label readable */
+  .bar.small rect { opacity: 0.35; }
+  .bar.small .yl { font-weight: 400; font-style: italic; }
   .bar:hover rect { stroke: var(--ink); stroke-width: 1; }
   .yl { font-size: 12px; fill: var(--ink); font-weight: 600; }
   .bar.all .yl { font-weight: 700; }
