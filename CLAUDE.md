@@ -1,53 +1,57 @@
 # CLAUDE.md
 
-Project: visualizations of the Hugging Face dataset
-`honza03210/cuni-bachelor-theses-style` — derived style features of Charles
-University bachelor's theses (2000–2026) and their reviews, used to study how
-student writing changed after LLMs (ChatGPT, Nov 2022).
+Interactive explorer of the Hugging Face dataset
+`honza03210/cuni-bachelor-theses-style`: derived style features of Charles
+University bachelor's theses (2006–2026) and their grades, used to show how
+student writing changed after LLMs (ChatGPT, Nov 2022). It's a course project
+built by a team of two; see `PRODUCT.md` (product context), `docs/PLAN.md`
+(spec) and `DESIGN.md` (visual system).
 
-## Data
+## Commands
 
-- Download with `python scripts/download_data.py` (core tables) or `--all`
-  (adds `word_counts` ~87 M rows and `word_freq_by_year` ~15 M rows). Files land
-  in `data/<table>.parquet`.
-- `data/` and `*.parquet` are gitignored — never commit data.
-- Tables: `theses` (one row per thesis, main table), `reviews`, `word_counts`,
-  `word_freq_by_year`, `word_freq_totals`. Join on `item_id`.
-- Full column docs: the dataset card
-  (https://huggingface.co/datasets/honza03210/cuni-bachelor-theses-style).
-  Check it before guessing what a column means.
+- Web app (in `web/`): `npm run dev`, `npm test` (Vitest), `npm run check`
+  (svelte-check + tsc), `npm run build`.
+- Data pipeline (repo root): `.venv/bin/python -I pipeline/build.py`, then
+  `.venv/bin/python -I pipeline/check.py`. It needs `data/*.parquet` from
+  `scripts/download_data.py --all`.
 
-## Analysis rules (important for correct plots)
+## Architecture
 
-- For style trends over time, filter to the comparable subset:
-  `usable & lang == "cs" & body_method == "intro-back" & year >= 2006`.
-  Mixing languages or extraction methods produces fake trends.
-- Faculty composition and language mix shift over time — show per-faculty
-  (`fac`) breakdowns alongside pooled numbers.
-- The current year (2026) is incomplete; mark it or exclude it.
-- Pre-2006 has only 181 theses — exclude from trends.
-- `ai_declaration`, `ai_tools`, `ai_purposes`, `chatgpt_links` exist only for
-  2023+ with public text (null otherwise). Declarations depend on faculty rules
-  → compare within faculty.
-- `ai_mentions_*` are keyword matches: theses *about* AI and declarations of
-  non-use count too.
-- Grades: use `grade_points` (1 best – 4 fail) to compare across the 1–4 and
-  A–F scales.
-- Review `sentiment` is NaN below 20 own words; correlation with grade is only
-  moderate (~−0.3).
-- Section metrics (`section_*`) only exist for ~24.5k Czech theses from 2015 on.
-- Word tables are not lemmatised — Czech inflected forms are separate words.
-  Word share = `n_docs / word_freq_totals.n_docs` for the same year and
-  `lang_group`.
+- `pipeline/build.py` → `web/public/data/` (committed, about 5 MB gz):
+  - `theses.bin.gz`: columnar per-thesis table. u8 columns (fac, year offset,
+    lang, ai, grade, usable, clean), then f32 metric columns. Metrics are NaN
+    unless `clean` (`body_method == "intro-back"`). The layout is described in
+    `theses.json`.
+  - `words-<lang>.bin.gz`: dense Uint16 word × cell matrix of "theses using the
+    word ≥ 2×". The cell layout is defined in `build.py` and mirrored in
+    `web/src/lib/data/excess.ts` (`cellIndex`); keep the two in sync.
+- `web/src/lib/state/app.svelte.ts` holds the one `$state` object for every
+  filter/view setting. `url.ts` encodes and decodes it to the query string, and
+  `App.svelte` syncs it with `replaceState`. New persistent UI state goes
+  there, with a round-trip test in `data.test.ts`.
+- Aggregation is pure and runs in the browser: `select.ts` (filter mask),
+  `aggregate.ts` (metric means, grade counts) and `excess.ts` (word trend fit
+  and scores). Put logic there, not in components, and unit-test it.
+- `lib/ui/Plate.svelte` is the yearbook "plate" wrapper (title, unit, tools,
+  chart/table toggle, footnote + source). Every chart lives in one.
 
-## Working with the big tables
+## Analysis rules (keep the charts honest)
 
-- Don't load `word_counts` fully into pandas; use `pyarrow`/`polars`/DuckDB
-  with filters and column projection.
+- Style trends: only `clean` rows; don't mix languages (the UI warns).
+  Faculty × year cells with n < 20 are hidden (`MIN_CELL_N`).
+- The AI-declaration filter only narrows years ≥ 2023 (`filterMask`).
+- 2026 is incomplete: drawn dotted and excluded from the default range.
+- Grades: common 1–4 scale (`grade_points`). A–F only exists at ETF/FSV.
+- Word data is not lemmatised and counts words used ≥ 2× per thesis.
+- Never single out individual theses, students or reviewers.
 
-## Conventions
+## Design rules
 
-- Python 3.12, deps in `requirements.txt`, virtualenv in `.venv/`.
-- Reusable code in `scripts/`, exploration in `notebooks/`, outputs in
-  `figures/` (gitignored).
-- Plots: label axes with units, mark Nov 2022 (ChatGPT release) on time axes.
+- Tokens are in `web/src/app.css`. Petrol (`--petrol`) means
+  selected/active only. Data colours: `--rise` / `--fall` for words, the
+  `--grade-1..4` ColorBrewer RdYlBu palette (grade 4 also hatched), and
+  `--avg` dashed for averages.
+- Never encode with colour alone: pair it with dash, weight, hatch or a direct
+  label.
+- All UI text lives in `web/src/lib/i18n.ts`, in both `cs` and `en`. Format
+  numbers through `L.f`.

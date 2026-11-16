@@ -1,76 +1,87 @@
-# Charles University Bachelor Theses — Visualizations
+# Charles University Bachelor Theses — Explorer
 
-Visualizing how bachelor's thesis writing at Charles University (Prague) changed
-over 2000–2026, with a focus on the period after the arrival of large language
-models (ChatGPT, November 2022).
+An interactive, bilingual (Czech / English) web explorer of **65,957 bachelor's
+theses** defended at Charles University in 2006–2026. It shows how student
+writing changed after large language models arrived (ChatGPT, November 2022).
+
+A filter panel (faculty, years, thesis language, AI-use declaration) drives three
+views:
+
+| view | what it shows |
+|---|---|
+| **Words** | A word cloud of words used more or less than their trend predicts. For the last year of the range, each word's share of theses is compared with a line fitted on the five years before it. Click a word to see its trend, with the expected and observed values. |
+| **Trends** | Small multiples of style measures per faculty (word length, sentence length and spread, lexical diversity, repetition, punctuation, …). Each panel shows its faculty highlighted, the other faculties in grey and the selection average dashed. |
+| **Grades** | A 100 % stacked area of grades over time. Click a year to show per-faculty grade bars for that year. Below, a parallel-coordinates plot links grade to writing style, one line per thesis, with brushable axes. |
+
+Every chart can switch to its data table. The whole state (view, filters,
+selected word, brushes) is kept in the URL, so any view can be shared as a link.
 
 Data: [`honza03210/cuni-bachelor-theses-style`](https://huggingface.co/datasets/honza03210/cuni-bachelor-theses-style)
-on Hugging Face (CC BY 4.0) — text-free, derived features of **66,138 theses**
-and **132,024 supervisor/opponent reviews**. No full texts or personal names.
+(CC BY 4.0). These are text-free derived features: no thesis texts or personal
+names.
 
-## Dataset at a glance
+## Run it
 
-| table | rows | one row per |
-|---|---|---|
-| `theses` | 66,138 | thesis: metadata, grade, style metrics, section measures, AI-use declarations, review aggregates |
-| `reviews` | 132,024 | supervisor / opponent review: length, reviewer style, sentiment, AI mentions |
-| `word_counts` | 87.3 M | (thesis, word form) with count ≥ 2 |
-| `word_freq_by_year` | 15.3 M | (year, language group, word form) |
-| `word_freq_totals` | small | (year, language group) denominators |
+```bash
+cd web
+npm install
+npm run dev        # http://localhost:5173
+npm test           # unit tests (data logic, URL state)
+npm run check      # type check
+npm run build      # static site in web/dist/
+```
 
-All tables join on `item_id`. See the
-[dataset card](https://huggingface.co/datasets/honza03210/cuni-bachelor-theses-style)
-for full column documentation.
+The browser data in `web/public/data/` is committed (about 5 MB compressed), so
+the site runs without downloading the source dataset.
 
-## Setup
+## Rebuild the data
+
+Only needed if the dataset or the pipeline changes:
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-# download theses, reviews and word_freq_totals into ./data/
-python scripts/download_data.py
-# add --all for the large word tables (word_counts, word_freq_by_year)
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python scripts/download_data.py --all   # ~540 MB into data/
+.venv/bin/python -I pipeline/build.py             # writes web/public/data/
+.venv/bin/python -I pipeline/check.py             # sanity checks
 ```
 
-Or read straight from the Hub without downloading:
+`pipeline/build.py` writes two kinds of files:
 
-```python
-import pandas as pd
-t = pd.read_parquet("hf://datasets/honza03210/cuni-bachelor-theses-style/data/theses.parquet")
+- `theses.bin.gz` + `theses.json`: one row per thesis (faculty, year,
+  language, AI declaration, grade, nine style measures), as columnar typed
+  arrays. Trends and Grades are computed from it in the browser.
+- `words-<lang>.bin.gz` + `.json`: for the top 8,000 (Czech) / 5,000 / 4,000 /
+  2,500 word forms, the number of theses using each word at least twice. Counts
+  are split by faculty × year, and for 2023+ also by AI declaration. They feed
+  the Words view.
+
+## Deploy
+
+`.github/workflows/pages.yml` type-checks, tests and builds on every push. On
+`main` it deploys to GitHub Pages. To enable it, open **Settings → Pages →
+Source: GitHub Actions**. Pages on a private repository needs a paid GitHub
+plan; otherwise make the repository public.
+
+## How to read the data
+
+- Style measures are only computed for theses whose body text was cut cleanly
+  (`body_method = intro-back`). They are not comparable across languages; the
+  default filter is Czech only.
+- Year × faculty cells with fewer than 20 theses are not drawn. 2026 is
+  incomplete, so it is drawn dotted and left out of the default range.
+- Grades use a common 1–4 scale (A/B = 1, C/D = 2, E = 3, F = 4).
+- The AI-declaration filter only narrows theses from 2023 on. Earlier years stay
+  unfiltered as a baseline.
+- Word forms are not lemmatised. A word counts for a thesis when the thesis
+  uses it at least twice.
+
+## Layout
+
 ```
-
-## Recommended subset for trends
-
-Style metrics are only comparable within one language and for cleanly extracted
-texts:
-
-```python
-t = t[t.usable & (t.lang == "cs") & (t.body_method == "intro-back") & (t.year >= 2006)]  # ~48,300 theses
+pipeline/   build.py (parquet → browser data), check.py (sanity checks)
+scripts/    download_data.py
+web/        Svelte 5 + TypeScript + D3 app (Vite)
+docs/       PLAN.md: implementation plan
+PRODUCT.md  product context;  DESIGN.md: visual system
 ```
-
-## Ideas to visualize
-
-- Style metrics over time (sentence length, word length, MATTR, em-dash rate,
-  repeated trigrams) — pooled and per faculty
-- "Excess vocabulary": words whose document share jumps after 2022
-  (`word_freq_by_year` / `word_freq_totals`)
-- AI-use declarations from 2023 on: share, tools named, purposes, by faculty
-- `chatgpt_links` (citations tagged `utm_source=chatgpt.com`)
-- Review sentiment vs. grade; reviews mentioning AI
-- Supervisor / opponent network via `advisor_id` and `referee_ids`
-
-## Repository layout
-
-```
-scripts/     data download and processing scripts
-notebooks/   exploratory notebooks
-figures/     generated plots (not committed)
-data/        downloaded parquet files (not committed)
-```
-
-## License
-
-Data: CC BY 4.0, from the dataset above; the theses themselves are
-public at [dspace.cuni.cz](https://dspace.cuni.cz).

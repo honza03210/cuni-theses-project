@@ -1,6 +1,6 @@
-# Data (downloaded from Hugging Face, ~600 MB — never commit)
-data/
-*.parquet
+# Source data (downloaded from Hugging Face, ~540 MB — never commit).
+# The small derived files in web/public/data/ ARE committed.
+/data/
 
 # Python
 __pycache__/
@@ -18,3 +18,7 @@ figures/*.svg
 .DS_Store
 .vscode/
 .idea/
+
+# Web app
+web/node_modules/
+web/dist/

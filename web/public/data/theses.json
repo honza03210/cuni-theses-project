@@ -1,0 +1,387 @@
+{
+ "rows": 65957,
+ "yearMin": 2006,
+ "yearMax": 2026,
+ "aiYear": 2023,
+ "columns": [
+  {
+   "name": "fac",
+   "type": "u8",
+   "offset": 0
+  },
+  {
+   "name": "year",
+   "type": "u8",
+   "offset": 65957
+  },
+  {
+   "name": "lang",
+   "type": "u8",
+   "offset": 131914
+  },
+  {
+   "name": "ai",
+   "type": "u8",
+   "offset": 197871
+  },
+  {
+   "name": "grade",
+   "type": "u8",
+   "offset": 263828
+  },
+  {
+   "name": "usable",
+   "type": "u8",
+   "offset": 329785
+  },
+  {
+   "name": "clean",
+   "type": "u8",
+   "offset": 395742
+  },
+  {
+   "name": "mean_word_len",
+   "type": "f32",
+   "offset": 461700
+  },
+  {
+   "name": "mean_sentence_len",
+   "type": "f32",
+   "offset": 725528
+  },
+  {
+   "name": "std_sentence_len",
+   "type": "f32",
+   "offset": 989356
+  },
+  {
+   "name": "mattr",
+   "type": "f32",
+   "offset": 1253184
+  },
+  {
+   "name": "repeated_trigram_ratio",
+   "type": "f32",
+   "offset": 1517012
+  },
+  {
+   "name": "long_word_ratio",
+   "type": "f32",
+   "offset": 1780840
+  },
+  {
+   "name": "em_dash_per_1000w",
+   "type": "f32",
+   "offset": 2044668
+  },
+  {
+   "name": "comma_per_1000w",
+   "type": "f32",
+   "offset": 2308496
+  },
+  {
+   "name": "first_person_sg_per_1000w",
+   "type": "f32",
+   "offset": 2572324
+  }
+ ],
+ "faculties": [
+  {
+   "code": "ff",
+   "abbr": "FF",
+   "name": {
+    "cs": "Filozofická fakulta",
+    "en": "Faculty of Arts"
+   }
+  },
+  {
+   "code": "fhs",
+   "abbr": "FHS",
+   "name": {
+    "cs": "Fakulta humanitních studií",
+    "en": "Faculty of Humanities"
+   }
+  },
+  {
+   "code": "fsv",
+   "abbr": "FSV",
+   "name": {
+    "cs": "Fakulta sociálních věd",
+    "en": "Faculty of Social Sciences"
+   }
+  },
+  {
+   "code": "pedf",
+   "abbr": "PedF",
+   "name": {
+    "cs": "Pedagogická fakulta",
+    "en": "Faculty of Education"
+   }
+  },
+  {
+   "code": "ftvs",
+   "abbr": "FTVS",
+   "name": {
+    "cs": "Fakulta tělesné výchovy a sportu",
+    "en": "Faculty of Physical Education and Sport"
+   }
+  },
+  {
+   "code": "etf",
+   "abbr": "ETF",
+   "name": {
+    "cs": "Evangelická teologická fakulta",
+    "en": "Protestant Theological Faculty"
+   }
+  },
+  {
+   "code": "htf",
+   "abbr": "HTF",
+   "name": {
+    "cs": "Husitská teologická fakulta",
+    "en": "Hussite Theological Faculty"
+   }
+  },
+  {
+   "code": "ktf",
+   "abbr": "KTF",
+   "name": {
+    "cs": "Katolická teologická fakulta",
+    "en": "Catholic Theological Faculty"
+   }
+  },
+  {
+   "code": "mff",
+   "abbr": "MFF",
+   "name": {
+    "cs": "Matematicko-fyzikální fakulta",
+    "en": "Faculty of Mathematics and Physics"
+   }
+  },
+  {
+   "code": "prf",
+   "abbr": "PřF",
+   "name": {
+    "cs": "Přírodovědecká fakulta",
+    "en": "Faculty of Science"
+   }
+  },
+  {
+   "code": "lf1",
+   "abbr": "1. LF",
+   "name": {
+    "cs": "1. lékařská fakulta",
+    "en": "First Faculty of Medicine"
+   }
+  },
+  {
+   "code": "lf2",
+   "abbr": "2. LF",
+   "name": {
+    "cs": "2. lékařská fakulta",
+    "en": "Second Faculty of Medicine"
+   }
+  },
+  {
+   "code": "lf3",
+   "abbr": "3. LF",
+   "name": {
+    "cs": "3. lékařská fakulta",
+    "en": "Third Faculty of Medicine"
+   }
+  },
+  {
+   "code": "lfhk",
+   "abbr": "LF HK",
+   "name": {
+    "cs": "Lékařská fakulta v Hradci Králové",
+    "en": "Faculty of Medicine in Hradec Králové"
+   }
+  },
+  {
+   "code": "faf",
+   "abbr": "FaF",
+   "name": {
+    "cs": "Farmaceutická fakulta v Hradci Králové",
+    "en": "Faculty of Pharmacy in Hradec Králové"
+   }
+  }
+ ],
+ "langs": [
+  "cs",
+  "en",
+  "sk",
+  "other"
+ ],
+ "aiValues": [
+  "n/a",
+  "declared use",
+  "declared no use",
+  "template only",
+  "no statement found"
+ ],
+ "metrics": [
+  {
+   "key": "mean_word_len",
+   "label": {
+    "cs": "Průměrná délka slova",
+    "en": "Average word length"
+   },
+   "unit": {
+    "cs": "písmen",
+    "en": "letters"
+   },
+   "desc": {
+    "cs": "Průměrný počet písmen ve slově.",
+    "en": "Mean number of letters per word."
+   },
+   "decimals": 2,
+   "p01": 4.175915718078613,
+   "p99": 6.25252628326416
+  },
+  {
+   "key": "mean_sentence_len",
+   "label": {
+    "cs": "Průměrná délka věty",
+    "en": "Average sentence length"
+   },
+   "unit": {
+    "cs": "slov",
+    "en": "words"
+   },
+   "desc": {
+    "cs": "Průměrný počet slov ve větě.",
+    "en": "Mean number of words per sentence."
+   },
+   "decimals": 1,
+   "p01": 12.670074462890625,
+   "p99": 33.82674789428711
+  },
+  {
+   "key": "std_sentence_len",
+   "label": {
+    "cs": "Rozptyl délky vět",
+    "en": "Sentence-length spread"
+   },
+   "unit": {
+    "cs": "slov (sm. odch.)",
+    "en": "words (std. dev.)"
+   },
+   "desc": {
+    "cs": "Směrodatná odchylka délky vět: nízká = věty jsou si podobně dlouhé.",
+    "en": "Standard deviation of sentence length: low = sentences are uniformly long."
+   },
+   "decimals": 1,
+   "p01": 7.014369010925293,
+   "p99": 25.227397918701172
+  },
+  {
+   "key": "mattr",
+   "label": {
+    "cs": "Lexikální rozmanitost",
+    "en": "Lexical diversity"
+   },
+   "unit": {
+    "cs": "MATTR",
+    "en": "MATTR"
+   },
+   "desc": {
+    "cs": "Průměrný poměr různých slov ke všem slovům v oknech po 500 slovech.",
+    "en": "Mean type–token ratio over 500-word windows."
+   },
+   "decimals": 3,
+   "p01": 0.38993632793426514,
+   "p99": 0.7181845903396606
+  },
+  {
+   "key": "repeated_trigram_ratio",
+   "label": {
+    "cs": "Opakování frází",
+    "en": "Phrase repetition"
+   },
+   "unit": {
+    "cs": "podíl trigramů",
+    "en": "trigram share"
+   },
+   "desc": {
+    "cs": "Podíl trojic slov, které se v okně 2 000 slov opakují.",
+    "en": "Share of word trigrams repeated within a 2,000-word window."
+   },
+   "decimals": 3,
+   "p01": 0.01479415874928236,
+   "p99": 0.2903570234775543
+  },
+  {
+   "key": "long_word_ratio",
+   "label": {
+    "cs": "Podíl dlouhých slov",
+    "en": "Long-word share"
+   },
+   "unit": {
+    "cs": "podíl slov > 6 písmen",
+    "en": "share of words > 6 letters"
+   },
+   "desc": {
+    "cs": "Podíl slov delších než 6 písmen.",
+    "en": "Share of words longer than 6 letters."
+   },
+   "decimals": 3,
+   "p01": 0.21895642578601837,
+   "p99": 0.4823068380355835
+  },
+  {
+   "key": "em_dash_per_1000w",
+   "label": {
+    "cs": "Dlouhé pomlčky",
+    "en": "Em dashes"
+   },
+   "unit": {
+    "cs": "na 1 000 slov",
+    "en": "per 1,000 words"
+   },
+   "desc": {
+    "cs": "Počet dlouhých pomlček „—“ na 1 000 slov.",
+    "en": "Em dashes “—” per 1,000 words."
+   },
+   "decimals": 2,
+   "p01": 0.0,
+   "p99": 1.3853925466537476
+  },
+  {
+   "key": "comma_per_1000w",
+   "label": {
+    "cs": "Čárky",
+    "en": "Commas"
+   },
+   "unit": {
+    "cs": "na 1 000 slov",
+    "en": "per 1,000 words"
+   },
+   "desc": {
+    "cs": "Počet čárek na 1 000 slov.",
+    "en": "Commas per 1,000 words."
+   },
+   "decimals": 1,
+   "p01": 35.791847229003906,
+   "p99": 122.72981262207031
+  },
+  {
+   "key": "first_person_sg_per_1000w",
+   "label": {
+    "cs": "1. osoba jednotného čísla",
+    "en": "First person singular"
+   },
+   "unit": {
+    "cs": "na 1 000 slov",
+    "en": "per 1,000 words"
+   },
+   "desc": {
+    "cs": "Zájmena a tvary 1. osoby jednotného čísla (já, jsem, můj…) na 1 000 slov.",
+    "en": "First-person singular pronouns and forms (I, my, …) per 1,000 words."
+   },
+   "decimals": 2,
+   "p01": 0.0,
+   "p99": 19.30838394165039
+  }
+ ]
+}

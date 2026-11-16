@@ -1,0 +1,229 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { loadTheses } from './lib/data/load';
+  import { countMask, filterMask } from './lib/data/select';
+  import type { Theses } from './lib/data/types';
+  import { app, assign, domainOf } from './lib/state/app.svelte';
+  import { decode, encode, type View } from './lib/state/url';
+  import { L } from './lib/locale.svelte';
+  import FilterPanel from './lib/ui/FilterPanel.svelte';
+  import WordsView from './views/words/WordsView.svelte';
+  import TrendsView from './views/trends/TrendsView.svelte';
+  import GradesView from './views/grades/GradesView.svelte';
+
+  let theses = $state.raw<Theses | null>(null);
+  let error: string | null = $state(null);
+  let drawerOpen = $state(false);
+  let bandH = $state(58);
+
+  async function load() {
+    error = null;
+    try {
+      const t = await loadTheses();
+      assign(decode(location.search, domainOf(t)));
+      theses = t;
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    }
+  }
+  onMount(() => {
+    load();
+    const onPop = () => { if (theses) assign(decode(location.search, domainOf(theses))); };
+    addEventListener('popstate', onPop);
+    return () => removeEventListener('popstate', onPop);
+  });
+
+  // URL <- state
+  $effect(() => {
+    if (!theses) return;
+    const q = encode(app, domainOf(theses));
+    const url = q ? `?${q}` : location.pathname;
+    if (url !== location.search && !(q === '' && location.search === '')) history.replaceState(null, '', url);
+  });
+  $effect(() => { document.documentElement.lang = app.locale; document.title = L.t.title; });
+
+  const filters = $derived({ fac: app.fac, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai });
+  const mask = $derived(theses ? filterMask(theses, filters) : null);
+  const matched = $derived(mask ? countMask(mask) : 0);
+
+  const views: View[] = ['words', 'trends', 'grades'];
+  const tabIds = { words: 'tab-words', trends: 'tab-trends', grades: 'tab-grades' } as const;
+  function onTabKey(e: KeyboardEvent) {
+    const i = views.indexOf(app.view);
+    let j = -1;
+    if (e.key === 'ArrowRight') j = (i + 1) % views.length;
+    else if (e.key === 'ArrowLeft') j = (i + views.length - 1) % views.length;
+    else if (e.key === 'Home') j = 0;
+    else if (e.key === 'End') j = views.length - 1;
+    if (j < 0) return;
+    e.preventDefault();
+    app.view = views[j];
+    document.getElementById(tabIds[views[j]])?.focus();
+  }
+</script>
+
+<div class="shell" class:drawer-open={drawerOpen} style:--band-h="{bandH}px">
+  <header class="band" bind:clientHeight={bandH}>
+    <div class="brand">
+      <h1>{L.t.title}</h1>
+      <p>{L.t.subtitle}</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label={L.t['view.label']} tabindex="-1" onkeydown={onTabKey}>
+      {#each views as v (v)}
+        <button
+          id={tabIds[v]} role="tab" type="button"
+          aria-selected={app.view === v} aria-controls="view-panel"
+          tabindex={app.view === v ? 0 : -1}
+          onclick={() => (app.view = v)}
+        >{L.t[`view.${v}`]}</button>
+      {/each}
+    </div>
+    <div class="right">
+      <button type="button" class="drawer-btn" aria-expanded={drawerOpen} aria-controls="filters"
+        onclick={() => (drawerOpen = !drawerOpen)}>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        {L.t['filters.open']}
+      </button>
+      <div class="locale" role="group" aria-label={L.t['lang.switch']}>
+        <button type="button" lang="cs" aria-pressed={app.locale === 'cs'} onclick={() => (app.locale = 'cs')}>CS</button>
+        <button type="button" lang="en" aria-pressed={app.locale === 'en'} onclick={() => (app.locale = 'en')}>EN</button>
+      </div>
+    </div>
+  </header>
+
+  <aside id="filters" class="filters" aria-label={L.t['filters.title']}>
+    {#if theses}
+      <FilterPanel {theses} {matched} aiApplies={app.yearTo >= theses.meta.aiYear} />
+    {/if}
+  </aside>
+  {#if drawerOpen}
+    <button type="button" class="scrim" aria-label={L.t['filters.close']} onclick={() => (drawerOpen = false)}></button>
+  {/if}
+
+  <main>
+  <div id="view-panel" role="tabpanel" aria-labelledby={tabIds[app.view]}>
+    {#if error}
+      <div class="state">
+        <p><strong>{L.t['common.loadError']}</strong></p>
+        <p class="detail">{error}</p>
+        <button type="button" class="retry" onclick={load}>{L.t['common.retry']}</button>
+      </div>
+    {:else if !theses || !mask}
+      <div class="state loading" aria-busy="true">
+        <div class="skel w60"></div><div class="skel block"></div><div class="skel w40"></div><div class="skel block short"></div>
+        <span class="sr-only">{L.t['common.loading']}</span>
+      </div>
+    {:else if app.view === 'words'}
+      <WordsView {theses} {filters} />
+    {:else if app.view === 'trends'}
+      <TrendsView {theses} {mask} />
+    {:else}
+      <GradesView {theses} {mask} />
+    {/if}
+  </div>
+  </main>
+</div>
+
+<style>
+  .shell {
+    display: grid;
+    grid-template-columns: 272px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: 'band band' 'filters main';
+    min-height: 100vh;
+  }
+  .band {
+    grid-area: band;
+    position: sticky; top: 0; z-index: 20;
+    display: grid;
+    grid-template-columns: minmax(272px, auto) 1fr auto;
+    align-items: end;
+    background: var(--petrol-deep);
+    color: var(--on-petrol);
+    padding: 0 var(--s5) 0 0;
+    border-bottom: 3px solid var(--ink);
+  }
+  .brand { padding: 12px var(--s4) 10px; white-space: nowrap; }
+  h1 { margin: 0; font-size: var(--fs-lg); font-weight: 700; line-height: 1.2; letter-spacing: -0.005em; }
+  .brand p { margin: 2px 0 0; font-size: var(--fs-xs); color: var(--on-petrol-2); }
+
+  .tabs { display: flex; gap: 2px; align-self: end; padding-left: var(--s5); }
+  .tabs button {
+    border: 0;
+    background: transparent;
+    color: var(--on-petrol-2);
+    font-size: var(--fs-md);
+    font-weight: 600;
+    padding: 10px 18px 9px;
+    cursor: pointer;
+    border-radius: 3px 3px 0 0;
+    transition: background var(--t) var(--ease), color var(--t) var(--ease);
+  }
+  .tabs button:hover { color: var(--on-petrol); background: rgb(255 255 255 / 0.07); }
+  .tabs button[aria-selected='true'] { background: var(--paper); color: var(--ink); }
+  .tabs button:focus-visible { outline-color: var(--on-petrol); outline-offset: -3px; }
+
+  .right { display: flex; align-items: center; gap: var(--s3); align-self: center; }
+  .locale { display: inline-flex; border: 1px solid rgb(246 244 238 / 0.35); border-radius: 3px; overflow: hidden; }
+  .locale button {
+    border: 0; background: transparent; color: var(--on-petrol-2);
+    font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em;
+    padding: 4px 9px; cursor: pointer;
+  }
+  .locale button[aria-pressed='true'] { background: var(--on-petrol); color: var(--petrol-deep); }
+  .locale button:focus-visible { outline-color: var(--on-petrol); }
+  .drawer-btn {
+    display: none;
+    align-items: center; gap: 6px;
+    border: 1px solid rgb(246 244 238 / 0.35); border-radius: 3px;
+    background: transparent; color: var(--on-petrol);
+    font-size: var(--fs-sm); padding: 4px 10px; cursor: pointer;
+  }
+
+  .filters {
+    grid-area: filters;
+    position: sticky;
+    top: var(--band-h, 58px);
+    align-self: start;
+    height: calc(100vh - var(--band-h, 58px));
+    overflow-y: auto;
+    background: var(--paper-2);
+    border-right: 1px solid var(--rule);
+  }
+  main {
+    grid-area: main;
+    min-width: 0;
+    padding: var(--s5) var(--s6) var(--s7);
+  }
+  .state { max-width: 60ch; padding: var(--s6) 0; }
+  .state .detail { color: var(--ink-3); font-size: var(--fs-sm); }
+  .retry {
+    border: 1px solid var(--petrol); background: var(--petrol); color: var(--on-petrol);
+    border-radius: 3px; padding: 6px 14px; cursor: pointer;
+  }
+  .loading { display: grid; gap: 14px; max-width: none; }
+  .skel { height: 14px; background: var(--paper-2); border-radius: 2px; animation: pulse 1.4s ease-in-out infinite; }
+  .skel.w60 { width: 60%; height: 20px; }
+  .skel.w40 { width: 40%; height: 20px; margin-top: 18px; }
+  .skel.block { height: 300px; }
+  .skel.short { height: 180px; }
+  @keyframes pulse { 50% { opacity: 0.55; } }
+  .scrim { display: none; }
+
+  @media (max-width: 1023px) {
+    .shell { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'band' 'main'; }
+    .band { grid-template-columns: 1fr auto; padding-right: var(--s4); }
+    .tabs { grid-column: 1 / -1; grid-row: 2; padding-left: var(--s4); overflow-x: auto; }
+    .drawer-btn { display: inline-flex; }
+    .filters {
+      position: fixed; z-index: 40; left: 0; top: 0; bottom: 0;
+      height: 100vh; width: min(320px, 88vw);
+      transform: translateX(-100%);
+      transition: transform 220ms var(--ease);
+      box-shadow: 4px 0 24px rgb(28 31 36 / 0.18);
+    }
+    .drawer-open .filters { transform: none; }
+    .scrim { display: block; position: fixed; inset: 0; z-index: 30; border: 0; background: rgb(28 31 36 / 0.3); }
+    main { padding: var(--s4) var(--s4) var(--s6); }
+  }
+</style>

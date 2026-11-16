@@ -1,0 +1,97 @@
+/* Statistical-yearbook world: warm paper, near-black ink, one petrol second colour
+   reserved for "selected / active". See .impeccable/surfaces/explorer.md */
+
+:root {
+  --paper: #f6f4ee;
+  --paper-2: #ece8de;          /* filter column, second neutral layer */
+  --paper-3: #e2ddd0;          /* hover on paper-2 */
+  --ink: #1c1f24;
+  --ink-2: #464b53;            /* secondary text  (~8:1 on paper) */
+  --ink-3: #5f646b;            /* tertiary text   (~5.5:1 on paper) */
+  --rule: #cdc7b8;             /* hairlines */
+  --rule-soft: #e1dccf;
+
+  --petrol: #1f5468;           /* selected / active only */
+  --petrol-deep: #163f4f;      /* header band */
+  --petrol-tint: #d9e6ea;
+  --on-petrol: #f6f4ee;
+  --on-petrol-2: #c5d6dc;
+
+  /* data */
+  --rise: #0b5fa5;
+  --fall: #a8430d;
+  --avg: #c43c14;
+  --context: #b8b2a4;
+  --grade-1: #2c7bb6;
+  --grade-2: #abd9e9;
+  --grade-3: #fdae61;
+  --grade-4: #d7191c;
+  --warn: #8a5a00;
+
+  --font: 'Source Sans 3', 'Source Sans Pro', system-ui, sans-serif;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.9375rem;
+  --fs-lg: 1.0625rem;
+  --fs-xl: 1.25rem;
+  --fs-2xl: 1.5rem;
+
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --t: 180ms;
+
+  color-scheme: light;
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--paper);
+  font-variant-numeric: tabular-nums lining-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; background: var(--paper); }
+body { min-height: 100vh; }
+
+::selection { background: var(--petrol); color: var(--on-petrol); }
+
+:focus-visible {
+  outline: 2px solid var(--petrol);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+a { color: var(--petrol); text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
+
+button, input, select { font: inherit; color: inherit; }
+
+input[type='checkbox'], input[type='radio'] { accent-color: var(--petrol); }
+
+* { scrollbar-width: thin; scrollbar-color: var(--rule) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 5px; border: 2px solid var(--paper-2); }
+::-webkit-scrollbar-track { background: transparent; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* Chart text */
+svg text { font-family: var(--font); fill: var(--ink-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+svg .axis path, svg .axis line { stroke: var(--rule); }
+svg .axis .domain { stroke: var(--ink-3); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+}

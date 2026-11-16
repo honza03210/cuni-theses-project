@@ -264,3 +264,22 @@ aggregation code); the other takes phase 1's word cube and 3c.
 - **Faculty English names:** a hand-written map to be checked by the team.
 - **Hosting:** GitHub Pages is assumed (the repo is private now; Pages on a
   private repo needs a paid plan, so the repo may need to go public).
+
+## 12. As built: deviations from this plan
+
+- **Grade bars are horizontal** (one row per faculty), not vertical as in the
+  sketch. With 15 faculties plus "All", vertical bars at half-width made the
+  faculty labels collide. Sorted by share of grade 1, thesis count on the right.
+- **Word-size ramp is data-relative.** Still 5 steps with the thresholds shown
+  in the legend, but they are quantiles of the displayed words' |log₂ ratio|.
+  Real deviations at a 1 % minimum share are mostly < 0.6, so a fixed ramp put
+  almost every word in the smallest size.
+- **Parallel plot opacity per grade** is scaled by √(1 / grade share), so the
+  rarer grades 3–4 stay visible next to grade 1 (> 50 % of theses). The
+  footnote says so.
+- **Word detail faculty lines** need ≥ 50 theses in a faculty-year (rather than
+  20): single-word shares in small faculties were too noisy.
+- **Single-faculty Trends** replaces "other faculties" and "selection average"
+  with a dotted whole-university reference line.
+- **d3-cloud is pinned to 1.x**: 2.0 (released during the build) replaced the
+  API.
