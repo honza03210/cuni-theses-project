@@ -114,8 +114,8 @@ describe('excess vocabulary', () => {
 describe('url state', () => {
   const d: Domain = { facCodes: ['a', 'b', 'c'], langs: ['cs', 'en', 'sk', 'other'], yearMin: 2006, yearMax: 2026, metrics: ['m1', 'm2'] };
   it('round-trips', () => {
-    const s = { ...defaults(d), view: 'grades' as const, locale: 'en' as const, fac: [0, 2], yearFrom: 2010, yearTo: 2024,
-      langs: [0, 1], ai: [1], metric: 'm2', word: 'čeština', wordLang: 1, minFreq: 0.02, gradeYear: 2020,
+    const s = { ...defaults(d), view: 'grades' as const, locale: 'cs' as const, fac: [0, 2], yearFrom: 2010, yearTo: 2024,
+      langs: [0, 1], ai: [1], metric: 'm2', word: 'čeština', wordLang: 1, minFreq: 0.02, wordYear: 2024, gradeYear: 2020,
       brushes: { mattr: [0.7, 0.75] as [number, number] }, table: { trends: true } };
     expect(decode(encode(s, d), d)).toEqual(s);
   });

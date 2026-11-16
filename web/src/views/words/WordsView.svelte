@@ -35,9 +35,12 @@
 
   const aiOn = $derived(aiFilterActive(filters.ai));
   const ctx = $derived(cube && filters.fac.length ? buildWordContext(theses, cube, filters, aiOn) : null);
-  const result = $derived(cube && ctx ? scoreWords(cube, ctx, filters.yearTo, app.minFreq) : null);
+  // Scored year: picked in the cloud header, or the end of the filter range by default
+  const firstTarget = $derived(meta.yearMin + BASELINE_YEARS);
+  const targetYears = $derived(Array.from({ length: meta.yearMax - firstTarget + 1 }, (_, i) => meta.yearMax - i));
+  const target = $derived(app.wordYear ?? filters.yearTo);
+  const result = $derived(cube && ctx ? scoreWords(cube, ctx, target, app.minFreq) : null);
   const movers = $derived(result ? topMovers(result.scores, N_EACH) : null);
-  const target = $derived(filters.yearTo);
   const baselineLabel = $derived(result?.baseline.length ? `${result.baseline[0]}–${result.baseline[result.baseline.length - 1]}` : `${target - BASELINE_YEARS}–${target - 1}`);
   const mfIndex = $derived(Math.max(0, MIN_FREQ_STEPS.findIndex((v) => v >= app.minFreq - 1e-9)));
 
@@ -59,6 +62,13 @@
           {/each}
         </div>
       {/if}
+      <label class="wy">
+        <span>{L.t['words.year']}</span>
+        <select value={app.wordYear ?? ''} onchange={(e) => (app.wordYear = e.currentTarget.value === '' ? null : +e.currentTarget.value)}>
+          <option value="">{L.t['words.yearEnd'](filters.yearTo)}</option>
+          {#each targetYears as y (y)}<option value={y}>{y}{y === meta.yearMax ? ` (${L.t['words.incomplete']})` : ''}</option>{/each}
+        </select>
+      </label>
       <label class="mf">
         <span>{L.t['words.minFreq']}</span>
         <input type="range" min="0" max={MIN_FREQ_STEPS.length - 1} step="1" value={mfIndex}
@@ -117,7 +127,7 @@
     {#if !selected || !cube || !ctx || !result}
       <p class="msg empty">{app.word && cube && !cube.index.has(app.word) ? L.t['words.detail.notInVocab'] : L.t['words.detail.empty']}</p>
     {:else}
-      <WordDetail {cube} {ctx} word={selected} {result} faculties={meta.faculties} yearFrom={filters.yearFrom} yearTo={filters.yearTo} yearMax={meta.yearMax} />
+      <WordDetail {cube} {ctx} word={selected} {result} faculties={meta.faculties} yearFrom={filters.yearFrom} yearTo={Math.max(filters.yearTo, target)} yearMax={meta.yearMax} />
     {/if}
   </Plate>
 </div>
@@ -140,6 +150,12 @@
   .skel { height: 380px; background: var(--paper-2); border-radius: 2px; animation: pulse 1.4s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.55; } }
 
+  .wy { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; font-size: var(--fs-sm); color: var(--ink-2); }
+  .wy select {
+    font-size: var(--fs-sm); color: var(--ink); background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 3px; padding: 3px 6px; cursor: pointer;
+  }
+  .wy select:hover { border-color: var(--ink-3); }
   .mf { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; font-size: var(--fs-sm); color: var(--ink-2); }
   .mf input { width: 110px; accent-color: var(--petrol); }
   .mf output { min-width: 3.4em; font-weight: 600; color: var(--ink); }
