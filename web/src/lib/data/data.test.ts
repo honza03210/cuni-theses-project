@@ -82,7 +82,7 @@ describe('excess vocabulary', () => {
     const t = makeTheses(rows);
     const meta = { lang: 'cs', words: ['x', 'y'], cells: 2 * 17 + 2 * 4 * 5, preYears: 17, postYears: 4, aiValues: 5, faculties: 2 };
     const counts = new Uint16Array(meta.words.length * meta.cells);
-    const cube: WordCube = { meta, langIndex: 0, counts, index: new Map([['x', 0], ['y', 1]]) };
+    const cube: WordCube = { meta, langIndex: 0, lemma: false, counts, index: new Map([['x', 0], ['y', 1]]) };
     for (let y = 2018; y <= 2022; y++) counts[0 * meta.cells + cellIndex(cube, t, 0, y, 0)] = 10;
     counts[0 * meta.cells + cellIndex(cube, t, 0, 2023, 4)] = 40;
     for (let y = 2018; y <= 2022; y++) counts[1 * meta.cells + cellIndex(cube, t, 0, y, 0)] = 30;
@@ -119,7 +119,7 @@ describe('excess vocabulary', () => {
   it('reports a target year too early for a baseline', () => {
     const t = makeTheses([{ fac: 0, year: 2008 }]);
     const meta = { lang: 'cs', words: ['x'], cells: 2 * 17 + 2 * 4 * 5, preYears: 17, postYears: 4, aiValues: 5, faculties: 2 };
-    const cube: WordCube = { meta, langIndex: 0, counts: new Uint16Array(meta.cells), index: new Map([['x', 0]]) };
+    const cube: WordCube = { meta, langIndex: 0, lemma: false, counts: new Uint16Array(meta.cells), index: new Map([['x', 0]]) };
     const ctx = buildWordContext(t, cube, { ...ALL, fac: [0] }, false);
     expect(scoreWords(cube, ctx, { from: 2008, to: 2008, base: 5 }, 0.01).reason).toBe('too-early');
   });
@@ -129,7 +129,7 @@ describe('url state', () => {
   const d: Domain = { facCodes: ['a', 'b', 'c'], langs: ['cs', 'en', 'sk', 'other'], yearMin: 2006, yearMax: 2026, metrics: ['m1', 'm2'] };
   it('round-trips', () => {
     const s = { ...defaults(d), view: 'grades' as const, locale: 'cs' as const, fac: [0, 2], yearFrom: 2010, yearTo: 2024,
-      langs: [0, 1], ai: [1], metric: 'm2', word: 'čeština', wordLang: 1, minFreq: 0.02, wordFrom: 2023, wordTo: 2025, wordBase: 4, gradeYear: 2020,
+      langs: [0, 1], ai: [1], metric: 'm2', word: 'čeština', wordLang: 1, minFreq: 0.02, wordFrom: 2023, wordTo: 2025, wordBase: 4, lemma: false, gradeYear: 2020,
       brushes: { mattr: [0.7, 0.75] as [number, number] }, table: { trends: true } };
     expect(decode(encode(s, d), d)).toEqual(s);
   });

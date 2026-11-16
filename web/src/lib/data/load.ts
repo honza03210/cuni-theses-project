@@ -42,20 +42,24 @@ export async function loadTheses(): Promise<Theses> {
 
 const cubeCache = new Map<string, Promise<WordCube>>();
 
-export function loadWordCube(lang: string, langIndex: number): Promise<WordCube> {
-  let p = cubeCache.get(lang);
+/** Languages with a lemmatised cube (inflected forms merged) */
+export const LEMMA_LANGS = ['cs', 'en', 'sk'];
+
+export function loadWordCube(lang: string, langIndex: number, lemma: boolean): Promise<WordCube> {
+  const name = lemma && LEMMA_LANGS.includes(lang) ? `${lang}-lemma` : lang;
+  let p = cubeCache.get(name);
   if (!p) {
     p = (async () => {
       const [meta, buf] = await Promise.all([
-        fetchOk(`${BASE}words-${lang}.json`).then((r) => r.json() as Promise<WordsMeta>),
-        fetchGz(`${BASE}words-${lang}.bin.gz`),
+        fetchOk(`${BASE}words-${name}.json`).then((r) => r.json() as Promise<WordsMeta>),
+        fetchGz(`${BASE}words-${name}.bin.gz`),
       ]);
       const counts = new Uint16Array(buf);
-      if (counts.length !== meta.words.length * meta.cells) throw new Error(`words-${lang}: size mismatch`);
-      return { meta, langIndex, counts, index: new Map(meta.words.map((w, i) => [w, i])) };
+      if (counts.length !== meta.words.length * meta.cells) throw new Error(`words-${name}: size mismatch`);
+      return { meta, langIndex, lemma: !!meta.forms, counts, index: new Map(meta.words.map((w, i) => [w, i])) };
     })();
-    p.catch(() => cubeCache.delete(lang));
-    cubeCache.set(lang, p);
+    p.catch(() => cubeCache.delete(name));
+    cubeCache.set(name, p);
   }
   return p;
 }

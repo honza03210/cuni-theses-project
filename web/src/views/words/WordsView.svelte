@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { loadWordCube } from '../../lib/data/load';
+  import { LEMMA_LANGS, loadWordCube } from '../../lib/data/load';
   import { buildWordContext, clampComparison, rampFor, scoreWords, topMovers, BASE_MAX, BASE_MIN, type Comparison } from '../../lib/data/excess';
   import { onDestroy } from 'svelte';
   import { aiFilterActive } from '../../lib/data/select';
@@ -21,15 +21,46 @@
 
   const wordLang = $derived(app.wordLang !== null && app.langs.includes(app.wordLang) ? app.wordLang : app.langs[0] ?? null);
 
+  const lemmaAvailable = $derived(wordLang !== null && LEMMA_LANGS.includes(meta.langs[wordLang]));
+  const useLemma = $derived(app.lemma && lemmaAvailable);
   let cube = $state.raw<WordCube | null>(null);
+  /** forms behind a lemma (lemma cubes only) */
+  function formsOf(word: string): string[] {
+    const i = cube?.index.get(word);
+    return i !== undefined && cube?.meta.forms ? cube.meta.forms[i].filter((f) => f !== word) : [];
+  }
+  /** Switch lemmas/forms and keep the selected word: lemma -> its main form, form -> its lemma */
+  function setLemma(v: boolean) {
+    if (v === app.lemma) return;
+    const w = app.word;
+    if (w && cube) {
+      if (cube.meta.forms) {
+        const i = cube.index.get(w);
+        app.word = i !== undefined ? (cube.meta.forms[i][0] ?? w) : w;
+      } else {
+        // the lemma cube is not loaded yet; look the form up once it is
+        pendingForm = w;
+      }
+    }
+    app.lemma = v;
+  }
+  let pendingForm: string | null = null;
+  $effect(() => {
+    if (!cube?.meta.forms || !pendingForm) return;
+    const f = pendingForm;
+    pendingForm = null;
+    const i = cube.meta.forms.findIndex((fs) => fs.includes(f));
+    if (i >= 0) app.word = cube.meta.words[i];
+  });
   let cubeError: string | null = $state(null);
   $effect(() => {
     const li = wordLang;
     if (li === null) { cube = null; return; }
     let alive = true;
     cubeError = null;
-    if (cube?.langIndex !== li) cube = null;
-    loadWordCube(meta.langs[li], li)
+    const lemma = useLemma;
+    if (cube?.langIndex !== li || cube?.lemma !== lemma) cube = null;
+    loadWordCube(meta.langs[li], li, lemma)
       .then((c) => { if (alive) cube = c; })
       .catch((e) => { if (alive) cubeError = String(e?.message ?? e); });
     return () => { alive = false; };
@@ -91,6 +122,12 @@
           {/each}
         </div>
       {/if}
+      {#if lemmaAvailable}
+        <div class="seg" role="group" aria-label={L.t['words.lemma.label']}>
+          <button type="button" aria-pressed={app.lemma} onclick={() => setLemma(true)} title={L.t['words.lemma.onHint']}>{L.t['words.lemma.on']}</button>
+          <button type="button" aria-pressed={!app.lemma} onclick={() => setLemma(false)} title={L.t['words.lemma.offHint']}>{L.t['words.lemma.off']}</button>
+        </div>
+      {/if}
       <label class="mf">
         <span>{L.t['words.minFreq']}</span>
         <input type="range" min="0" max={MIN_FREQ_STEPS.length - 1} step="1" value={mfIndex}
@@ -101,11 +138,12 @@
     {/snippet}
     {#snippet table()}
       <table>
-        <thead><tr><th>{L.t['words.col.word']}</th><th>{L.t['words.col.obs']}</th><th>{L.t['words.col.exp']}</th><th>{L.t['words.col.ratio']}</th><th>{L.t['words.col.docs']}</th></tr></thead>
+        <thead><tr><th>{L.t['words.col.word']}</th>{#if useLemma}<th class="forms-h">{L.t['words.col.forms']}</th>{/if}<th>{L.t['words.col.obs']}</th><th>{L.t['words.col.exp']}</th><th>{L.t['words.col.ratio']}</th><th>{L.t['words.col.docs']}</th></tr></thead>
         <tbody>
           {#each listRows as s (s.word)}
             <tr>
               <td><button type="button" class="wbtn" class:rise={s.score > 0} class:fall={s.score < 0} aria-pressed={selected === s.word} onclick={() => pick(s.word)}>{s.word}</button></td>
+              {#if useLemma}<td class="muted forms">{formsOf(s.word).join(', ')}</td>{/if}
               <td>{L.f.pct(s.observed, 2)}</td><td class="muted">{L.f.pct(s.expected, 2)}</td>
               <td>{L.f.signed(s.score, 2)}</td><td class="muted">{L.f.int(s.docs)}</td>
             </tr>
@@ -176,11 +214,12 @@
       <p class="msg">{L.t['words.none']}</p>
     {:else}
       {#if result.targetTotal < SMALL_TARGET}<p class="warn" role="status">{L.t['words.small'](result.targetTotal)}</p>{/if}
-      <WordCloud rising={movers.rising} falling={movers.falling} {ramp} sizes={SIZES} {selected} onpick={pick} />
+      <WordCloud rising={movers.rising} falling={movers.falling} {ramp} sizes={SIZES} {selected} onpick={pick} forms={useLemma ? formsOf : null} />
     {/if}
   </Plate>
 
-  <Plate id="w-detail" title={selected ? L.t['words.detail.title'](selected) : L.t['words.detail.none']} unit={L.t['words.detail.unit']}>
+  <Plate id="w-detail" title={selected ? L.t['words.detail.title'](selected) : L.t['words.detail.none']}
+    unit={selected && useLemma && formsOf(selected).length ? `${L.t['words.detail.unitLemma']} · ${L.t['words.detail.forms'](formsOf(selected).join(', '))}` : L.t['words.detail.unit']}>
     {#if !selected || !cube || !ctx || !result}
       <p class="msg empty">{app.word && cube && !cube.index.has(app.word) ? L.t['words.detail.notInVocab'] : L.t['words.detail.empty']}</p>
     {:else}
@@ -233,6 +272,8 @@
   .seg button + button { border-left: 1px solid var(--rule); }
   .seg button[aria-pressed='true'] { background: var(--petrol); color: var(--on-petrol); }
 
+  :global(td.forms) { text-align: left !important; white-space: normal; max-width: 32ch; }
+  :global(th.forms-h) { text-align: left !important; }
   .wbtn { border: 0; background: none; padding: 0; cursor: pointer; font-size: inherit; text-align: left; }
   .wbtn.rise { color: var(--rise); font-weight: 700; }
   .wbtn.fall { color: var(--fall); }

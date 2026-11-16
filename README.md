@@ -54,7 +54,9 @@ python3 -m venv .venv
 - `words-<lang>.bin.gz` + `.json`: for the top 8,000 (Czech) / 5,000 / 4,000 /
   2,500 word forms, the number of theses using each word at least twice. Counts
   are split by faculty × year, and for 2023+ also by AI declaration. They feed
-  the Words view.
+  the Words view. For cs/en/sk there is also a `words-<lang>-lemma` cube
+  (inflected forms merged into lemmas, a thesis counted once per lemma) with
+  the main forms of each lemma in the JSON.
 
 ## Deploy
 
@@ -73,8 +75,11 @@ plan; otherwise make the repository public.
 - Grades use a common 1–4 scale (A/B = 1, C/D = 2, E = 3, F = 4).
 - The AI-declaration filter only narrows theses from 2023 on. Earlier years stay
   unfiltered as a baseline.
-- Word forms are not lemmatised. A word counts for a thesis when the thesis
-  uses it at least twice.
+- The word cloud shows base forms (lemmas) by default: inflected forms are
+  merged with the `simplemma` dictionary lemmatiser, plus two fixes (negation is
+  kept: *nesouhlasí → nesouhlasit*; unknown *-ovat* verbs are mapped when the
+  infinitive occurs). A thesis counts for a lemma when it uses one of its forms
+  at least twice. A toggle switches back to raw word forms.
 
 ## Layout
 

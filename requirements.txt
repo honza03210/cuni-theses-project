@@ -4,3 +4,4 @@ numpy>=1.26
 pandas>=2.2
 pyarrow>=15
 huggingface_hub>=0.24
+simplemma>=1.1

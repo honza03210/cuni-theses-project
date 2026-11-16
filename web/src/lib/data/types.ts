@@ -51,12 +51,15 @@ export interface WordsMeta {
   postYears: number;
   aiValues: number;
   faculties: number;
+  /** lemma cubes only: the most used word forms behind each lemma */
+  forms?: string[][];
 }
 
 /** Dense word × cell matrix of "number of theses using the word ≥ 2×". */
 export interface WordCube {
   meta: WordsMeta;
   langIndex: number;
+  lemma: boolean;
   counts: Uint16Array;
   index: Map<string, number>;
 }

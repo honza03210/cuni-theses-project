@@ -42,7 +42,9 @@ built by a team of two; see `PRODUCT.md` (product context), `docs/PLAN.md`
 - The AI-declaration filter only narrows years ≥ 2023 (`filterMask`).
 - 2026 is incomplete: drawn dotted and excluded from the default range.
 - Grades: common 1–4 scale (`grade_points`). A–F only exists at ETF/FSV.
-- Word data is not lemmatised and counts words used ≥ 2× per thesis.
+- Word data counts words used ≥ 2× per thesis. Lemma cubes (`words-<lang>-lemma`)
+  merge forms via `lemmatize_vocab` in `pipeline/build.py` (simplemma + negation
+  and -ovat fixes); a thesis counts once per lemma. Raw forms: `words-<lang>`.
 - Never single out individual theses, students or reviewers.
 
 ## Design rules

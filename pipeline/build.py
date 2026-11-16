@@ -175,11 +175,12 @@ def build_words(con: duckdb.DuckDBPyConnection) -> None:
     """)
     con.sql(f"""
         CREATE OR REPLACE TEMP TABLE wc AS
-        SELECT t.lg, t.year, t.cell, w.word
-        FROM read_parquet('{wc}') w JOIN t USING (item_id)
+        SELECT t.lg, t.year, t.cell, t.tid, w.word
+        FROM read_parquet('{wc}') w JOIN (SELECT *, row_number() OVER () AS tid FROM t) t USING (item_id)
     """)
     for lang in LANGS:
         cap, min_docs = VOCAB[lang]
+        # 1) word forms, as in the dataset
         vocab = con.sql(f"""
             SELECT word FROM wc WHERE lg = '{lang}'
             GROUP BY word
@@ -187,7 +188,6 @@ def build_words(con: duckdb.DuckDBPyConnection) -> None:
             ORDER BY count(*) FILTER (WHERE year >= {VOCAB_RANK_FROM}) DESC, word
             LIMIT {cap}
         """).df()["word"].tolist()
-        idx = {w: i for i, w in enumerate(vocab)}
         con.register("vocab", con.sql("SELECT unnest($v) AS word, generate_subscripts($v, 1) - 1 AS wi",
                                       params={"v": vocab}).df())
         counts = con.sql(f"""
@@ -196,18 +196,84 @@ def build_words(con: duckdb.DuckDBPyConnection) -> None:
             WHERE wc.lg = '{lang}'
             GROUP BY 1, 2
         """).df()
-        mat = np.zeros((len(vocab), n_cells), dtype=np.uint16)
-        assert counts["n"].max() < 65535
-        mat[counts["wi"].to_numpy(), counts["cell"].to_numpy()] = counts["n"].to_numpy()
-        size = write_gz(OUT / f"words-{lang}.bin.gz", mat.tobytes())
-        (OUT / f"words-{lang}.json").write_text(json.dumps({
-            "lang": lang, "words": vocab, "cells": n_cells,
-            "preYears": PRE_YEARS, "postYears": POST_YEARS, "aiValues": len(AI_VALUES),
-            "faculties": len(FACULTIES),
-        }, ensure_ascii=False))
+        write_cube(lang, "", vocab, counts, n_cells, None)
         con.unregister("vocab")
-        print(f"words-{lang}: {len(vocab)} words x {n_cells} cells, {size / 1e6:.2f} MB gz")
-        assert len(idx) == len(vocab)
+
+        # 2) lemmas: inflected forms merged; a thesis counts once per lemma
+        if lang not in LEMMA_LANGS:
+            continue
+        forms = con.sql(f"SELECT word, count(*) AS n FROM wc WHERE lg = '{lang}' GROUP BY word HAVING count(*) >= 3").df()
+        mapping = lemmatize_vocab(forms["word"].tolist(), lang)
+        forms["lemma"] = forms["word"].map(mapping)
+        con.register("lmap", forms[["word", "lemma"]])
+        lvocab = con.sql(f"""
+            SELECT m.lemma FROM wc JOIN lmap m USING (word)
+            WHERE wc.lg = '{lang}'
+            GROUP BY m.lemma
+            HAVING count(DISTINCT wc.tid) >= {min_docs}
+            ORDER BY count(DISTINCT wc.tid) FILTER (WHERE wc.year >= {VOCAB_RANK_FROM}) DESC, m.lemma
+            LIMIT {cap}
+        """).df()["lemma"].tolist()
+        lpos = {w: i for i, w in enumerate(lvocab)}
+        sub = forms[forms["lemma"].isin(lpos)].copy()
+        sub["wi"] = sub["lemma"].map(lpos)
+        con.register("lsub", sub[["word", "wi"]])
+        lcounts = con.sql(f"""
+            SELECT l.wi, wc.cell, count(DISTINCT wc.tid) AS n
+            FROM wc JOIN lsub l USING (word)
+            WHERE wc.lg = '{lang}'
+            GROUP BY 1, 2
+        """).df()
+        # the most used forms behind each lemma (for labels/tooltips)
+        top = (sub.sort_values(["wi", "n"], ascending=[True, False]).groupby("wi")["word"]
+               .apply(lambda ws: [w for w in ws if w][:4]).to_dict())
+        write_cube(lang, "-lemma", lvocab, lcounts, n_cells, [top.get(i, []) for i in range(len(lvocab))])
+        con.unregister("lmap"); con.unregister("lsub")
+
+
+LEMMA_LANGS = {"cs": "cs", "en": "en", "sk": "sk"}
+VERB_ENDINGS = ("uje", "ují", "ujících", "ující", "ujícím", "ujíc", "oval", "ovala", "ovali", "ovalo", "ovaly",
+                "ujeme", "ujete", "uju", "uji", "ujme", "ujte", "ován", "ována", "ováno", "ováni", "ovány")
+
+
+def lemmatize_vocab(words: list[str], lang: str) -> dict[str, str]:
+    """Dictionary lemmatization (simplemma) with two fixes for Czech/Slovak:
+    keep negation (nesouhlasí -> nesouhlasit, not souhlasit), and map unknown
+    -ovat verb forms (reflektuje -> reflektovat) when that infinitive occurs."""
+    import simplemma
+    code = LEMMA_LANGS[lang]
+    vocab = set(words)
+    out: dict[str, str] = {}
+    for w in words:
+        lem = simplemma.lemmatize(w, lang=code)
+        if lang in ("cs", "sk") and w.startswith("ne") and len(w) > 4 and not lem.startswith("ne"):
+            if simplemma.lemmatize(w[2:], lang=code) == lem:
+                lem = "ne" + lem
+        if lang in ("cs", "sk") and lem == w:
+            for end in VERB_ENDINGS:
+                if w.endswith(end) and len(w) - len(end) >= 3:
+                    inf = w[: -len(end)] + "ovat"
+                    if inf in vocab:
+                        lem = inf
+                    break
+        out[w] = lem
+    return out
+
+
+def write_cube(lang: str, suffix: str, vocab: list[str], counts, n_cells: int, forms) -> None:
+    mat = np.zeros((len(vocab), n_cells), dtype=np.uint16)
+    assert counts["n"].max() < 65535
+    mat[counts["wi"].to_numpy(), counts["cell"].to_numpy()] = counts["n"].to_numpy()
+    size = write_gz(OUT / f"words-{lang}{suffix}.bin.gz", mat.tobytes())
+    meta = {
+        "lang": lang, "words": vocab, "cells": n_cells,
+        "preYears": PRE_YEARS, "postYears": POST_YEARS, "aiValues": len(AI_VALUES),
+        "faculties": len(FACULTIES),
+    }
+    if forms is not None:
+        meta["forms"] = forms
+    (OUT / f"words-{lang}{suffix}.json").write_text(json.dumps(meta, ensure_ascii=False))
+    print(f"words-{lang}{suffix}: {len(vocab)} x {n_cells} cells, {size / 1e6:.2f} MB gz")
 
 
 def main() -> None:
