@@ -24,7 +24,7 @@
     padding: 8px 10px;
     background: var(--paper);
     border: 1px solid var(--ink);
-    box-shadow: 0 4px 14px rgb(28 31 36 / 0.14);
+    box-shadow: 0 4px 14px var(--shadow);
     font-size: var(--fs-sm);
     line-height: 1.4;
     color: var(--ink);

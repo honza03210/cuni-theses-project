@@ -85,7 +85,7 @@
   .empty { color: var(--ink-2); padding: var(--s6) 0; }
   .glegend { display: flex; flex-wrap: wrap; gap: 2px 14px; list-style: none; margin: 0 0 var(--s3); padding: 0; font-size: var(--fs-sm); color: var(--ink-2); }
   .glegend li { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-  .sw { width: 11px; height: 11px; border-radius: 1px; box-shadow: inset 0 0 0 1px rgb(28 31 36 / 0.25); }
+  .sw { width: 11px; height: 11px; border-radius: 1px; box-shadow: inset 0 0 0 1px var(--swatch-edge); }
   .sw.hatch { background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.55) 0 1.5px, transparent 1.5px 4px) !important; background-color: var(--grade-4); }
   @media (max-width: 1279px) {
     .grades { grid-template-columns: minmax(0, 1fr); }

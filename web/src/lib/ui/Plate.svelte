@@ -57,8 +57,6 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
-    border-top: 2px solid var(--ink);
-    padding-top: 1px;
   }
   .plate.grow { flex: 1 1 auto; }
   .head {
@@ -66,9 +64,10 @@
     align-items: flex-end;
     justify-content: space-between;
     gap: var(--s4);
-    padding: var(--s2) 0 var(--s2);
-    border-top: 1px solid var(--ink);
+    padding: 10px var(--s4);
+    background: var(--plate-head);
     border-bottom: 1px solid var(--rule);
+    border-radius: 4px 4px 0 0;
   }
   .titles { min-width: 0; }
   h2 {

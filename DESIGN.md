@@ -155,7 +155,7 @@ components:
 
 **Creative North Star: "The Steerable Yearbook"**
 
-The explorer is printed, not rendered. It takes its material from the two-colour Czech Statistical Yearbook: a warm paper ground, near-black ink, and one petrol-blue second colour. Every chart is set as a yearbook plate, with a heavy double rule on top, a bold figure title, a grey unit line, the figure itself, and a small footer that ends in an italic source line. Each plate can flip into its ruled table. Separation comes from 1px hairline rules, never from boxes or card backgrounds, so the page reads as a ruled sheet rather than a grid of floating widgets.
+The explorer is printed, not rendered. It takes its material from the two-colour Czech Statistical Yearbook: a warm paper ground, near-black ink, and one petrol-blue second colour. Every chart is set as a yearbook plate, with a tinted header band (paper-2, 4px top corners) holding a bold figure title, a grey unit line, the figure itself, and a small footer that ends in an italic source line. Each plate can flip into its ruled table. Below the header band, separation comes from 1px hairline rules, never from boxes or card backgrounds, so the page reads as a ruled sheet rather than a grid of floating widgets.
 
 The density is high and deliberate: small faceted multiples, a 13 px control size, tabular numerals in every place a number appears, and a persistent filter column that shows its live count at the top. Colour is spent with care. Petrol marks what the reader has selected or activated, and the darker petrol-deep is used only for the masthead band. All other colour is data colour, and each data colour has one fixed meaning.
 
@@ -163,7 +163,7 @@ Motion is small and practical. State changes use a 180 ms ease-out, the mobile f
 
 **Key Characteristics:**
 - Warm paper ground, near-black ink, and one petrol second colour that means "selected / active".
-- The yearbook plate: a 2px + 1px ink rule, title, unit line, figure, and source footer, with a Chart / Table toggle.
+- The yearbook plate: a tinted header band, title, unit line, figure, and source footer, with a Chart / Table toggle.
 - Hairline rules instead of boxes, and crisp 1px axes.
 - One family (Source Sans 3) with tabular, lining numerals everywhere.
 - Data colours with fixed meanings that stay readable for colour-blind readers, backed up by line style or hatching.
@@ -190,7 +190,7 @@ The ground is warm paper and the text is near-black ink. The single structural c
 - **Yearbook Paper** (paper): the page ground, plate tables, tooltip and button grounds, and the selected view tab, which opens onto the page.
 - **Filter Paper** (paper-2): the filter column, row hover in tables and pickers, and loading skeletons.
 - **Pressed Paper** (paper-3): hover inside the filter column.
-- **Ink** (ink): text, the plate's double top rule, axis lines in the parallel plot, and the focal series ("this faculty").
+- **Ink** (ink): text, axis lines in the parallel plot, and the focal series ("this faculty").
 - **Ink Grey** (ink-2): secondary text, chart labels, table headers, and the fitted-trend line.
 - **Ink Light** (ink-3): unit lines, captions, counts, the ChatGPT marker, and axis domains.
 - **Rule / Soft Rule** (rule, rule-soft): hairlines, segmented-control borders, table row rules, and grid lines.
@@ -261,7 +261,7 @@ Borders are hairlines: 1px rule for controls and tables, and 1px ink under table
 ## Components
 
 ### Yearbook Plate (signature)
-- **Structure:** a 2px + 1px ink rule on top. The header holds the title (Title role) and the unit line (Control role, ink-3) on the left and the tools on the right. Below that come the figure, then a caption footer with an optional note (at most 110ch) and an italic source line.
+- **Structure:** a tinted header band (`--plate-head`, paper-2, 10px × 16px padding, 4px top radius, hairline below). The band holds the title (Title role) and the unit line (Control role, ink-3) on the left and the tools on the right. Below that come the figure, then a caption footer with an optional note (at most 110ch) and an italic source line.
 - **Table mode:** a Chart / Table segmented toggle swaps the figure for a ruled table. Headers are 600 weight in ink-2 with a 1px ink rule underneath and stay fixed while scrolling. Rows are 3px × 10px with soft-rule dividers and a paper-2 hover. Numbers are right-aligned and the first column is left-aligned. The table scrolls inside a 560px maximum height.
 
 ### Buttons
@@ -299,7 +299,7 @@ A paper box with a 1px ink border and the float shadow, at most 280px wide. It h
 ## Do's and Don'ts
 
 ### Do:
-- **Do** set every chart as a yearbook plate: a 2px + 1px ink rule, title, unit line, figure, a footer with an italic source line, and a Table toggle wherever the data has a table form.
+- **Do** set every chart as a yearbook plate: a tinted header band, title, unit line, figure, a footer with an italic source line, and a Table toggle wherever the data has a table form.
 - **Do** keep petrol for selection and active state only, and give neutral actions ink or rule treatments.
 - **Do** keep excluded or deselected data visible in context stone instead of removing it.
 - **Do** back up every data colour with a second cue: dashes for averages, dots for incomplete years, hatching for grade 4, and weight for rising words.
@@ -315,3 +315,7 @@ A paper box with a 1px ink border and the float shadow, at most 280px wide. It h
 - **Don't** put an uppercase label above a plate title. Uppercase tracking is for control-group legends only.
 - **Don't** use shadows on surfaces at rest. Only the tooltip and the mobile drawer float.
 - **Don't** use the grade ramp or rise / fall colours for anything other than grades and word movement.
+
+## Themes
+
+A light theme (the paper sheet) and a dark theme (charcoal sheet, light ink) share every rule above. The dark theme follows the OS preference until the viewer picks one with the sun/moon switch in the masthead; the pick is stored in `localStorage` (`cuni-theses-theme`) and applied before first paint by an inline script in `index.html`. Dark overrides live in `web/src/app.css` under `@media (prefers-color-scheme: dark)` (guarded by `:root:not([data-theme='light'])`) and `:root[data-theme='dark']`: paper #16191d / #1d2126 / #272c32, ink #e9e6df / #bdbab3 / #9a978f, petrol #6fb3cd (with dark `--on-petrol`), rise #6aaeea, fall #e8925a, avg #f2724a. Grade colours are shared by both themes. Masthead text uses its own `--band-ink` tokens so the selection colour can change per theme without touching the band.

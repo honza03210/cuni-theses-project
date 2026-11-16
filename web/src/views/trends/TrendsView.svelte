@@ -122,12 +122,13 @@
   .empty { color: var(--ink-2); padding: var(--s6) 0; }
 
   .picker { position: sticky; top: calc(var(--band-h, 58px) + var(--s5)); }
-  fieldset { border: 0; margin: 0; padding: 0; border-top: 2px solid var(--ink); }
+  fieldset { border: 0; margin: 0; padding: 0; }
   legend {
     float: left; width: 100%;
-    padding: 10px 0 8px;
-    border-top: 1px solid var(--ink);
-    margin-top: 1px;
+    padding: 12px 10px 10px;
+    background: var(--plate-head);
+    border-bottom: 1px solid var(--rule);
+    border-radius: 4px 4px 0 0;
     font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2);
   }
   label {

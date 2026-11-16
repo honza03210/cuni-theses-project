@@ -15,7 +15,16 @@
   --petrol-deep: #163f4f;      /* header band */
   --petrol-tint: #d9e6ea;
   --on-petrol: #f6f4ee;
-  --on-petrol-2: #c5d6dc;
+
+  /* masthead band (independent of the selection colour) */
+  --band-ink: #f6f4ee;
+  --band-ink-2: #c5d6dc;
+  --band-line: rgb(246 244 238 / 0.35);
+  --band-hover: rgb(255 255 255 / 0.07);
+  --band-edge: #1c1f24;
+
+  --shadow: rgb(28 31 36 / 0.16);
+  --swatch-edge: rgb(28 31 36 / 0.25);
 
   /* data */
   --rise: #0b5fa5;
@@ -48,6 +57,7 @@
   --t: 180ms;
 
   color-scheme: light;
+  --plate-head: var(--paper-2);
   font-family: var(--font);
   font-size: 16px;
   line-height: 1.45;
@@ -58,9 +68,34 @@
   text-rendering: optimizeLegibility;
 }
 
+/* Dark theme: night reading of the same yearbook — charcoal sheet, light ink.
+   Applied by the OS preference unless the viewer picks a theme (data-theme). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #16191d; --paper-2: #1d2126; --paper-3: #272c32;
+    --ink: #e9e6df; --ink-2: #bdbab3; --ink-3: #9a978f;
+    --rule: #3b4047; --rule-soft: #2a2f35;
+    --petrol: #6fb3cd; --petrol-deep: #0e2630; --petrol-tint: #1e3a45; --on-petrol: #0c1a20;
+    --rise: #6aaeea; --fall: #e8925a; --avg: #f2724a; --context: #555a61; --warn: #e2b450;
+    --shadow: rgb(0 0 0 / 0.5); --swatch-edge: rgb(255 255 255 / 0.2);
+    --plate-head: var(--paper-2); --band-edge: #070809;
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] {
+  --paper: #16191d; --paper-2: #1d2126; --paper-3: #272c32;
+  --ink: #e9e6df; --ink-2: #bdbab3; --ink-3: #9a978f;
+  --rule: #3b4047; --rule-soft: #2a2f35;
+  --petrol: #6fb3cd; --petrol-deep: #0e2630; --petrol-tint: #1e3a45; --on-petrol: #0c1a20;
+  --rise: #6aaeea; --fall: #e8925a; --avg: #f2724a; --context: #555a61; --warn: #e2b450;
+  --shadow: rgb(0 0 0 / 0.5); --swatch-edge: rgb(255 255 255 / 0.2);
+  --plate-head: var(--paper-2); --band-edge: #070809;
+  color-scheme: dark;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
-html, body { margin: 0; background: var(--paper); }
+html, body { margin: 0; background: var(--paper); color: var(--ink); }
 body { min-height: 100vh; }
 
 ::selection { background: var(--petrol); color: var(--on-petrol); }

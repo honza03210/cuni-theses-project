@@ -308,7 +308,7 @@
   }
   .gtoggles button[aria-pressed='false'] { color: var(--ink-3); text-decoration: line-through; }
   .gtoggles button[aria-pressed='false'] .sw { opacity: 0.25; }
-  .sw { width: 10px; height: 10px; border-radius: 1px; box-shadow: inset 0 0 0 1px rgb(28 31 36 / 0.25); }
+  .sw { width: 10px; height: 10px; border-radius: 1px; box-shadow: inset 0 0 0 1px var(--swatch-edge); }
   .sw.hatch { background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.55) 0 1.5px, transparent 1.5px 4px) !important; background-color: var(--grade-4); }
   .selcount { font-size: var(--fs-sm); color: var(--ink-2); }
   .clear { border: 1px solid var(--ink-3); color: var(--ink); background: var(--paper); border-radius: 3px; padding: 2px 9px; font-size: var(--fs-sm); cursor: pointer; }

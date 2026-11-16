@@ -16,6 +16,29 @@
   let drawerOpen = $state(false);
   let bandH = $state(58);
 
+  // Theme: follows the OS until the viewer picks one; the pick is remembered per browser.
+  const THEME_KEY = 'cuni-theses-theme';
+  const systemDark = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : null;
+  function storedTheme(): 'light' | 'dark' | null {
+    try { const v = localStorage.getItem(THEME_KEY); return v === 'light' || v === 'dark' ? v : null; } catch { return null; }
+  }
+  let picked = $state(storedTheme());
+  let sysDark = $state(systemDark?.matches ?? false);
+  const theme = $derived(picked ?? (sysDark ? 'dark' : 'light'));
+  function setTheme(t: 'light' | 'dark') {
+    picked = t;
+    try { localStorage.setItem(THEME_KEY, t); } catch { /* private mode: keep for this visit */ }
+  }
+  $effect(() => {
+    if (picked) document.documentElement.dataset.theme = picked;
+    else delete document.documentElement.dataset.theme;
+  });
+  onMount(() => {
+    const f = (e: MediaQueryListEvent) => (sysDark = e.matches);
+    systemDark?.addEventListener('change', f);
+    return () => systemDark?.removeEventListener('change', f);
+  });
+
   async function load() {
     error = null;
     try {
@@ -84,6 +107,16 @@
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         {L.t['filters.open']}
       </button>
+      <div class="theme" role="group" aria-label={L.t['theme.label']}>
+        <button type="button" aria-pressed={theme === 'light'} title={L.t['theme.light']} onclick={() => setTheme('light')}>
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg>
+          <span class="sr-only">{L.t['theme.light']}</span>
+        </button>
+        <button type="button" aria-pressed={theme === 'dark'} title={L.t['theme.dark']} onclick={() => setTheme('dark')}>
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M13.5 9.6A5.6 5.6 0 0 1 6.4 2.5a5.6 5.6 0 1 0 7.1 7.1Z"/></svg>
+          <span class="sr-only">{L.t['theme.dark']}</span>
+        </button>
+      </div>
       <div class="locale" role="group" aria-label={L.t['lang.switch']}>
         <button type="button" lang="cs" aria-pressed={app.locale === 'cs'} onclick={() => (app.locale = 'cs')}>CS</button>
         <button type="button" lang="en" aria-pressed={app.locale === 'en'} onclick={() => (app.locale = 'en')}>EN</button>
@@ -139,19 +172,19 @@
     grid-template-columns: minmax(272px, auto) 1fr auto;
     align-items: end;
     background: var(--petrol-deep);
-    color: var(--on-petrol);
+    color: var(--band-ink);
     padding: 0 var(--s5) 0 0;
-    border-bottom: 3px solid var(--ink);
+    border-bottom: 3px solid var(--band-edge);
   }
   .brand { padding: 12px var(--s4) 10px; white-space: nowrap; }
   h1 { margin: 0; font-size: var(--fs-lg); font-weight: 700; line-height: 1.2; letter-spacing: -0.005em; }
-  .brand p { margin: 2px 0 0; font-size: var(--fs-xs); color: var(--on-petrol-2); }
+  .brand p { margin: 2px 0 0; font-size: var(--fs-xs); color: var(--band-ink-2); }
 
   .tabs { display: flex; gap: 2px; align-self: end; padding-left: var(--s5); }
   .tabs button {
     border: 0;
     background: transparent;
-    color: var(--on-petrol-2);
+    color: var(--band-ink-2);
     font-size: var(--fs-md);
     font-weight: 600;
     padding: 10px 18px 9px;
@@ -159,24 +192,27 @@
     border-radius: 3px 3px 0 0;
     transition: background var(--t) var(--ease), color var(--t) var(--ease);
   }
-  .tabs button:hover { color: var(--on-petrol); background: rgb(255 255 255 / 0.07); }
+  .tabs button:hover { color: var(--band-ink); background: var(--band-hover); }
   .tabs button[aria-selected='true'] { background: var(--paper); color: var(--ink); }
-  .tabs button:focus-visible { outline-color: var(--on-petrol); outline-offset: -3px; }
+  .tabs button:focus-visible { outline-color: var(--band-ink); outline-offset: -3px; }
 
   .right { display: flex; align-items: center; gap: var(--s3); align-self: center; }
-  .locale { display: inline-flex; border: 1px solid rgb(246 244 238 / 0.35); border-radius: 3px; overflow: hidden; }
-  .locale button {
-    border: 0; background: transparent; color: var(--on-petrol-2);
+  .locale, .theme { display: inline-flex; border: 1px solid var(--band-line); border-radius: 3px; overflow: hidden; }
+  .locale button, .theme button {
+    border: 0; background: transparent; color: var(--band-ink-2);
     font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em;
     padding: 4px 9px; cursor: pointer;
   }
-  .locale button[aria-pressed='true'] { background: var(--on-petrol); color: var(--petrol-deep); }
-  .locale button:focus-visible { outline-color: var(--on-petrol); }
+  .locale button[aria-pressed='true'], .theme button[aria-pressed='true'] { background: var(--band-ink); color: var(--petrol-deep); }
+  .locale button:focus-visible, .theme button:focus-visible { outline-color: var(--band-ink); }
+  .locale button:not([aria-pressed='true']):hover, .theme button:not([aria-pressed='true']):hover { color: var(--band-ink); background: var(--band-hover); }
+  .theme button { display: inline-flex; align-items: center; padding: 4px 8px; }
+  .theme svg { display: block; }
   .drawer-btn {
     display: none;
     align-items: center; gap: 6px;
-    border: 1px solid rgb(246 244 238 / 0.35); border-radius: 3px;
-    background: transparent; color: var(--on-petrol);
+    border: 1px solid var(--band-line); border-radius: 3px;
+    background: transparent; color: var(--band-ink);
     font-size: var(--fs-sm); padding: 4px 10px; cursor: pointer;
   }
 
@@ -220,7 +256,7 @@
       height: 100vh; width: min(320px, 88vw);
       transform: translateX(-100%);
       transition: transform 220ms var(--ease);
-      box-shadow: 4px 0 24px rgb(28 31 36 / 0.18);
+      box-shadow: 4px 0 24px var(--shadow);
     }
     .drawer-open .filters { transform: none; }
     .scrim { display: block; position: fixed; inset: 0; z-index: 30; border: 0; background: rgb(28 31 36 / 0.3); }

@@ -111,7 +111,7 @@
   svg:focus-visible { outline: 2px solid var(--petrol); outline-offset: 4px; }
   .grid { stroke: var(--paper); stroke-opacity: 0.6; stroke-width: 1; shape-rendering: crispEdges; }
   .marker { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 3; }
-  .mlabel { font-size: 11px; fill: var(--on-petrol); font-weight: 600; }
+  .mlabel { font-size: 11px; fill: #f6f4ee; font-weight: 600; }
   .sel { stroke: var(--petrol); stroke-width: 2.5; }
   .sel-label { fill: var(--paper); font-weight: 700; paint-order: stroke; stroke: var(--petrol); stroke-width: 14px; stroke-linejoin: round; }
   .blabel { font-size: 12px; fill: var(--ink-2); }
