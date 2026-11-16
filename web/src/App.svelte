@@ -126,7 +126,8 @@
 
   <aside id="filters" class="filters" aria-label={L.t['filters.title']}>
     {#if theses}
-      <FilterPanel {theses} {matched} aiApplies={app.yearTo >= theses.meta.aiYear} />
+      <FilterPanel {theses} {matched} yearsLocked={app.view === 'words'}
+        aiApplies={app.view === 'words' || app.yearTo >= theses.meta.aiYear} />
     {/if}
   </aside>
   {#if drawerOpen}

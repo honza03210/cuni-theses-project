@@ -1,7 +1,7 @@
 import { filterMask } from './select';
 import type { Filters, Theses, WordCube } from './types';
 
-export const BASELINE_YEARS = 5;
+export const BASELINE_YEARS = 5;   // default baseline length
 /** Smoothing for log ratios: 0.1 % of theses */
 export const EPS = 0.001;
 
@@ -79,59 +79,87 @@ export function fitLine(xs: number[], ys: number[]): LinearFit | null {
 export interface WordScore {
   word: string;
   wi: number;
-  observed: number;   // share of theses in target year
-  expected: number;   // trend extrapolated to target year
+  observed: number;   // pooled share of theses over the target years
+  expected: number;   // trend extrapolated to the target years (thesis-weighted)
   score: number;      // log2((observed+eps)/(expected+eps))
-  docs: number;       // theses using it in target year
+  docs: number;       // theses using it in the target years
   fit: LinearFit;
 }
 
+export interface Comparison {
+  from: number;       // first target year
+  to: number;         // last target year (from === to: a single year)
+  base: number;       // number of baseline years right before `from`
+}
+
+export const BASE_MIN = 3;
+export const BASE_MAX = 8;
+
 export interface ScoreResult {
-  target: number;
+  from: number;
+  to: number;
   baseline: number[];          // years used for the fit
-  targetTotal: number;         // theses in target year
+  targetTotal: number;         // theses in the target years
   scores: WordScore[];         // all words passing the min-frequency filter
   reason?: 'too-early' | 'no-target' | 'thin-baseline';
 }
 
-/** Score every word: observed share in `target` vs the linear trend fitted on the
- *  BASELINE_YEARS before it. */
-export function scoreWords(cube: WordCube, ctx: WordContext, target: number, minFreq: number): ScoreResult {
-  const ti = target - ctx.yearMin;
+/** Score every word: its pooled share over the target years [from, to] against the
+ *  linear trend fitted on the `base` years before `from`, extrapolated to each target
+ *  year and weighted by that year's thesis count. */
+export function scoreWords(cube: WordCube, ctx: WordContext, cmp: Comparison, minFreq: number): ScoreResult {
+  const { from, to, base } = cmp;
   const baseline: number[] = [];
-  for (let y = target - BASELINE_YEARS; y < target; y++) {
+  for (let y = from - base; y < from; y++) {
     if (y >= ctx.yearMin && ctx.total[y - ctx.yearMin] > 0) baseline.push(y);
   }
-  const res: ScoreResult = { target, baseline, targetTotal: ctx.total[ti] ?? 0, scores: [] };
-  if (target - BASELINE_YEARS < ctx.yearMin) { res.reason = 'too-early'; return res; }
-  if (!res.targetTotal) { res.reason = 'no-target'; return res; }
-  if (baseline.length < 3) { res.reason = 'thin-baseline'; return res; }
+  const targets: number[] = [];
+  for (let y = from; y <= to; y++) if (y <= ctx.yearMax && ctx.total[y - ctx.yearMin] > 0) targets.push(y);
+  const tTot = targets.map((y) => ctx.total[y - ctx.yearMin]);
+  const targetTotal = tTot.reduce((a, b) => a + b, 0);
+  const res: ScoreResult = { from, to, baseline, targetTotal, scores: [] };
+  if (from - base < ctx.yearMin) { res.reason = 'too-early'; return res; }
+  if (!targetTotal) { res.reason = 'no-target'; return res; }
+  if (baseline.length < BASE_MIN) { res.reason = 'thin-baseline'; return res; }
 
-  // flatten cells per relevant year
-  const yearsUsed = [...baseline, target];
-  const flat = yearsUsed.map((y) => ctx.cells.flatMap((perYear) => perYear[y - ctx.yearMin]));
-  const denoms = yearsUsed.map((y) => ctx.total[y - ctx.yearMin]);
+  const flatB = baseline.map((y) => ctx.cells.flatMap((perYear) => perYear[y - ctx.yearMin]));
+  const denB = baseline.map((y) => ctx.total[y - ctx.yearMin]);
+  const flatT = targets.map((y) => ctx.cells.flatMap((perYear) => perYear[y - ctx.yearMin]));
   const nb = baseline.length;
   const C = cube.meta.cells;
   const shares = new Array<number>(nb);
   for (let wi = 0; wi < cube.meta.words.length; wi++) {
     const row = wi * C;
-    let docsT = 0;
-    for (let k = 0; k <= nb; k++) {
+    for (let k = 0; k < nb; k++) {
       let s = 0;
-      for (const c of flat[k]) s += cube.counts[row + c];
-      if (k < nb) shares[k] = s / denoms[k];
-      else docsT = s;
+      for (const c of flatB[k]) s += cube.counts[row + c];
+      shares[k] = s / denB[k];
     }
     const fit = fitLine(baseline, shares);
     if (!fit) continue;
-    const observed = docsT / res.targetTotal;
-    const expected = Math.max(0, fit.intercept + fit.slope * target);
+    let docs = 0, expDocs = 0;
+    for (let k = 0; k < targets.length; k++) {
+      let s = 0;
+      for (const c of flatT[k]) s += cube.counts[row + c];
+      docs += s;
+      expDocs += Math.max(0, fit.intercept + fit.slope * targets[k]) * tTot[k];
+    }
+    const observed = docs / targetTotal;
+    const expected = expDocs / targetTotal;
     if (Math.max(observed, expected) < minFreq) continue;
     const score = Math.log2((observed + EPS) / (expected + EPS));
-    res.scores.push({ word: cube.meta.words[wi], wi, observed, expected, score, docs: docsT, fit });
+    res.scores.push({ word: cube.meta.words[wi], wi, observed, expected, score, docs, fit });
   }
   return res;
+}
+
+/** Keep a comparison valid: from <= to inside the data, baseline of BASE_MIN..BASE_MAX
+ *  years that fits before `from`. */
+export function clampComparison(c: Comparison, yearMin: number, yearMax: number): Comparison {
+  let from = Math.max(yearMin + BASE_MIN, Math.min(yearMax, Math.round(c.from)));
+  let to = Math.max(from, Math.min(yearMax, Math.round(c.to)));
+  const base = Math.max(BASE_MIN, Math.min(BASE_MAX, Math.round(c.base), from - yearMin));
+  return { from, to, base };
 }
 
 export function topMovers(scores: WordScore[], n: number, minAbs = 0.15) {

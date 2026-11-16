@@ -7,8 +7,8 @@
   import { L } from '../locale.svelte';
   import YearRange from './YearRange.svelte';
 
-  interface Props { theses: Theses; matched: number; aiApplies: boolean }
-  let { theses, matched, aiApplies }: Props = $props();
+  interface Props { theses: Theses; matched: number; aiApplies: boolean; yearsLocked?: boolean }
+  let { theses, matched, aiApplies, yearsLocked = false }: Props = $props();
 
   const meta = $derived(theses.meta);
 
@@ -69,11 +69,12 @@
     {#if !app.fac.length}<p class="warn" role="status">{L.t['filters.noFaculty']}</p>{/if}
   </fieldset>
 
-  <fieldset>
+  <fieldset disabled={yearsLocked}>
     <legend><span>{L.t['filters.years']}</span></legend>
     <YearRange min={meta.yearMin} max={meta.yearMax} from={app.yearFrom} to={app.yearTo}
       onchange={(a, b) => { app.yearFrom = a; app.yearTo = b; }} />
-    {#if app.yearTo === meta.yearMax}<p class="note">{L.t['filters.incomplete']}</p>{/if}
+    {#if yearsLocked}<p class="note">{L.t['filters.yearsWords']}</p>
+    {:else if app.yearTo === meta.yearMax}<p class="note">{L.t['filters.incomplete']}</p>{/if}
   </fieldset>
 
   <fieldset>

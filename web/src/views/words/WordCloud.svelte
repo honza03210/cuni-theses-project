@@ -31,7 +31,6 @@
       ...falling.map((s) => ({ text: s.word, size: sizes[rampStep(s.score, ramp)], rise: false, s })),
     ].sort((a, b) => b.size - a.size || a.text.localeCompare(b.text));
     let cancelled = false;
-    ready = false;
     Promise.all([document.fonts.load(`700 20px "${FONT}"`), document.fonts.load(`400 20px "${FONT}"`)]).then(() => {
       if (cancelled) return;
       const layout = cloud<(typeof input)[number]>()
@@ -71,7 +70,7 @@
         <text
           role="button"
           class="w" class:rise={p.rise} class:fall={!p.rise} class:sel={selected === p.text}
-          x={p.x} y={p.y} style:font-size="{p.size}px" text-anchor="middle" dy="0.35em"
+          style:transform="translate({p.x}px, {p.y}px)" style:font-size="{p.size}px" text-anchor="middle" dy="0.35em"
           tabindex="0"
           aria-label="{p.text}: {p.rise ? L.t['words.more'] : L.t['words.less']}, {L.f.pct(p.s.observed, 1)} / {L.f.pct(p.s.expected, 1)}"
           aria-pressed={selected === p.text}
@@ -101,7 +100,8 @@
   .wrap { width: 100%; position: relative; }
   svg { display: block; opacity: 0; transition: opacity 200ms var(--ease); }
   svg.ready { opacity: 1; }
-  .w { cursor: pointer; font-family: var(--font); transition: opacity var(--t) var(--ease); }
+  .w { cursor: pointer; font-family: var(--font); transition: opacity var(--t) var(--ease), transform 700ms var(--ease), font-size 700ms var(--ease); animation: word-in 500ms var(--ease) both; }
+  @keyframes word-in { from { opacity: 0; } }
   .w.rise { fill: var(--rise); font-weight: 700; }
   .w.fall { fill: var(--fall); font-weight: 400; }
   .w:hover, .w:focus-visible { text-decoration: underline; text-decoration-thickness: 1.5px; outline: none; }

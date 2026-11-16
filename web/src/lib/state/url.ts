@@ -14,7 +14,9 @@ export interface AppState {
   word: string | null;
   wordLang: number | null;
   minFreq: number;          // share, e.g. 0.01
-  wordYear: number | null;  // year scored by the word cloud; null = end of the year range
+  wordFrom: number;         // word cloud: first target year
+  wordTo: number;           // word cloud: last target year
+  wordBase: number;         // word cloud: baseline length in years
   gradeYear: number | null;
   brushes: Record<string, [number, number]>;
   table: Record<string, boolean>;
@@ -41,7 +43,9 @@ export function defaults(d: Domain): AppState {
     word: null,
     wordLang: null,
     minFreq: 0.01,
-    wordYear: null,
+    wordFrom: d.yearMax - 1,  // last complete year
+    wordTo: d.yearMax - 1,
+    wordBase: 5,
     gradeYear: null,
     brushes: {},
     table: {},
@@ -67,7 +71,8 @@ export function encode(s: AppState, d: Domain): string {
   if (s.word) p.set('w', s.word);
   if (s.wordLang !== null) p.set('wl', d.langs[s.wordLang]);
   if (s.minFreq !== def.minFreq) p.set('mf', String(s.minFreq));
-  if (s.wordYear !== null) p.set('wy', String(s.wordYear));
+  if (s.wordFrom !== def.wordFrom || s.wordTo !== def.wordTo) p.set('wy', s.wordFrom === s.wordTo ? `${s.wordFrom}` : `${s.wordFrom}-${s.wordTo}`);
+  if (s.wordBase !== def.wordBase) p.set('wb', String(s.wordBase));
   if (s.gradeYear !== null) p.set('gy', String(s.gradeYear));
   const b = Object.entries(s.brushes)
     .map(([k, [lo, hi]]) => `${k}:${+lo.toPrecision(4)}:${+hi.toPrecision(4)}`);
@@ -114,7 +119,13 @@ export function decode(query: string, d: Domain): AppState {
   const mf = Number(p.get('mf'));
   if (p.has('mf') && mf >= 0.001 && mf <= 0.2) s.minFreq = mf;
   s.gradeYear = intIn(p.get('gy'), d.yearMin, d.yearMax);
-  s.wordYear = intIn(p.get('wy'), d.yearMin, d.yearMax);
+  const wy = p.get('wy')?.match(/^(\d{4})(?:-(\d{4}))?$/);
+  if (wy) {
+    const a = intIn(wy[1], d.yearMin, d.yearMax), b = intIn(wy[2] ?? wy[1], d.yearMin, d.yearMax);
+    if (a !== null && b !== null && a <= b) { s.wordFrom = a; s.wordTo = b; }
+  }
+  const wb = intIn(p.get('wb'), 3, 8);
+  if (wb !== null) s.wordBase = wb;
   for (const part of (p.get('b') ?? '').split(';')) {
     const [k, lo, hi] = part.split(':');
     if (k && Number.isFinite(+lo) && Number.isFinite(+hi) && lo !== '' && hi !== '') {

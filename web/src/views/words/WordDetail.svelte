@@ -16,7 +16,7 @@
   const FAC_MIN = Math.max(50, MIN_CELL_N);
   const wi = $derived(cube.index.get(word)!);
   const counts = $derived(wordCounts(cube, ctx, wi));
-  const from = $derived(Math.max(ctx.yearMin, Math.min(yearFrom, result.target - 5)));
+  const from = $derived(Math.max(ctx.yearMin, Math.min(yearFrom, result.baseline[0] ?? result.from)));
   const yearsShown = $derived(Array.from({ length: yearTo - from + 1 }, (_, i) => from + i));
 
   const total = $derived(yearsShown.map((y) => {
@@ -47,9 +47,16 @@
     const slope = sxx ? sxy / sxx : 0;
     return { slope, intercept: my - slope * mx };
   });
-  const T = $derived(result.target);
-  const observed = $derived(total.find((p) => p.year === T)?.v ?? NaN);
-  const expected = $derived(fit ? Math.max(0, fit.intercept + fit.slope * T) : NaN);
+  // Target block: pooled observed share vs the trend extrapolated over the block (thesis-weighted)
+  const T0 = $derived(result.from);
+  const T1 = $derived(result.to);
+  const T = $derived((T0 + T1) / 2);
+  const block = $derived(total.filter((p) => p.year >= T0 && p.year <= T1));
+  const blockD = $derived(block.reduce((s, p) => s + p.d, 0));
+  const observed = $derived(blockD ? block.reduce((s, p) => s + p.n, 0) / blockD : NaN);
+  const expected = $derived(fit && blockD
+    ? block.reduce((s, p) => s + Math.max(0, fit.intercept + fit.slope * p.year) * p.d, 0) / blockD : NaN);
+  const blockLabel = $derived(T0 === T1 ? `${T0}` : `${T0}–${T1}`);
 
   let width = $state(800);
   const height = 300;
@@ -65,7 +72,7 @@
   const solidPart = (pts: { year: number; v: number }[]) => pts.filter((p) => p.year < yearMax || p.year === pts[0]?.year);
   const tailPart = (pts: { year: number; v: number }[]) => (pts.length >= 2 && pts[pts.length - 1].year === yearMax ? pts.slice(-2) : []);
   const fitPts = $derived(fit && result.baseline.length
-    ? [result.baseline[0], T].map((yy) => ({ year: yy, v: Math.max(0, fit.intercept + fit.slope * yy) })) : []);
+    ? [result.baseline[0], T1].map((yy) => ({ year: yy, v: Math.max(0, fit.intercept + fit.slope * yy) })) : []);
   const ticks = $derived(yearTicks(from, yearTo, iw, 40));
   const pctTick = (v: number) => L.f.pct(v, v < 0.1 && yMax < 0.05 ? 1 : 0);
 
@@ -101,9 +108,9 @@
   </div>
   <div class="chart" bind:clientWidth={width}>
     <svg {width} {height} role="slider" tabindex="0"
-      aria-valuemin={from} aria-valuemax={yearTo} aria-valuenow={hoverYear ?? T}
+      aria-valuemin={from} aria-valuemax={yearTo} aria-valuenow={hoverYear ?? T1}
       aria-valuetext={hp ? `${hp.year}: ${L.f.pct(hp.v, 2)}` : undefined}
-      aria-label="{word}: {L.t['words.detail.observed']} {L.f.pct(observed, 2)}, {L.t['words.detail.expected']} {L.f.pct(expected, 2)} ({T})"
+      aria-label="{word}: {L.t['words.detail.observed']} {L.f.pct(observed, 2)}, {L.t['words.detail.expected']} {L.f.pct(expected, 2)} ({blockLabel})"
       onpointermove={onMove} onpointerleave={() => (hoverYear = null)} onkeydown={onKey} onblur={() => (hoverYear = null)}>
       <defs>
         <marker id="arrowhead" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -123,6 +130,7 @@
         {#if result.baseline.length}
           <rect class="base" x={x(result.baseline[0] - 0.5)} width={x(result.baseline[result.baseline.length - 1] + 0.5) - x(result.baseline[0] - 0.5)} y="0" height={ih} />
         {/if}
+        <rect class="target" x={x(T0 - 0.5)} width={x(T1 + 0.5) - x(T0 - 0.5)} y="0" height={ih} />
         {#each perFac as f (f.f)}
           {#if f.pts.length > 1}<path class="ctx" d={gen(f.pts)} />{/if}
         {/each}
@@ -131,10 +139,14 @@
         {#if tailPart(total).length}<path class="own dotted" d={gen(tailPart(total))} />{/if}
 
         {#if Number.isFinite(observed) && Number.isFinite(expected)}
-          {@const x0 = x(T)}
+          {@const x0 = x(T1) + (T1 > T0 ? 10 : 0)}
           {@const gap = Math.abs(y(observed) - y(expected))}
           {#if gap > 12}
             <line class="arrow" x1={x0 + 14} x2={x0 + 14} y1={y(expected)} y2={y(observed) + (observed > expected ? 6 : -6)} marker-end="url(#arrowhead)" />
+          {/if}
+          {#if T1 > T0}
+            <line class="span exp-span" x1={x(T0 - 0.4)} x2={x(T1 + 0.4)} y1={y(expected)} y2={y(expected)} />
+            <line class="span obs-span" x1={x(T0 - 0.4)} x2={x(T1 + 0.4)} y1={y(observed)} y2={y(observed)} />
           {/if}
           <circle class="exp" cx={x0} cy={y(expected)} r="5" />
           <circle class="obs" cx={x0} cy={y(observed)} r="5" />
@@ -176,6 +188,10 @@
   .marker { stroke: var(--ink-3); stroke-dasharray: 2 3; }
   .mlabel { font-size: 11px; fill: var(--ink-3); }
   .base { fill: var(--paper-2); }
+  .target { fill: var(--petrol-tint); opacity: 0.7; }
+  .span { stroke-width: 2; }
+  .exp-span { stroke: var(--ink-2); stroke-dasharray: 4 3; }
+  .obs-span { stroke: var(--ink); }
   path { fill: none; stroke-linejoin: round; stroke-linecap: round; }
   .ctx { stroke: var(--context); stroke-width: 1; stroke-opacity: 0.8; }
   .fit { stroke: var(--ink-2); stroke-width: 1.5; stroke-dasharray: 5 4; }

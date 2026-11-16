@@ -1,6 +1,7 @@
 <script lang="ts">
   import { loadWordCube } from '../../lib/data/load';
-  import { buildWordContext, rampFor, scoreWords, topMovers, BASELINE_YEARS } from '../../lib/data/excess';
+  import { buildWordContext, clampComparison, rampFor, scoreWords, topMovers, BASE_MAX, BASE_MIN, type Comparison } from '../../lib/data/excess';
+  import { onDestroy } from 'svelte';
   import { aiFilterActive } from '../../lib/data/select';
   import type { Filters, Theses, WordCube } from '../../lib/data/types';
   import { app } from '../../lib/state/app.svelte';
@@ -8,6 +9,7 @@
   import Plate from '../../lib/ui/Plate.svelte';
   import WordCloud from './WordCloud.svelte';
   import WordDetail from './WordDetail.svelte';
+  import WordTimeline from './WordTimeline.svelte';
 
   interface Props { theses: Theses; filters: Filters }
   let { theses, filters }: Props = $props();
@@ -35,13 +37,40 @@
 
   const aiOn = $derived(aiFilterActive(filters.ai));
   const ctx = $derived(cube && filters.fac.length ? buildWordContext(theses, cube, filters, aiOn) : null);
-  // Scored year: picked in the cloud header, or the end of the filter range by default
-  const firstTarget = $derived(meta.yearMin + BASELINE_YEARS);
-  const targetYears = $derived(Array.from({ length: meta.yearMax - firstTarget + 1 }, (_, i) => meta.yearMax - i));
-  const target = $derived(app.wordYear ?? filters.yearTo);
-  const result = $derived(cube && ctx ? scoreWords(cube, ctx, target, app.minFreq) : null);
+  // What is compared: target years [from, to] against the trend of `base` years before them.
+  // Set by the timeline strip / sentence controls; independent of the panel's year range.
+  const cmp = $derived(clampComparison({ from: app.wordFrom, to: app.wordTo, base: app.wordBase }, meta.yearMin, meta.yearMax));
+  function setCmp(c: Comparison) {
+    const k = clampComparison(c, meta.yearMin, meta.yearMax);
+    app.wordFrom = k.from; app.wordTo = k.to; app.wordBase = k.base;
+  }
+  const result = $derived(cube && ctx ? scoreWords(cube, ctx, cmp, app.minFreq) : null);
   const movers = $derived(result ? topMovers(result.scores, N_EACH) : null);
-  const baselineLabel = $derived(result?.baseline.length ? `${result.baseline[0]}–${result.baseline[result.baseline.length - 1]}` : `${target - BASELINE_YEARS}–${target - 1}`);
+  const blockLabel = $derived(cmp.from === cmp.to ? `${cmp.from}` : `${cmp.from}–${cmp.to}`);
+  const baselineLabel = $derived(`${cmp.from - cmp.base}–${cmp.from - 1}`);
+  const totals = $derived(ctx ? ctx.total : new Array(meta.yearMax - meta.yearMin + 1).fill(0));
+  const fromYears = $derived(Array.from({ length: meta.yearMax - (meta.yearMin + BASE_MIN) + 1 }, (_, i) => meta.yearMin + BASE_MIN + i));
+  const toYears = $derived(fromYears.filter((y) => y >= cmp.from));
+  const baseOptions = $derived(Array.from({ length: BASE_MAX - BASE_MIN + 1 }, (_, i) => BASE_MIN + i).filter((b) => cmp.from - b >= meta.yearMin));
+
+  // step / play through the years, keeping the block length
+  const len = $derived(cmp.to - cmp.from);
+  const canBack = $derived(cmp.from - 1 - cmp.base >= meta.yearMin || cmp.base > BASE_MIN);
+  const canFwd = $derived(cmp.to < meta.yearMax);
+  function stepBy(d: number) { setCmp({ ...cmp, from: cmp.from + d, to: cmp.to + d }); }
+  let timer: ReturnType<typeof setInterval> | null = $state(null);
+  function stop() { if (timer) { clearInterval(timer); timer = null; } }
+  function play() {
+    if (timer) { stop(); return; }
+    // the last year is incomplete: playback ends at the last complete year
+    const end = meta.yearMax - 1;
+    if (cmp.to >= end) setCmp({ ...cmp, from: meta.yearMin + cmp.base, to: meta.yearMin + cmp.base + len });
+    timer = setInterval(() => {
+      if (cmp.to >= end) { stop(); return; }
+      stepBy(1);
+    }, 1600);
+  }
+  onDestroy(stop);
   const mfIndex = $derived(Math.max(0, MIN_FREQ_STEPS.findIndex((v) => v >= app.minFreq - 1e-9)));
 
   const selected = $derived(app.word && cube && cube.index.has(app.word) ? app.word : null);
@@ -53,7 +82,7 @@
 </script>
 
 <div class="words">
-  <Plate id="w-cloud" title={L.t['words.cloud.title']} unit={L.t['words.cloud.unit'](target, baselineLabel)} foot={L.t['words.cloud.foot']}>
+  <Plate id="w-cloud" title={L.t['words.cloud.title']} unit={L.t['words.cloud.unit'](blockLabel, baselineLabel)} foot={L.t['words.cloud.foot']}>
     {#snippet tools()}
       {#if app.langs.length > 1}
         <div class="seg" role="group" aria-label={L.t['words.lang']}>
@@ -62,13 +91,6 @@
           {/each}
         </div>
       {/if}
-      <label class="wy">
-        <span>{L.t['words.year']}</span>
-        <select value={app.wordYear ?? ''} onchange={(e) => (app.wordYear = e.currentTarget.value === '' ? null : +e.currentTarget.value)}>
-          <option value="">{L.t['words.yearEnd'](filters.yearTo)}</option>
-          {#each targetYears as y (y)}<option value={y}>{y}{y === meta.yearMax ? ` (${L.t['words.incomplete']})` : ''}</option>{/each}
-        </select>
-      </label>
       <label class="mf">
         <span>{L.t['words.minFreq']}</span>
         <input type="range" min="0" max={MIN_FREQ_STEPS.length - 1} step="1" value={mfIndex}
@@ -92,6 +114,41 @@
       </table>
     {/snippet}
 
+    <div class="compare">
+      <div class="sentence">
+        <span>{L.t['words.s.compare']}</span>
+        <select aria-label={L.t['words.s.from']} value={cmp.from} onchange={(e) => { stop(); setCmp({ ...cmp, from: +e.currentTarget.value, to: Math.max(+e.currentTarget.value, cmp.to) }); }}>
+          {#each fromYears as y (y)}<option value={y}>{y}</option>{/each}
+        </select>
+        <span>–</span>
+        <select aria-label={L.t['words.s.to']} value={cmp.to} onchange={(e) => { stop(); setCmp({ ...cmp, to: +e.currentTarget.value }); }}>
+          {#each toYears as y (y)}<option value={y}>{y}{y === meta.yearMax ? ` (${L.t['words.incomplete']})` : ''}</option>{/each}
+        </select>
+        <span>{L.t['words.s.with']}</span>
+        <select aria-label={L.t['words.s.base']} value={cmp.base} onchange={(e) => { stop(); setCmp({ ...cmp, base: +e.currentTarget.value }); }}>
+          {#each baseOptions as b (b)}<option value={b}>{b}</option>{/each}
+        </select>
+        <span>{L.t['words.s.years'](baselineLabel)}</span>
+      </div>
+      <div class="player" role="group" aria-label={L.t['words.s.player']}>
+        <button type="button" disabled={!canBack} onclick={() => { stop(); stepBy(-1); }} title={L.t['words.s.prev']} aria-label={L.t['words.s.prev']}>
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="play" aria-pressed={!!timer} onclick={play} title={timer ? L.t['words.s.pause'] : L.t['words.s.play']}>
+          {#if timer}
+            <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9M11 3.5v9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          {:else}
+            <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6L12.5 8z" fill="currentColor"/></svg>
+          {/if}
+          <span>{timer ? L.t['words.s.pause'] : L.t['words.s.play']}</span>
+        </button>
+        <button type="button" disabled={!canFwd} onclick={() => { stop(); stepBy(1); }} title={L.t['words.s.next']} aria-label={L.t['words.s.next']}>
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <WordTimeline yearMin={meta.yearMin} yearMax={meta.yearMax} {totals} {cmp} onchange={(c) => { stop(); setCmp(c); }} />
+
     <div class="legend">
       <span class="lk rise">{L.t['words.more']}</span>
       <span class="lk fall">{L.t['words.less']}</span>
@@ -110,7 +167,7 @@
     {:else if !cube || !result || !movers}
       <div class="skel" aria-busy="true"><span class="sr-only">{L.t['common.loading']}</span></div>
     {:else if result.reason === 'too-early'}
-      <p class="msg">{L.t['words.tooEarly'](meta.yearMin + BASELINE_YEARS)}</p>
+      <p class="msg">{L.t['words.thin']}</p>
     {:else if result.reason === 'no-target'}
       <p class="msg">{L.t['words.noTarget']}</p>
     {:else if result.reason === 'thin-baseline'}
@@ -127,7 +184,7 @@
     {#if !selected || !cube || !ctx || !result}
       <p class="msg empty">{app.word && cube && !cube.index.has(app.word) ? L.t['words.detail.notInVocab'] : L.t['words.detail.empty']}</p>
     {:else}
-      <WordDetail {cube} {ctx} word={selected} {result} faculties={meta.faculties} yearFrom={filters.yearFrom} yearTo={Math.max(filters.yearTo, target)} yearMax={meta.yearMax} />
+      <WordDetail {cube} {ctx} word={selected} {result} faculties={meta.faculties} yearFrom={meta.yearMin} yearTo={meta.yearMax} yearMax={meta.yearMax} />
     {/if}
   </Plate>
 </div>
@@ -150,12 +207,24 @@
   .skel { height: 380px; background: var(--paper-2); border-radius: 2px; animation: pulse 1.4s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.55; } }
 
-  .wy { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; font-size: var(--fs-sm); color: var(--ink-2); }
-  .wy select {
-    font-size: var(--fs-sm); color: var(--ink); background: var(--paper);
-    border: 1px solid var(--rule); border-radius: 3px; padding: 3px 6px; cursor: pointer;
+  .compare { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s4); margin-bottom: var(--s2); }
+  .sentence { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--fs-md); color: var(--ink-2); }
+  .sentence select {
+    font-size: var(--fs-md); font-weight: 600; color: var(--ink); background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 3px; padding: 2px 4px; cursor: pointer;
   }
-  .wy select:hover { border-color: var(--ink-3); }
+  .sentence select:hover { border-color: var(--ink-3); }
+  .player { display: inline-flex; gap: 4px; }
+  .player button {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--ink);
+    border-radius: 3px; padding: 4px 8px; font-size: var(--fs-sm); cursor: pointer;
+    transition: border-color var(--t) var(--ease), background var(--t) var(--ease);
+  }
+  .player button:hover:not(:disabled):not([aria-pressed='true']) { border-color: var(--ink-3); background: var(--paper-2); }
+  .player button:disabled { opacity: 0.4; cursor: default; }
+  .player .play { min-width: 92px; justify-content: center; }
+  .player .play[aria-pressed='true'] { background: var(--petrol); border-color: var(--petrol); color: var(--on-petrol); }
   .mf { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; font-size: var(--fs-sm); color: var(--ink-2); }
   .mf input { width: 110px; accent-color: var(--petrol); }
   .mf output { min-width: 3.4em; font-weight: 600; color: var(--ink); }

@@ -9,7 +9,7 @@ views:
 
 | view | what it shows |
 |---|---|
-| **Words** | A word cloud of words used more or less than their trend predicts. For the last year of the range, each word's share of theses is compared with a line fitted on the five years before it. Click a word to see its trend, with the expected and observed values. |
+| **Words** | A word cloud of words used more or less than their trend predicts. A timeline strip picks the compared year, or a block of several years, and the trend window before it (3–8 years). You drag on the strip, or use the sentence controls or step/play buttons. Click a word to see its trend, with the expected and observed values. |
 | **Trends** | Small multiples of style measures per faculty (word length, sentence length and spread, lexical diversity, repetition, punctuation, …). Each panel shows its faculty highlighted, the other faculties in grey and the selection average dashed. |
 | **Grades** | A 100 % stacked area of grades over time. Click a year to show per-faculty grade bars for that year. Below, a parallel-coordinates plot links grade to writing style, one line per thesis, with brushable axes. |
 
