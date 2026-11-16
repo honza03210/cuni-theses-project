@@ -137,10 +137,11 @@
   .quick { display: inline-flex; gap: 2px; text-transform: none; letter-spacing: 0; }
   .quick button {
     border: 0; background: none; cursor: pointer;
-    font-size: var(--fs-xs); font-weight: 600; color: var(--petrol);
+    font-size: var(--fs-xs); font-weight: 600; color: var(--ink);
     padding: 2px 6px; border-radius: 2px;
+    text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px;
   }
-  .quick button:hover { background: var(--paper-3); }
+  .quick button:hover { background: var(--paper-3); text-decoration-color: var(--ink); }
 
   .checks { list-style: none; margin: 0; padding: 0; }
   label {

@@ -89,7 +89,7 @@ const cs = {
   'trends.this': 'tato fakulta',
   'trends.other': 'ostatní vybrané',
   'trends.avg': 'průměr výběru',
-  'trends.uni': 'celá univerzita',
+  'trends.uni': 'celá univerzita (průměr)',
   'trends.foot': 'Roční průměry prací s čistě vyříznutým tělem textu. Body s méně než 20 pracemi nejsou vykresleny. Průměr výběru je vážený počtem prací. Stín = 95% interval spolehlivosti.',
   'trends.mixedLang': 'Vybráno více jazyků práce: stylové ukazatele nejsou mezi jazyky srovnatelné.',
 
@@ -204,7 +204,7 @@ const en: Dict = {
   'trends.this': 'this faculty',
   'trends.other': 'other selected',
   'trends.avg': 'selection average',
-  'trends.uni': 'whole university',
+  'trends.uni': 'whole university (average)',
   'trends.foot': 'Yearly means of theses whose body text was cut cleanly. Points with fewer than 20 theses are not drawn. The selection average is weighted by thesis count. Band = 95 % confidence interval.',
   'trends.mixedLang': 'More than one thesis language selected: style measures are not comparable across languages.',
 

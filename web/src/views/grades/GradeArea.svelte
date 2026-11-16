@@ -78,7 +78,7 @@
         <text x="-6" y={y(t)} dy="0.32em" text-anchor="end">{t * 100} %</text>
       {/each}
       {#each ticks as t (t)}
-        {#if Math.abs(x(t) - x(selected)) > 30}<text x={x(t)} y={ih + 16} text-anchor="middle">{t}</text>{/if}
+        {#if Math.abs(x(t) - x(selected)) > 42}<text x={x(t)} y={ih + 16} text-anchor="middle">{t}</text>{/if}
       {/each}
       {#if to >= yearMax}
         <rect x={x(yearMax - 1)} width={x(yearMax) - x(yearMax - 1)} y="0" height={ih} fill="var(--paper)" opacity="0.35" />

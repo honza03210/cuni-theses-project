@@ -198,7 +198,7 @@
   .state { max-width: 60ch; padding: var(--s6) 0; }
   .state .detail { color: var(--ink-3); font-size: var(--fs-sm); }
   .retry {
-    border: 1px solid var(--petrol); background: var(--petrol); color: var(--on-petrol);
+    border: 1px solid var(--ink); background: var(--ink); color: var(--paper);
     border-radius: 3px; padding: 6px 14px; cursor: pointer;
   }
   .loading { display: grid; gap: 14px; max-width: none; }

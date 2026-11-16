@@ -2,6 +2,7 @@
   import { brushY, scaleLinear, select, type BrushBehavior } from 'd3';
   import type { Theses } from '../../lib/data/types';
   import { GRADE_HEX, GRADE_VARS } from '../../lib/chart';
+  const CONTEXT_HEX = '#8f897b';
   import { app } from '../../lib/state/app.svelte';
   import { L } from '../../lib/locale.svelte';
   import Plate from '../../lib/ui/Plate.svelte';
@@ -78,7 +79,7 @@
 
   let width = $state(900);
   const height = 380;
-  const m = { top: 34, right: 56, bottom: 26, left: 56 };
+  const m = { top: 46, right: 56, bottom: 26, left: 56 };
   const iw = $derived(Math.max(10, width - m.left - m.right));
   const ih = height - m.top - m.bottom;
   const ax = (a: number) => (iw * a) / (AXES.length - 1);
@@ -94,53 +95,65 @@
     const ctx = canvas.getContext('2d')!;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
-    ctx.translate(m.left, m.top);
-    ctx.lineWidth = 0.7;
     const A = AXES.length;
     const { n, norm, grade } = data;
     const { sel, any } = selection;
     const alpha = Math.max(0.025, Math.min(0.5, 900 / Math.max(1, n)));
     const xs = AXES.map((_, a) => ax(a));
-    const trace = (r: number) => {
-      const o = r * A;
-      ctx.moveTo(xs[0], ih * (1 - norm[o]));
-      for (let a = 1; a < A; a++) ctx.lineTo(xs[a], ih * (1 - norm[o + a]));
-    };
-    // context layer: deselected theses stay as a faint trace (nothing disappears)
-    if (any || hidden.length) {
-      ctx.strokeStyle = `rgba(28,31,36,${Math.min(0.02, alpha * 0.45)})`;
-      ctx.beginPath();
+    // Density layers: lines accumulate in an alpha-only offscreen canvas, which is then
+    // tinted with the exact palette colour ("source-in"). Blending low-alpha colours
+    // directly drifts hues toward black in 8-bit canvas maths.
+    const layer = (keep: (r: number) => boolean, lineAlpha: number, color: string, opacity: number) => {
+      const off = offscreen(canvas!.width, canvas!.height);
+      const o = off.getContext('2d')!;
+      o.setTransform(dpr, 0, 0, dpr, 0, 0);
+      o.clearRect(0, 0, width, height);
+      o.translate(m.left, m.top);
+      o.lineWidth = 0.7;
+      o.strokeStyle = `rgba(0,0,0,${Math.max(1 / 255, Math.min(0.9, lineAlpha))})`;
+      o.beginPath();
       let k = 0;
       for (let r = 0; r < n; r++) {
-        if (sel[r]) continue;
-        trace(r);
-        if (++k % 2000 === 0) { ctx.stroke(); ctx.beginPath(); }
+        if (!keep(r)) continue;
+        const b = r * A;
+        o.moveTo(xs[0], ih * (1 - norm[b]));
+        for (let a = 1; a < A; a++) o.lineTo(xs[a], ih * (1 - norm[b + a]));
+        if (++k % 2000 === 0) { o.stroke(); o.beginPath(); }
       }
-      ctx.stroke();
-    }
-    // grade-coloured layer, batched per grade in shuffled order chunks
-    const chunk = 1500;
+      o.stroke();
+      o.setTransform(1, 0, 0, 1, 0, 0);
+      o.globalCompositeOperation = 'source-in';
+      o.fillStyle = color;
+      o.fillRect(0, 0, off.width, off.height);
+      o.globalCompositeOperation = 'source-over';
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalAlpha = opacity;
+      ctx.drawImage(off, 0, 0);
+      ctx.restore();
+    };
+    // context layer: deselected theses stay as faint context (nothing disappears)
+    if (any || hidden.length) layer((r) => !sel[r], alpha, CONTEXT_HEX, 0.3);
     const a2 = any ? Math.min(0.6, alpha * 1.8) : alpha;
-    // Rarer grades get more ink (sqrt of inverse share) so all four stay visible; stated in the footnote.
+    // Rarer grades get more ink ((1/share)^0.12) so all four stay visible; stated in the footnote.
     const per = [0, 0, 0, 0];
     for (let r = 0; r < n; r++) per[grade[r] - 1]++;
-    const boost = per.map((c) => (c ? Math.sqrt(n / (4 * c)) : 1));
-    for (let start = 0; start < n; start += chunk) {
-      for (let g = 1; g <= 4; g++) {
-        const hex = GRADE_HEX[g - 1];
-        // light blue (grade 2) needs extra weight against the paper ground
-        const ga = (g === 2 ? a2 * 1.6 : a2) * boost[g - 1];
-        ctx.strokeStyle = hexA(hex, Math.min(0.9, ga));
-        ctx.beginPath();
-        const end = Math.min(n, start + chunk);
-        for (let r = start; r < end; r++) if (grade[r] === g && sel[r]) trace(r);
-        ctx.stroke();
-      }
+    const boost = per.map((c) => (c ? Math.pow(n / (4 * c), 0.12) : 1));
+    for (let g = 1; g <= 4; g++) {
+      // light blue (grade 2) needs extra weight against the paper ground
+      const ga = (g === 2 ? a2 * 1.6 : a2) * boost[g - 1];
+      layer((r) => grade[r] === g && sel[r] === 1, ga, GRADE_HEX[g - 1], any ? 0.9 : 0.72);
     }
   }
-  function hexA(hex: string, a: number) {
-    const v = parseInt(hex.slice(1), 16);
-    return `rgba(${v >> 16},${(v >> 8) & 255},${v & 255},${a})`;
+  const offs: HTMLCanvasElement[] = [];
+  let offIdx = 0;
+  function offscreen(w: number, h: number) {
+    // reuse a small pool of canvases between layers
+    const c = offs[offIdx % 2] ?? (offs[offIdx % 2] = document.createElement('canvas'));
+    offIdx++;
+    if (c.width !== w) c.width = w;
+    if (c.height !== h) c.height = h;
+    return c;
   }
   $effect(() => {
     // dependencies
@@ -193,6 +206,18 @@
     hidden = hidden.includes(g) ? hidden.filter((x) => x !== g) : [...hidden, g];
   }
 
+  /** Break an axis title into two lines when it is wider than the axis spacing (~6.4 px/char at 12px). */
+  function splitLabel(t: string, spacing: number): string[] {
+    if (t.length * 6.4 < spacing - 12) return [t];
+    const words = t.split(' ');
+    if (words.length < 2) return [t];
+    let best = 1, bestD = Infinity;
+    for (let i = 1; i < words.length; i++) {
+      const d = Math.abs(words.slice(0, i).join(' ').length - words.slice(i).join(' ').length);
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    return [words.slice(0, best).join(' '), words.slice(best).join(' ')];
+  }
   const axisLabel = (k: string) => (k === 'grade' ? L.t['grade.axis'] : L.pick(metricOf(k).label));
   const axisTicks = (k: string) => {
     if (k === 'grade') return [1, 2, 3, 4].map((g) => ({ y: ih * ((g - 0.5) / 4), t: String(g) }));
@@ -245,13 +270,16 @@
     <svg {width} {height} role="group" aria-label={L.t['grades.par.title']}>
       <g transform="translate({m.left},{m.top})">
         {#each AXES as k, a (k)}
+          {@const lines = splitLabel(axisLabel(k), iw / (AXES.length - 1))}
           <g transform="translate({ax(a)},0)">
             <line class="axis-line" y1="0" y2={ih} />
             {#each axisTicks(k) as t (t.t + t.y)}
               <line class="tick" x1="-3" x2="0" y1={t.y} y2={t.y} />
               <text class="tl" x="-6" y={t.y} dy="0.32em" text-anchor="end">{t.t}</text>
             {/each}
-            <text class="al" y="-14" text-anchor={a === 0 ? 'start' : a === AXES.length - 1 ? 'end' : 'middle'} x={a === 0 ? -8 : a === AXES.length - 1 ? 8 : 0}>{axisLabel(k)}</text>
+            <text class="al" y={lines.length > 1 ? -26 : -14} text-anchor={a === 0 ? 'start' : a === AXES.length - 1 ? 'end' : 'middle'} x={a === 0 ? -8 : a === AXES.length - 1 ? 8 : 0}>
+              {#each lines as ln, li (li)}<tspan x={a === 0 ? -8 : a === AXES.length - 1 ? 8 : 0} dy={li ? '1.15em' : 0}>{ln}</tspan>{/each}
+            </text>
             {#key brushVersion + ih}
               <g class="brush" use:brushAxis={k}></g>
             {/key}
@@ -283,6 +311,6 @@
   .sw { width: 10px; height: 10px; border-radius: 1px; box-shadow: inset 0 0 0 1px rgb(28 31 36 / 0.25); }
   .sw.hatch { background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.55) 0 1.5px, transparent 1.5px 4px) !important; background-color: var(--grade-4); }
   .selcount { font-size: var(--fs-sm); color: var(--ink-2); }
-  .clear { border: 1px solid var(--petrol); color: var(--petrol); background: var(--paper); border-radius: 3px; padding: 2px 9px; font-size: var(--fs-sm); cursor: pointer; }
-  .clear:hover { background: var(--petrol-tint); }
+  .clear { border: 1px solid var(--ink-3); color: var(--ink); background: var(--paper); border-radius: 3px; padding: 2px 9px; font-size: var(--fs-sm); cursor: pointer; }
+  .clear:hover { border-color: var(--ink); background: var(--paper-2); }
 </style>

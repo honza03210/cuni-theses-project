@@ -21,8 +21,9 @@
     aiOn: boolean;
     uniRef: Point[] | null;
     large: boolean;
+    first?: boolean;
   }
-  let { fac, faculty, faculties, series, facs, yDomain, metric, yearFrom, yearTo, yearMax, aiYear, aiOn, uniRef, large }: Props = $props();
+  let { fac, faculty, faculties, series, facs, yDomain, metric, yearFrom, yearTo, yearMax, aiYear, aiOn, uniRef, large, first = false }: Props = $props();
 
   let width = $state(260);
   const height = $derived(large ? 380 : 168);
@@ -112,11 +113,11 @@
 
         {#if CHATGPT_X >= yearFrom && CHATGPT_X <= yearTo + 0.25}
           <line class="marker" x1={x(CHATGPT_X)} x2={x(CHATGPT_X)} y1="0" y2={ih} />
-          {#if large}<text class="mlabel" x={x(CHATGPT_X) + 4} y="10">{L.t['common.chatgpt']}</text>{/if}
+          {#if large || first}<text class="mlabel" x={x(CHATGPT_X) - 3} y="9" text-anchor="end">{L.t['common.chatgpt']}</text>{/if}
         {/if}
         {#if aiOn && aiYear >= yearFrom}
           <line class="marker ai" x1={x(aiYear - 0.5)} x2={x(aiYear - 0.5)} y1="0" y2={ih} />
-          {#if large}<text class="mlabel" x={x(aiYear - 0.5) - 4} y="10" text-anchor="end">{L.t['common.aiStart']}</text>{/if}
+          {#if large}<text class="mlabel" x={x(aiYear - 0.5) - 4} y="22" text-anchor="end">{L.t['common.aiStart']}</text>{/if}
         {/if}
 
         {#each others as o (o.f)}
@@ -173,10 +174,10 @@
   .grid { stroke: var(--rule-soft); stroke-width: 1; shape-rendering: crispEdges; }
   .marker { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; shape-rendering: crispEdges; }
   .marker.ai { stroke: var(--warn); }
-  .mlabel { font-size: 11px; fill: var(--ink-3); }
+  .mlabel { font-size: 10.5px; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
   path { fill: none; stroke-linejoin: round; stroke-linecap: round; }
   .other { stroke: var(--context); stroke-width: 1.1; }
-  .other.uni { stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 1 3; }
+  .other.uni { stroke: var(--avg); stroke-width: 2.1; stroke-dasharray: 5 3; }
   .band { fill: var(--ink); fill-opacity: 0.08; stroke: none; }
   .avg { stroke: var(--avg); stroke-width: 2.1; stroke-dasharray: 5 3; }
   .hover { stroke: var(--petrol); stroke-width: 2; }

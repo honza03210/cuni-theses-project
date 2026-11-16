@@ -140,7 +140,7 @@
   .skel { height: 380px; background: var(--paper-2); border-radius: 2px; animation: pulse 1.4s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.55; } }
 
-  .mf { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-sm); color: var(--ink-2); }
+  .mf { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; font-size: var(--fs-sm); color: var(--ink-2); }
   .mf input { width: 110px; accent-color: var(--petrol); }
   .mf output { min-width: 3.4em; font-weight: 600; color: var(--ink); }
   .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }

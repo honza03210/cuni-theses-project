@@ -47,7 +47,7 @@
         <ul class="legend" aria-label="Legend">
           <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--ink)" stroke-width="2.25"/></svg>{L.t['trends.this']}</li>
           {#if facs.length === 1}
-            <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="1 3"/></svg>{L.t['trends.uni']}</li>
+            <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--avg)" stroke-width="2.25" stroke-dasharray="5 3"/></svg>{L.t['trends.uni']}</li>
           {:else}
             <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--context)" stroke-width="1.25"/></svg>{L.t['trends.other']}</li>
             <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--avg)" stroke-width="2.25" stroke-dasharray="5 3"/></svg>{L.t['trends.avg']}</li>
@@ -77,8 +77,8 @@
         <p class="empty">{L.t['common.empty']}</p>
       {:else}
         <div class="grid" class:single={facs.length === 1}>
-          {#each facs as f (f)}
-            <TrendPanel
+          {#each facs as f, fi (f)}
+            <TrendPanel first={fi === 0}
               fac={f} faculty={meta.faculties[f]} {series} {facs} {yDomain} {metric} {aiOn}
               yearFrom={app.yearFrom} yearTo={app.yearTo} yearMax={meta.yearMax} aiYear={meta.aiYear}
               faculties={meta.faculties} uniRef={uniRef} large={facs.length === 1}

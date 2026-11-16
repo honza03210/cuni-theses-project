@@ -97,6 +97,10 @@
     flex: 1 1 auto;
   }
   .table-wrap { overflow: auto; max-height: 560px; }
+  @media (max-width: 639px) {
+    .head { flex-direction: column; align-items: stretch; gap: var(--s2); }
+    .tools { justify-content: flex-start; }
+  }
   .foot {
     display: flex;
     flex-wrap: wrap;
