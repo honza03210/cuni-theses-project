@@ -1,0 +1,565 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-16T00:00:00Z",
+  "title": "Design System: Bakalářské práce UK",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Yearbook Paper",
+        "canonical": "oklch(96.7% 0.008 91)",
+        "tonalRamp": [
+          "#0c0b09",
+          "#262522",
+          "#43423e",
+          "#63615c",
+          "#84827d",
+          "#a6a5a1",
+          "#cac9c5",
+          "#efeeeb"
+        ]
+      },
+      "paper-2": {
+        "role": "neutral",
+        "displayName": "Filter Paper",
+        "canonical": "oklch(93.1% 0.014 89)",
+        "tonalRamp": [
+          "#0c0b08",
+          "#272520",
+          "#44423b",
+          "#646159",
+          "#85827a",
+          "#a8a59d",
+          "#cbc9c3",
+          "#f0eee9"
+        ]
+      },
+      "paper-3": {
+        "role": "neutral",
+        "displayName": "Pressed Paper",
+        "canonical": "oklch(89.8% 0.018 89)",
+        "tonalRamp": [
+          "#0d0b07",
+          "#27251f",
+          "#454239",
+          "#656156",
+          "#868277",
+          "#a8a59b",
+          "#ccc9c1",
+          "#f1eee8"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(23.8% 0.011 261)",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#232528",
+          "#3f4246",
+          "#5e6167",
+          "#7f8288",
+          "#a2a5aa",
+          "#c7c9ce",
+          "#eceef2"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink Grey",
+        "canonical": "oklch(41.1% 0.015 260)",
+        "tonalRamp": [
+          "#090b0e",
+          "#22252a",
+          "#3e4248",
+          "#5d6269",
+          "#7e838b",
+          "#a1a5ad",
+          "#c6c9cf",
+          "#eceff3"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink Light",
+        "canonical": "oklch(50.1% 0.013 257)",
+        "tonalRamp": [
+          "#090b0e",
+          "#232529",
+          "#3f4247",
+          "#5d6268",
+          "#7e838a",
+          "#a1a5ab",
+          "#c6c9ce",
+          "#eceff3"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "oklch(83.0% 0.022 89)",
+        "tonalRamp": [
+          "#0d0b06",
+          "#28251e",
+          "#464238",
+          "#666155",
+          "#878275",
+          "#a9a599",
+          "#cdc9bf",
+          "#f1eee7"
+        ]
+      },
+      "rule-soft": {
+        "role": "neutral",
+        "displayName": "Soft Rule",
+        "canonical": "oklch(89.5% 0.018 89)",
+        "tonalRamp": [
+          "#0d0b07",
+          "#27251f",
+          "#454239",
+          "#656156",
+          "#868277",
+          "#a8a59b",
+          "#ccc9c1",
+          "#f1eee8"
+        ]
+      },
+      "petrol": {
+        "role": "primary",
+        "displayName": "Yearbook Petrol",
+        "canonical": "oklch(42.0% 0.064 226)",
+        "tonalRamp": [
+          "#000e15",
+          "#0b2934",
+          "#214757",
+          "#39687b",
+          "#5b8a9e",
+          "#84acbe",
+          "#aecfde",
+          "#d9f3ff"
+        ]
+      },
+      "petrol-deep": {
+        "role": "primary",
+        "displayName": "Masthead Petrol",
+        "canonical": "oklch(34.7% 0.053 227)",
+        "tonalRamp": [
+          "#010d14",
+          "#122832",
+          "#294753",
+          "#426777",
+          "#638999",
+          "#8aabb9",
+          "#b3ceda",
+          "#ddf2fc"
+        ]
+      },
+      "petrol-tint": {
+        "role": "primary",
+        "displayName": "Petrol Wash",
+        "canonical": "oklch(91.6% 0.015 218)",
+        "tonalRamp": [
+          "#080c0d",
+          "#202628",
+          "#3b4446",
+          "#596366",
+          "#7a8588",
+          "#9da7aa",
+          "#c3cbcd",
+          "#e9f0f2"
+        ]
+      },
+      "on-petrol": {
+        "role": "primary",
+        "displayName": "On-Petrol Paper",
+        "canonical": "oklch(96.7% 0.008 91)",
+        "tonalRamp": [
+          "#0c0b09",
+          "#262522",
+          "#43423e",
+          "#63615c",
+          "#84827d",
+          "#a6a5a1",
+          "#cac9c5",
+          "#efeeeb"
+        ]
+      },
+      "on-petrol-2": {
+        "role": "primary",
+        "displayName": "On-Petrol Mist",
+        "canonical": "oklch(86.5% 0.020 221)",
+        "tonalRamp": [
+          "#070c0e",
+          "#1e2729",
+          "#394448",
+          "#566469",
+          "#77858a",
+          "#9ba8ac",
+          "#c1cbcf",
+          "#e8f0f3"
+        ]
+      },
+      "rise": {
+        "role": "secondary",
+        "displayName": "Rise Blue",
+        "canonical": "oklch(47.9% 0.133 251)",
+        "tonalRamp": [
+          "#000a25",
+          "#00254c",
+          "#074377",
+          "#1e63a4",
+          "#4386ca",
+          "#72a9e4",
+          "#a0ceff",
+          "#d4f2ff"
+        ]
+      },
+      "fall": {
+        "role": "secondary",
+        "displayName": "Fall Rust",
+        "canonical": "oklch(51.3% 0.146 43)",
+        "tonalRamp": [
+          "#210000",
+          "#470e00",
+          "#712700",
+          "#9d4113",
+          "#c3633a",
+          "#e18d6a",
+          "#fdb699",
+          "#ffe2ce"
+        ]
+      },
+      "avg": {
+        "role": "secondary",
+        "displayName": "Average Vermilion",
+        "canonical": "oklch(55.2% 0.179 36)",
+        "tonalRamp": [
+          "#250000",
+          "#4e0000",
+          "#7b1600",
+          "#ab2f07",
+          "#d25534",
+          "#ef8266",
+          "#ffae96",
+          "#ffe3d7"
+        ]
+      },
+      "context": {
+        "role": "neutral",
+        "displayName": "Context Stone",
+        "canonical": "oklch(76.5% 0.021 88)",
+        "tonalRamp": [
+          "#0d0b07",
+          "#28251e",
+          "#464238",
+          "#666155",
+          "#878276",
+          "#a9a59a",
+          "#cdc9c0",
+          "#f1eee7"
+        ]
+      },
+      "grade-1": {
+        "role": "secondary",
+        "displayName": "Excellent Blue",
+        "canonical": "oklch(56.3% 0.119 245)",
+        "tonalRamp": [
+          "#000c22",
+          "#002747",
+          "#04456f",
+          "#1c669b",
+          "#4388c0",
+          "#72abdc",
+          "#a0cff8",
+          "#cff4ff"
+        ]
+      },
+      "grade-2": {
+        "role": "secondary",
+        "displayName": "Pale Sky",
+        "canonical": "oklch(85.8% 0.053 221)",
+        "tonalRamp": [
+          "#010e13",
+          "#102931",
+          "#284752",
+          "#416875",
+          "#618997",
+          "#89abb7",
+          "#b2cfd9",
+          "#ddf3fb"
+        ]
+      },
+      "grade-3": {
+        "role": "secondary",
+        "displayName": "Apricot",
+        "canonical": "oklch(81.2% 0.131 63)",
+        "tonalRamp": [
+          "#1c0300",
+          "#401800",
+          "#663200",
+          "#904e00",
+          "#b57026",
+          "#d3975e",
+          "#f0be90",
+          "#ffe6c2"
+        ]
+      },
+      "grade-4": {
+        "role": "secondary",
+        "displayName": "Fail Red",
+        "canonical": "oklch(56.0% 0.218 28)",
+        "tonalRamp": [
+          "#250000",
+          "#550000",
+          "#860000",
+          "#b9000c",
+          "#e23e36",
+          "#fe7467",
+          "#ffa99c",
+          "#ffe2db"
+        ]
+      },
+      "warn": {
+        "role": "secondary",
+        "displayName": "Caution Ochre",
+        "canonical": "oklch(50.8% 0.108 73)",
+        "tonalRamp": [
+          "#180600",
+          "#381e00",
+          "#5c3900",
+          "#83570c",
+          "#a67837",
+          "#c59d68",
+          "#e5c398",
+          "#ffeac8"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Live filter count; the only large number."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Plate titles and masthead wordmark."
+      },
+      "tab": {
+        "displayName": "Tab",
+        "purpose": "View tabs and trends metric names."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Messages and empty states, 60–70ch."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Filter rows, segmented controls, legends, tables, tooltips, unit lines."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase legends of control groups and the CS/EN switch only."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Plate footers and notes; italic only for the source line."
+      },
+      "chart": {
+        "displayName": "Chart",
+        "purpose": "SVG axis and annotation text in ink-2."
+      }
+    },
+    "shadows": [
+      {
+        "name": "float",
+        "value": "0 4px 14px rgb(28 31 36 / 0.14)",
+        "purpose": "Hover tooltip only, with a 1px ink border."
+      },
+      {
+        "name": "drawer",
+        "value": "4px 0 24px rgb(28 31 36 / 0.18)",
+        "purpose": "Mobile filter drawer over a rgb(28 31 36 / 0.3) scrim."
+      },
+      {
+        "name": "swatch-edge",
+        "value": "inset 0 0 0 1px rgb(28 31 36 / 0.25)",
+        "purpose": "Inner outline on pale grade legend swatches."
+      },
+      {
+        "name": "focus-halo",
+        "value": "0 0 0 3px #d9e6ea",
+        "purpose": "Slider thumb focus."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "All state transitions."
+      },
+      {
+        "name": "t",
+        "value": "180ms",
+        "purpose": "Hover, pressed and active-row changes."
+      },
+      {
+        "name": "drawer",
+        "value": "220ms",
+        "purpose": "Mobile filter drawer slide."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0ms",
+        "purpose": "All transitions and animations under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "plate-stack",
+        "value": "639px"
+      },
+      {
+        "name": "drawer",
+        "value": "1023px"
+      },
+      {
+        "name": "picker-inline",
+        "value": "1279px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Yearbook Plate",
+      "kind": "card",
+      "description": "Signature chart container: 2px + 1px ink top rules, title, unit line, figure, source footer, Chart/Table toggle.",
+      "html": "<section class=\"ds-plate\"><header class=\"ds-plate-head\"><div><h2>Grade distribution over time</h2><p class=\"ds-unit\">share of theses, % · 2006–2025</p></div><div class=\"ds-seg\"><button aria-pressed=\"true\">Chart</button><button aria-pressed=\"false\">Table</button></div></header><div class=\"ds-plate-body\"><svg width=\"100%\" height=\"80\" viewBox=\"0 0 300 80\" preserveAspectRatio=\"none\"><line x1=\"0\" y1=\"79.5\" x2=\"300\" y2=\"79.5\" stroke=\"#5f646b\"/><polyline points=\"0,50 60,46 120,48 180,44 240,30 300,22\" fill=\"none\" stroke=\"#1c1f24\" stroke-width=\"2\"/><polyline points=\"0,52 60,51 120,50 180,50 240,44 300,40\" fill=\"none\" stroke=\"#c43c14\" stroke-width=\"2.1\" stroke-dasharray=\"5 3\"/><line x1=\"213\" x2=\"213\" y1=\"0\" y2=\"80\" stroke=\"#5f646b\" stroke-dasharray=\"2 3\"/></svg></div><footer class=\"ds-plate-foot\"><span>2026 is incomplete.</span><span class=\"ds-src\">Source: cuni-bachelor-theses-style</span></footer></section>",
+      "css": ".ds-plate{font-family: var(--font);font-variant-numeric:tabular-nums lining-nums;color:#1c1f24;background:#f6f4ee;border-top:2px solid #1c1f24;padding-top:1px;max-width:520px}.ds-plate-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:8px 0;border-top:1px solid #1c1f24;border-bottom:1px solid #cdc7b8}.ds-plate h2{margin:0;font-size:1.0625rem;font-weight:700;line-height:1.25}.ds-unit{margin:2px 0 0;font-size:.8125rem;color:#5f646b}.ds-plate-body{padding:12px 0}.ds-plate-foot{display:flex;flex-wrap:wrap;gap:0 8px;padding-top:8px;border-top:1px solid #cdc7b8;font-size:.75rem;line-height:1.5;color:#5f646b}.ds-src{font-style:italic}.ds-seg{display:inline-flex;border:1px solid #cdc7b8;border-radius:3px;overflow:hidden}.ds-seg button{font:inherit;border:0;background:transparent;padding:3px 10px;font-size:.8125rem;color:#464b53;cursor:pointer;transition:background 180ms cubic-bezier(.16,1,.3,1),color 180ms cubic-bezier(.16,1,.3,1)}.ds-seg button+button{border-left:1px solid #cdc7b8}.ds-seg button:hover{background:#ece8de;color:#1c1f24}.ds-seg button[aria-pressed=true]{background:#1f5468;color:#f6f4ee}.ds-seg button:focus-visible{outline:2px solid #1f5468;outline-offset:-2px}"
+    },
+    {
+      "name": "Segmented Toggle",
+      "kind": "button",
+      "refersTo": "segmented-button-active",
+      "description": "Chart/Table and view-mode switch; the pressed segment is the one petrol surface.",
+      "html": "<div class=\"ds-seg\" role=\"group\"><button aria-pressed=\"true\">Chart</button><button aria-pressed=\"false\">Table</button></div>",
+      "css": ".ds-seg{font-family: var(--font);display:inline-flex;border:1px solid #cdc7b8;border-radius:3px;overflow:hidden;background:#f6f4ee}.ds-seg button{font:inherit;border:0;background:transparent;padding:3px 10px;font-size:.8125rem;color:#464b53;cursor:pointer;transition:background 180ms cubic-bezier(.16,1,.3,1)}.ds-seg button+button{border-left:1px solid #cdc7b8}.ds-seg button:hover{background:#ece8de;color:#1c1f24}.ds-seg button[aria-pressed=true]{background:#1f5468;color:#f6f4ee}.ds-seg button:focus-visible{outline:2px solid #1f5468;outline-offset:-2px}"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Neutral secondary action (reset filters); ink on paper, never petrol.",
+      "html": "<button class=\"ds-btn-quiet\">Reset to default</button>",
+      "css": ".ds-btn-quiet{font-family: var(--font);border:1px solid #cdc7b8;background:#f6f4ee;color:#1c1f24;border-radius:3px;padding:5px 12px;font-size:.8125rem;cursor:pointer;transition:border-color 180ms cubic-bezier(.16,1,.3,1)}.ds-btn-quiet:hover{border-color:#5f646b}.ds-btn-quiet:focus-visible{outline:2px solid #1f5468;outline-offset:2px}"
+    },
+    {
+      "name": "Ink Button",
+      "kind": "button",
+      "refersTo": "button-ink",
+      "description": "Strongest neutral action (retry after a load error).",
+      "html": "<button class=\"ds-btn-ink\">Try again</button>",
+      "css": ".ds-btn-ink{font-family: var(--font);border:1px solid #1c1f24;background:#1c1f24;color:#f6f4ee;border-radius:3px;padding:6px 14px;font-size:1rem;cursor:pointer}.ds-btn-ink:hover{background:#464b53;border-color:#464b53}.ds-btn-ink:focus-visible{outline:2px solid #1f5468;outline-offset:2px}"
+    },
+    {
+      "name": "Filter Group",
+      "kind": "input",
+      "refersTo": "filter-row-hover",
+      "description": "Control-group legend with All/None quick links over dense checkbox rows with counts.",
+      "html": "<fieldset class=\"ds-fg\"><legend><span>Faculty</span><span class=\"ds-q\"><button>All</button><button>None</button></span></legend><label><input type=\"checkbox\" checked><b>FF</b><span class=\"ds-nm\">Faculty of Arts</span><span class=\"ds-n\">9 140</span></label><label><input type=\"checkbox\" checked><b>MFF</b><span class=\"ds-nm\">Faculty of Mathematics and Physics</span><span class=\"ds-n\">3 411</span></label><label><input type=\"checkbox\"><b>PřF</b><span class=\"ds-nm\">Faculty of Science</span><span class=\"ds-n\">8 026</span></label></fieldset>",
+      "css": ".ds-fg{font-family: var(--font);font-variant-numeric:tabular-nums;border:0;margin:0;padding:16px;background:#ece8de;color:#1c1f24;width:240px}.ds-fg legend{display:flex;justify-content:space-between;width:100%;padding:0 0 6px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#464b53;float:left}.ds-q{display:inline-flex;gap:2px;text-transform:none;letter-spacing:0}.ds-q button{font:inherit;border:0;background:none;cursor:pointer;font-size:.75rem;font-weight:600;color:#1c1f24;padding:2px 6px;border-radius:2px;text-decoration:underline;text-decoration-color:#cdc7b8;text-underline-offset:3px}.ds-q button:hover{background:#e2ddd0;text-decoration-color:#1c1f24}.ds-fg label{clear:both;display:grid;grid-template-columns:18px auto 1fr auto;align-items:center;column-gap:6px;padding:3px 4px;margin:0 -4px;border-radius:2px;font-size:.8125rem;cursor:pointer}.ds-fg label:hover{background:#e2ddd0}.ds-fg input{margin:0;width:15px;height:15px;accent-color:#1f5468}.ds-fg b{font-weight:600;min-width:3.4em}.ds-nm{color:#464b53;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ds-n{color:#5f646b;font-size:.75rem}"
+    },
+    {
+      "name": "Year Range",
+      "kind": "input",
+      "description": "Dual-thumb year slider: rule track, petrol fill, hollow petrol-ringed thumbs.",
+      "html": "<div class=\"ds-yr\"><div class=\"ds-yv\">2006 – 2025</div><div class=\"ds-track\"><span class=\"ds-fill\"></span><span class=\"ds-th\" style=\"left:0\"></span><span class=\"ds-th\" style=\"left:calc(95% - 8px)\" tabindex=\"0\"></span></div><div class=\"ds-ends\"><span>2006</span><span>2026</span></div></div>",
+      "css": ".ds-yr{font-family: var(--font);font-variant-numeric:tabular-nums;width:240px;color:#1c1f24}.ds-yv{font-size:1.0625rem;font-weight:600;margin-bottom:6px}.ds-track{position:relative;height:22px}.ds-track::before{content:'';position:absolute;left:0;right:0;top:10px;height:2px;background:#cdc7b8}.ds-fill{position:absolute;top:10px;left:0;width:95%;height:2px;background:#1f5468}.ds-th{position:absolute;top:3px;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:#f6f4ee;border:2px solid #1f5468;cursor:grab}.ds-th:hover,.ds-th:focus-visible{outline:none;background:#1f5468;box-shadow:0 0 0 3px #d9e6ea}.ds-ends{display:flex;justify-content:space-between;font-size:.75rem;color:#5f646b}"
+    },
+    {
+      "name": "Masthead Band",
+      "kind": "nav",
+      "refersTo": "header-band",
+      "description": "Petrol-deep sticky band with wordmark, folder-tab view switch and CS/EN switch.",
+      "html": "<header class=\"ds-band\"><div class=\"ds-brand\"><strong>Bakalářské práce UK</strong><span>2006–2026 · style, words and grades</span></div><nav class=\"ds-tabs\"><button>Words</button><button aria-selected=\"true\">Trends</button><button>Grades</button></nav><div class=\"ds-loc\"><button aria-pressed=\"false\">CS</button><button aria-pressed=\"true\">EN</button></div></header>",
+      "css": ".ds-band{font-family: var(--font);display:grid;grid-template-columns:auto 1fr auto;align-items:end;gap:24px;background:#163f4f;color:#f6f4ee;padding:0 16px;border-bottom:3px solid #1c1f24}.ds-brand{padding:12px 0 10px;display:flex;flex-direction:column}.ds-brand strong{font-size:1.0625rem;font-weight:700;line-height:1.2}.ds-brand span{font-size:.75rem;color:#c5d6dc}.ds-tabs{display:flex;gap:2px}.ds-tabs button{font:inherit;border:0;background:transparent;color:#c5d6dc;font-size:.9375rem;font-weight:600;padding:10px 18px 9px;border-radius:3px 3px 0 0;cursor:pointer;transition:background 180ms cubic-bezier(.16,1,.3,1),color 180ms cubic-bezier(.16,1,.3,1)}.ds-tabs button:hover{color:#f6f4ee;background:rgb(255 255 255 / .07)}.ds-tabs button[aria-selected=true]{background:#f6f4ee;color:#1c1f24}.ds-tabs button:focus-visible{outline:2px solid #f6f4ee;outline-offset:-3px}.ds-loc{align-self:center;display:inline-flex;border:1px solid rgb(246 244 238 / .35);border-radius:3px;overflow:hidden}.ds-loc button{font:inherit;border:0;background:transparent;color:#c5d6dc;font-size:.75rem;font-weight:700;letter-spacing:.06em;padding:4px 9px;cursor:pointer}.ds-loc button[aria-pressed=true]{background:#f6f4ee;color:#163f4f}"
+    },
+    {
+      "name": "Metric Choice Row",
+      "kind": "chip",
+      "refersTo": "choice-row-active",
+      "description": "Trends picker row: radio, metric name and description; the active row takes the petrol wash.",
+      "html": "<div class=\"ds-pick\"><label class=\"ds-on\"><input type=\"radio\" name=\"m\" checked><span class=\"ds-ml\">Average word length</span><span class=\"ds-md\">Mean letters per word.</span></label><label><input type=\"radio\" name=\"m\"><span class=\"ds-ml\">Average sentence length</span><span class=\"ds-md\">Mean words per sentence.</span></label></div>",
+      "css": ".ds-pick{font-family: var(--font);width:240px;border-top:2px solid #1c1f24;padding-top:1px;color:#1c1f24}.ds-pick label{display:grid;grid-template-columns:18px 1fr;column-gap:6px;padding:7px 8px 7px 6px;border-top:1px solid #e1dccf;cursor:pointer;transition:background 180ms cubic-bezier(.16,1,.3,1)}.ds-pick label:hover{background:#ece8de}.ds-pick label.ds-on{background:#d9e6ea}.ds-pick input{margin:3px 0 0;grid-row:span 2;accent-color:#1f5468}.ds-ml{font-size:.9375rem;font-weight:600;line-height:1.3}.ds-md{font-size:.75rem;color:#5f646b;line-height:1.4}.ds-on .ds-md{color:#464b53}"
+    },
+    {
+      "name": "Tooltip",
+      "kind": "custom",
+      "refersTo": "tooltip",
+      "description": "Floating readout: paper, 1px ink border, the one ambient float shadow.",
+      "html": "<div class=\"ds-tip\"><div class=\"ds-tt\">FF · 2023</div><div class=\"ds-row\"><span><i style=\"background:#2c7bb6\"></i>1 excellent</span><b>48.2 %</b></div><div class=\"ds-row\"><span><i style=\"background:#d7191c\"></i>4 failed</span><b>3.1 %</b></div></div>",
+      "css": ".ds-tip{font-family: var(--font);font-variant-numeric:tabular-nums;max-width:280px;padding:8px 10px;background:#f6f4ee;border:1px solid #1c1f24;box-shadow:0 4px 14px rgb(28 31 36 / .14);font-size:.8125rem;line-height:1.4;color:#1c1f24}.ds-tt{font-weight:700;margin-bottom:2px}.ds-row{display:flex;justify-content:space-between;gap:16px;color:#464b53}.ds-row b{color:#1c1f24;font-weight:600}.ds-row i{display:inline-block;width:9px;height:9px;margin-right:5px;border-radius:1px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Steerable Yearbook",
+    "overview": "The explorer is printed, not rendered. It takes its material from the two-colour Czech Statistical Yearbook: a warm paper ground, near-black ink, and one petrol-blue second colour. Every chart is set as a yearbook plate, with a heavy double rule on top, a bold figure title, a grey unit line, the figure itself, and a small footer that ends in an italic source line. Each plate can flip into its ruled table. Separation comes from 1px hairline rules, never from boxes or card backgrounds, so the page reads as a ruled sheet rather than a grid of floating widgets.\n\nThe density is high and deliberate: small faceted multiples, a 13 px control size, tabular numerals in every place a number appears, and a persistent filter column that shows its live count at the top. Colour is spent with care. Petrol marks what the reader has selected or activated, and the darker petrol-deep is used only for the masthead band. All other colour is data colour, and each data colour has one fixed meaning.\n\nMotion is small and practical. State changes use a 180 ms ease-out, the mobile filter drawer slides in over 220 ms, and everything collapses to instant changes under reduced motion.",
+    "keyCharacteristics": [
+      "Warm paper ground, near-black ink, and one petrol second colour that means \"selected / active\".",
+      "The yearbook plate: a 2px + 1px ink rule, title, unit line, figure, and source footer, with a Chart / Table toggle.",
+      "Hairline rules instead of boxes, and crisp 1px axes.",
+      "One family (Source Sans 3) with tabular, lining numerals everywhere.",
+      "Data colours with fixed meanings that stay readable for colour-blind readers, backed up by line style or hatching.",
+      "Nothing disappears: excluded or unselected data stays visible as faint warm-grey context."
+    ],
+    "rules": [
+      {
+        "name": "The One Meaning Rule",
+        "body": "Petrol means \"selected / active\". If a control is not reporting a selection or an active state, it is ink on paper. Neutral actions like reset, retry, clear-selection and the All / None quick links never use petrol.",
+        "section": "colors"
+      },
+      {
+        "name": "The Nothing Disappears Rule",
+        "body": "Data excluded by a filter, a brush or a focus change stays on screen in context stone (or a light warm grey at low opacity on canvas). It never vanishes.",
+        "section": "colors"
+      },
+      {
+        "name": "The Redundant Encoding Rule",
+        "body": "No data colour carries meaning alone. The average is dashed, an incomplete year is dotted (1.5 3), grade 4 is hatched, and rise words are bold while fall words are regular weight.",
+        "section": "colors"
+      },
+      {
+        "name": "The Single Family Rule",
+        "body": "Source Sans 3 is the only family, and italic is reserved for the source line.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Every number is set in tabular, lining figures so columns and axis labels line up.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Sheet Rule",
+        "body": "Surfaces at rest have no shadow. A shadow means a layer that floats above the sheet for a moment (a tooltip or the drawer), never a card.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** set every chart as a yearbook plate: a 2px + 1px ink rule, title, unit line, figure, a footer with an italic source line, and a Table toggle wherever the data has a table form.",
+      "**Do** keep petrol for selection and active state only, and give neutral actions ink or rule treatments.",
+      "**Do** keep excluded or deselected data visible in context stone instead of removing it.",
+      "**Do** back up every data colour with a second cue: dashes for averages, dots for incomplete years, hatching for grade 4, and weight for rising words.",
+      "**Do** use tabular, lining numerals and right-align numbers in tables.",
+      "**Do** separate regions with 1px rule or rule-soft hairlines and paper tone changes.",
+      "**Do** keep warnings and caveats inline in caution ochre, next to the chart they qualify."
+    ],
+    "donts": [
+      "**Don't** put a chart in a rounded, shadowed card. Plates are ruled, not boxed.",
+      "**Don't** use petrol for decoration, headings, neutral buttons, or as a data series colour.",
+      "**Don't** draw the average or university reference as a solid line, or in any colour other than avg.",
+      "**Don't** add a second type family or a display face. Italic is for the source line only.",
+      "**Don't** put an uppercase label above a plate title. Uppercase tracking is for control-group legends only.",
+      "**Don't** use shadows on surfaces at rest. Only the tooltip and the mobile drawer float.",
+      "**Don't** use the grade ramp or rise / fall colours for anything other than grades and word movement."
+    ]
+  }
+}
