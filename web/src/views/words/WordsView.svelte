@@ -1,6 +1,6 @@
 <script lang="ts">
   import { LEMMA_LANGS, loadWordCube } from '../../lib/data/load';
-  import { buildWordContext, clampComparison, rampFor, scoreWords, topMovers, BASE_MAX, BASE_MIN, type Comparison } from '../../lib/data/excess';
+  import { buildWordContext, clampComparison, rampFor, rankValue, scoreWords, topMovers, BASE_MAX, BASE_MIN, type Comparison } from '../../lib/data/excess';
   import { onDestroy } from 'svelte';
   import { aiFilterActive } from '../../lib/data/select';
   import type { Filters, Theses, WordCube } from '../../lib/data/types';
@@ -78,7 +78,7 @@
     app.wordFrom = k.from; app.wordTo = k.to; app.wordBase = k.base;
   }
   const result = $derived(cube && ctx ? scoreWords(cube, ctx, cmp, app.minFreq) : null);
-  const movers = $derived(result ? topMovers(result.scores, N_EACH) : null);
+  const movers = $derived(result ? topMovers(result.scores, N_EACH, app.wordRank) : null);
   const blockLabel = $derived(cmp.from === cmp.to ? `${cmp.from}` : `${cmp.from}–${cmp.to}`);
   const baselineLabel = $derived(`${cmp.from - cmp.base}–${cmp.from - 1}`);
   const totals = $derived(ctx ? ctx.total : new Array(meta.yearMax - meta.yearMin + 1).fill(0));
@@ -140,7 +140,10 @@
   function choose(w: string) { q = ''; pick(w, false); }
 
   const listRows = $derived(movers ? [...movers.rising, ...movers.falling] : []);
-  const ramp = $derived(rampFor(listRows.map((r) => r.score)));
+  const ramp = $derived(rampFor(listRows.map((r) => rankValue(r, app.wordRank))));
+  const pp = (gap: number) => L.t['words.pp'](L.f.signed(gap * 100, 1));
+  /** the number shown next to a word: the active measure first */
+  const figure = (s: { gap: number; score: number }) => app.wordRank === 'gap' ? pp(s.gap) : L.t['words.ratio'](times(s.score));
   const SIZES = [13, 16, 21, 28, 38];
 </script>
 
@@ -148,12 +151,12 @@
   <Lede howto={L.t['words.howto']}>
     {#if movers && result && !result.reason && movers.rising.length}
       <b>{L.t['words.lede.up'](blockLabel, baselineLabel)}</b>
-      {#each movers.rising.slice(0, 3) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw rise" onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({L.t['words.ratio'](times(s.score))})</span>{/each}{#if movers.falling.length}; {L.t['words.lede.down']}{#each movers.falling.slice(0, 2) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw fall" onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({L.t['words.ratio'](times(s.score))})</span>{/each}{/if}.
+      {#each movers.rising.slice(0, 3) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw rise" onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({figure(s)})</span>{/each}{#if movers.falling.length}; {L.t['words.lede.down']}{#each movers.falling.slice(0, 2) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw fall" onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({figure(s)})</span>{/each}{/if}.
     {:else}
       <span class="muted">{L.t['words.cloud.title']}.</span>
     {/if}
   </Lede>
-  <Plate id="w-cloud" title={L.t['words.cloud.title']} unit={L.t['words.cloud.unit'](blockLabel, baselineLabel)} foot={L.t['words.cloud.foot']} footTable={L.t['words.table.foot']}>
+  <Plate id="w-cloud" title={L.t['words.cloud.title']} unit={L.t['words.cloud.unit'](blockLabel, baselineLabel)} foot={app.wordRank === 'gap' ? L.t['words.cloud.footGap'] : L.t['words.cloud.foot']} footTable={L.t['words.table.foot']}>
     {#snippet tools()}
       {#if app.langs.length > 1}
         <div class="seg" role="group" aria-label={L.t['words.lang']}>
@@ -162,6 +165,10 @@
           {/each}
         </div>
       {/if}
+      <div class="seg" role="group" aria-label={L.t['words.rank.label']}>
+        <button type="button" aria-pressed={app.wordRank === 'gap'} onclick={() => (app.wordRank = 'gap')} title={L.t['words.rank.gapHint']}>{L.t['words.rank.gap']}</button>
+        <button type="button" aria-pressed={app.wordRank === 'ratio'} onclick={() => (app.wordRank = 'ratio')} title={L.t['words.rank.ratioHint']}>{L.t['words.rank.ratio']}</button>
+      </div>
       {#if lemmaAvailable}
         <div class="seg" role="group" aria-label={L.t['words.lemma.label']}>
           <button type="button" aria-pressed={app.lemma} onclick={() => setLemma(true)} title={L.t['words.lemma.onHint']}>{L.t['words.lemma.on']}</button>
@@ -178,14 +185,14 @@
     {/snippet}
     {#snippet table()}
       <table>
-        <thead><tr><th>{L.t['words.col.word']}</th>{#if useLemma}<th class="forms-h">{L.t['words.col.forms']}</th>{/if}<th>{L.t['words.col.obs']}</th><th>{L.t['words.col.exp']}</th><th>{L.t['words.col.times']}</th><th>{L.t['words.col.docs']}</th></tr></thead>
+        <thead><tr><th>{L.t['words.col.word']}</th>{#if useLemma}<th class="forms-h">{L.t['words.col.forms']}</th>{/if}<th>{L.t['words.col.obs']}</th><th>{L.t['words.col.exp']}</th><th>{L.t['words.col.gap']}</th><th>{L.t['words.col.times']}</th><th>{L.t['words.col.docs']}</th></tr></thead>
         <tbody>
           {#each listRows as s (s.word)}
             <tr>
               <td><button type="button" class="wbtn" class:rise={s.score > 0} class:fall={s.score < 0} aria-pressed={selected === s.word} onclick={() => pick(s.word)}>{s.word}</button></td>
               {#if useLemma}<td class="muted forms">{formsOf(s.word).join(', ')}</td>{/if}
               <td>{L.f.pct(s.observed, 2)}</td><td class="muted">{L.f.pct(s.expected, 2)}</td>
-              <td>{L.t['words.ratio'](times(s.score))}</td><td class="muted">{L.f.int(s.docs)}</td>
+              <td>{pp(s.gap)}</td><td>{L.t['words.ratio'](times(s.score))}</td><td class="muted">{L.f.int(s.docs)}</td>
             </tr>
           {/each}
         </tbody>
@@ -235,7 +242,9 @@
       {#if listRows.length}
         <span class="ramp">
           {#each SIZES as sz, i (i)}<span aria-hidden="true" style:font-size="{sz * 0.75}px">Aa</span>{/each}
-          <small>{L.t['words.legend.ratio'](L.f.num(2 ** ramp[0], 1), L.f.num(2 ** ramp[4], 1))}</small>
+          <small>{app.wordRank === 'gap'
+            ? L.t['words.legend.gap'](L.f.num(ramp[0] * 100, 1), L.f.num(ramp[4] * 100, 1))
+            : L.t['words.legend.ratio'](L.f.num(2 ** ramp[0], 1), L.f.num(2 ** ramp[4], 1))}</small>
         </span>
       {/if}
     </div>
@@ -256,7 +265,7 @@
       <p class="msg">{L.t['words.none']}</p>
     {:else}
       {#if result.targetTotal < SMALL_TARGET}<p class="warn" role="status">{L.t['words.small'](result.targetTotal)}</p>{/if}
-      <WordCloud rising={movers.rising} falling={movers.falling} {ramp} sizes={SIZES} {selected} onpick={pick} forms={useLemma ? formsOf : null} />
+      <WordCloud rising={movers.rising} falling={movers.falling} {ramp} sizes={SIZES} {selected} onpick={pick} forms={useLemma ? formsOf : null} mode={app.wordRank} />
     {/if}
   </Plate>
 

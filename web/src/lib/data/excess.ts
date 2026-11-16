@@ -81,7 +81,8 @@ export interface WordScore {
   wi: number;
   observed: number;   // pooled share of theses over the target years
   expected: number;   // trend extrapolated to the target years (thesis-weighted)
-  score: number;      // log2((observed+eps)/(expected+eps))
+  score: number;      // log2((observed+eps)/(expected+eps)): relative change
+  gap: number;        // observed - expected: absolute change in share of theses
   docs: number;       // theses using it in the target years
   fit: LinearFit;
 }
@@ -148,7 +149,7 @@ export function scoreWords(cube: WordCube, ctx: WordContext, cmp: Comparison, mi
     const expected = expDocs / targetTotal;
     if (Math.max(observed, expected) < minFreq) continue;
     const score = Math.log2((observed + EPS) / (expected + EPS));
-    res.scores.push({ word: cube.meta.words[wi], wi, observed, expected, score, docs, fit });
+    res.scores.push({ word: cube.meta.words[wi], wi, observed, expected, score, gap: observed - expected, docs, fit });
   }
   return res;
 }
@@ -162,9 +163,22 @@ export function clampComparison(c: Comparison, yearMin: number, yearMax: number)
   return { from, to, base };
 }
 
-export function topMovers(scores: WordScore[], n: number, minAbs = 0.15) {
-  const rising = scores.filter((s) => s.score >= minAbs).sort((a, b) => b.score - a.score).slice(0, n);
-  const falling = scores.filter((s) => s.score <= -minAbs).sort((a, b) => a.score - b.score).slice(0, n);
+/** How words are ranked and sized:
+ *  'gap'   - absolute change in share of theses (percentage points): favours widely used words
+ *            whose use grew a lot (e.g. klíčový 49 % → 67 %);
+ *  'ratio' - relative change (observed ÷ expected): surfaces rare words that exploded. */
+export type RankMode = 'gap' | 'ratio';
+
+export const rankValue = (s: WordScore, mode: RankMode) => (mode === 'gap' ? s.gap : s.score);
+
+/** Minimum change for a word to count as a mover: 0.2 pp of theses, or a 1.11× ratio. */
+const MIN_MOVE: Record<RankMode, number> = { gap: 0.002, ratio: 0.15 };
+
+export function topMovers(scores: WordScore[], n: number, mode: RankMode = 'gap') {
+  const v = (s: WordScore) => rankValue(s, mode);
+  const min = MIN_MOVE[mode];
+  const rising = scores.filter((s) => v(s) >= min).sort((a, b) => v(b) - v(a)).slice(0, n);
+  const falling = scores.filter((s) => v(s) <= -min).sort((a, b) => v(a) - v(b)).slice(0, n);
   return { rising, falling };
 }
 

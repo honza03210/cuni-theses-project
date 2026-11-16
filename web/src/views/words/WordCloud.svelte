@@ -1,11 +1,11 @@
 <script lang="ts">
   import cloud from 'd3-cloud';
-  import { rampStep, type WordScore } from '../../lib/data/excess';
+  import { rampStep, rankValue, type RankMode, type WordScore } from '../../lib/data/excess';
   import { L } from '../../lib/locale.svelte';
   import Tooltip from '../../lib/ui/Tooltip.svelte';
 
-  interface Props { rising: WordScore[]; falling: WordScore[]; ramp: number[]; sizes: number[]; selected: string | null; onpick: (w: string) => void; forms?: ((w: string) => string[]) | null }
-  let { rising, falling, ramp, sizes, selected, onpick, forms = null }: Props = $props();
+  interface Props { rising: WordScore[]; falling: WordScore[]; ramp: number[]; sizes: number[]; selected: string | null; onpick: (w: string) => void; forms?: ((w: string) => string[]) | null; mode?: RankMode }
+  let { rising, falling, ramp, sizes, selected, onpick, forms = null, mode = 'gap' }: Props = $props();
 
   const FONT = 'Source Sans 3';
   let width = $state(800);
@@ -27,8 +27,8 @@
   $effect(() => {
     const w = width, h = height;
     const input = [
-      ...rising.map((s) => ({ text: s.word, size: sizes[rampStep(s.score, ramp)], rise: true, s })),
-      ...falling.map((s) => ({ text: s.word, size: sizes[rampStep(s.score, ramp)], rise: false, s })),
+      ...rising.map((s) => ({ text: s.word, size: sizes[rampStep(rankValue(s, mode), ramp)], rise: true, s })),
+      ...falling.map((s) => ({ text: s.word, size: sizes[rampStep(rankValue(s, mode), ramp)], rise: false, s })),
     ].sort((a, b) => b.size - a.size || a.text.localeCompare(b.text));
     let cancelled = false;
     Promise.all([document.fonts.load(`700 20px "${FONT}"`), document.fonts.load(`400 20px "${FONT}"`)]).then(() => {
@@ -116,6 +116,7 @@
       {#if forms && forms(hover.s.word).length}<div class="tt-forms">{forms(hover.s.word).join(', ')}</div>{/if}
       <div class="tt-row"><span>{L.t['words.col.obs']}</span><b>{L.f.pct(hover.s.observed, 2)}</b></div>
       <div class="tt-row"><span>{L.t['words.col.exp']}</span><b>{L.f.pct(hover.s.expected, 2)}</b></div>
+      <div class="tt-row"><span>{L.t['words.col.gap']}</span><b>{L.t['words.pp'](L.f.signed(hover.s.gap * 100, 1))}</b></div>
       <div class="tt-row"><span>{L.t['words.col.times']}</span><b>{L.t['words.ratio'](L.f.num(2 ** hover.s.score, 2))}</b></div>
       <div class="tt-row"><span>{L.t['words.col.docs']}</span><b>{L.f.int(hover.s.docs)}</b></div>
     </Tooltip>

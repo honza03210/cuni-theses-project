@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { filterMask, countMask } from './select';
 import { gradesByYear, metricSeries } from './aggregate';
-import { buildWordContext, cellIndex, clampComparison, fitLine, rampFor, rampStep, scoreWords } from './excess';
+import { buildWordContext, cellIndex, clampComparison, fitLine, rampFor, rampStep, scoreWords, topMovers } from './excess';
 import { decode, encode, defaults, type Domain } from '../state/url';
 import type { Theses, WordCube } from './types';
 
@@ -100,6 +100,7 @@ describe('excess vocabulary', () => {
     const ramp = rampFor([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, x.score]);
     expect(rampStep(x.score, ramp)).toBe(4);
     expect(rampStep(0.1, ramp)).toBe(0);
+    expect(x.gap).toBeCloseTo(0.3);
 
     // block 2023–2024 (2024 has no uses of x): pooled observed = 40/200, expected ≈ 0.1
     const b = scoreWords(cube, ctx, { from: 2023, to: 2024, base: 5 }, 0.01);
@@ -109,6 +110,17 @@ describe('excess vocabulary', () => {
     expect(xb.expected).toBeCloseTo(0.1);
     // a 3-year baseline uses 2020–2022 only
     expect(scoreWords(cube, ctx, { from: 2023, to: 2023, base: 3 }, 0.01).baseline).toEqual([2020, 2021, 2022]);
+  });
+
+  it('ranks movers by absolute gap or by ratio', () => {
+    const mk = (word: string, observed: number, expected: number) =>
+      ({ word, wi: 0, observed, expected, gap: observed - expected, score: Math.log2((observed + 0.001) / (expected + 0.001)), docs: 0, fit: { slope: 0, intercept: 0 } });
+    const common = mk('klíčový', 0.67, 0.49);  // +18 pp, 1.37×
+    const rare = mk('zprava', 0.03, 0.01);      // +2 pp, ~2.8×
+    const falls = mk('covid', 0.02, 0.10);
+    expect(topMovers([rare, common, falls], 5, 'gap').rising.map((s) => s.word)).toEqual(['klíčový', 'zprava']);
+    expect(topMovers([rare, common, falls], 5, 'ratio').rising.map((s) => s.word)).toEqual(['zprava', 'klíčový']);
+    expect(topMovers([rare, common, falls], 5, 'gap').falling.map((s) => s.word)).toEqual(['covid']);
   });
 
   it('clamps comparisons into valid ranges', () => {
@@ -129,7 +141,7 @@ describe('url state', () => {
   const d: Domain = { facCodes: ['a', 'b', 'c'], langs: ['cs', 'en', 'sk', 'other'], yearMin: 2006, yearMax: 2026, metrics: ['m1', 'm2'] };
   it('round-trips', () => {
     const s = { ...defaults(d), view: 'grades' as const, locale: 'cs' as const, fac: [0, 2], yearFrom: 2010, yearTo: 2024,
-      langs: [0, 1], ai: [1], metric: 'm2', word: 'čeština', wordLang: 1, minFreq: 0.02, wordFrom: 2023, wordTo: 2025, wordBase: 4, lemma: false, gradeYear: 2020,
+      langs: [0, 1], ai: [1], metric: 'm2', word: 'čeština', wordLang: 1, minFreq: 0.02, wordFrom: 2023, wordTo: 2025, wordBase: 4, lemma: false, wordRank: 'ratio' as const, gradeYear: 2020,
       brushes: { mattr: [0.7, 0.75] as [number, number] }, table: { trends: true } };
     expect(decode(encode(s, d), d)).toEqual(s);
   });

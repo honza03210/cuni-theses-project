@@ -304,3 +304,4 @@ aggregation code); the other takes phase 1's word cube and 3c.
   - Faculty codes in URLs are case-insensitive.
   - Czech is picked automatically for cs/sk browsers.
 - **Type:** plate titles are 20px and the answer line 21px, over 16px body text.
+- **Word ranking (2026-11-16):** the cloud ranks and sizes words by the absolute change in share of theses (percentage points, observed − expected) by default. Ratios over-reward rare words (1 % → 3 % = 3×, while *klíčový* 49 % → 67 % = 1.4×). A toggle switches to the relative change (×), as in Kobak et al. 2024, which uses both measures. The answer line, table and tooltip show both numbers. Movers need ≥ 0.2 pp (gap mode) or ≥ 1.11× (ratio mode).

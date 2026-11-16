@@ -18,6 +18,7 @@ export interface AppState {
   wordTo: number;           // word cloud: last target year
   wordBase: number;         // word cloud: baseline length in years
   lemma: boolean;           // word cloud: merge inflected forms (lemmas)
+  wordRank: 'gap' | 'ratio'; // word cloud: rank by absolute (pp) or relative (×) change
   gradeYear: number | null;
   brushes: Record<string, [number, number]>;
   table: Record<string, boolean>;
@@ -50,6 +51,7 @@ export function defaults(d: Domain): AppState {
     wordTo: d.yearMax - 1,
     wordBase: 5,
     lemma: true,
+    wordRank: 'gap',
     gradeYear: null,
     brushes: {},
     table: {},
@@ -78,6 +80,7 @@ export function encode(s: AppState, d: Domain): string {
   if (s.wordFrom !== def.wordFrom || s.wordTo !== def.wordTo) p.set('wy', s.wordFrom === s.wordTo ? `${s.wordFrom}` : `${s.wordFrom}-${s.wordTo}`);
   if (s.wordBase !== def.wordBase) p.set('wb', String(s.wordBase));
   if (!s.lemma) p.set('wf', '1');
+  if (s.wordRank !== def.wordRank) p.set('wr', s.wordRank);
   if (s.gradeYear !== null) p.set('gy', String(s.gradeYear));
   const b = Object.entries(s.brushes)
     .map(([k, [lo, hi]]) => `${k}:${+lo.toPrecision(4)}:${+hi.toPrecision(4)}`);
@@ -133,6 +136,7 @@ export function decode(query: string, d: Domain): AppState {
   const wb = intIn(p.get('wb'), 3, 8);
   if (wb !== null) s.wordBase = wb;
   if (p.get('wf') === '1') s.lemma = false;
+  if (p.get('wr') === 'ratio') s.wordRank = 'ratio';
   for (const part of (p.get('b') ?? '').split(';')) {
     const [k, lo, hi] = part.split(':');
     if (k && Number.isFinite(+lo) && Number.isFinite(+hi) && lo !== '' && hi !== '') {

@@ -68,13 +68,14 @@
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    gap: var(--s4);
+    flex-wrap: wrap;
+    gap: var(--s2) var(--s4);
     padding: 10px var(--s4);
     background: var(--plate-head);
     border-bottom: 1px solid var(--rule);
     border-radius: 4px 4px 0 0;
   }
-  .titles { min-width: 0; }
+  .titles { min-width: 0; flex: 1 1 340px; }
   h2 {
     margin: 0;
     font-size: var(--fs-xl);
