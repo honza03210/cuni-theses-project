@@ -9,11 +9,15 @@
     unit?: string;
     foot?: string;
     tools?: Snippet;
+    /** controls shown above the body in both chart and table mode */
+    lead?: Snippet;
+    /** footnote for table mode (defaults to foot) */
+    footTable?: string;
     table?: Snippet;
     children: Snippet;
     grow?: boolean;
   }
-  let { id, title, unit, foot, tools, table, children, grow = false }: Props = $props();
+  let { id, title, unit, foot, tools, lead, footTable, table, children, grow = false }: Props = $props();
 
   const showTable = $derived(!!table && !!app.table[id]);
   function setTable(v: boolean) {
@@ -39,6 +43,7 @@
       {/if}
     </div>
   </header>
+  {#if lead}<div class="lead">{@render lead()}</div>{/if}
   <div class="body">
     {#if showTable}
       <div class="table-wrap">{@render table!()}</div>
@@ -47,7 +52,7 @@
     {/if}
   </div>
   <footer class="foot">
-    {#if foot}<span>{foot}</span>{/if}
+    {#if showTable && footTable}<span>{footTable}</span>{:else if foot}<span>{foot}</span>{/if}
     <span class="src">{L.t['plate.source']}</span>
   </footer>
 </section>
@@ -72,9 +77,10 @@
   .titles { min-width: 0; }
   h2 {
     margin: 0;
-    font-size: var(--fs-lg);
+    font-size: var(--fs-xl);
     font-weight: 700;
-    line-height: 1.25;
+    line-height: 1.2;
+    letter-spacing: -0.005em;
     text-wrap: balance;
   }
   .unit {
@@ -89,6 +95,7 @@
     flex-wrap: wrap;
     justify-content: flex-end;
   }
+  .lead { padding: var(--s3) 0 0; }
   .body {
     position: relative;
     padding: var(--s3) 0;

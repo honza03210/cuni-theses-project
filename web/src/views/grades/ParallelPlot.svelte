@@ -56,6 +56,29 @@
   });
 
   let hidden = $state<number[]>([]);
+  let showLines = $state(true);
+
+  /** Median and quartiles per grade per axis (normalised 0..1), over the selected theses. */
+  const bands = $derived.by(() => {
+    const A = AXES.length;
+    const out: { g: number; n: number; q1: number[]; med: number[]; q3: number[] }[] = [];
+    for (let g = 1; g <= 4; g++) {
+      if (hidden.includes(g)) continue;
+      const rows: number[] = [];
+      for (let r = 0; r < data.n; r++) if (data.grade[r] === g && selection.sel[r]) rows.push(r);
+      if (rows.length < 20) continue;
+      const q1: number[] = [], med: number[] = [], q3: number[] = [];
+      const centre = 1 - (g - 0.5) / 4;
+      for (let a = 0; a < A; a++) {
+        if (a === 0) { q1.push(centre); med.push(centre); q3.push(centre); continue; }
+        const vals = Float32Array.from(rows, (r) => data.norm[r * A + a]).sort();
+        const q = (p: number) => vals[Math.min(vals.length - 1, Math.floor(p * vals.length))];
+        q1.push(q(0.25)); med.push(q(0.5)); q3.push(q(0.75));
+      }
+      out.push({ g, n: rows.length, q1, med, q3 });
+    }
+    return out;
+  });
   let live = $state<Record<string, [number, number]>>({ ...app.brushes });
   $effect(() => { live = { ...app.brushes }; });
 
@@ -132,17 +155,16 @@
       ctx.drawImage(off, 0, 0);
       ctx.restore();
     };
-    // context layer: deselected theses stay as faint context (nothing disappears)
-    if (any || hidden.length) layer((r) => !sel[r], alpha, CONTEXT_HEX, 0.3);
-    const a2 = any ? Math.min(0.6, alpha * 1.8) : alpha;
-    // Rarer grades get more ink ((1/share)^0.12) so all four stay visible; stated in the footnote.
-    const per = [0, 0, 0, 0];
-    for (let r = 0; r < n; r++) per[grade[r] - 1]++;
-    const boost = per.map((c) => (c ? Math.pow(n / (4 * c), 0.12) : 1));
+    if (!showLines) return;
+    // context layer: deselected theses stay as faint grey context (nothing disappears)
+    if (any || hidden.length) layer((r) => !sel[r], alpha, CONTEXT_HEX, 0.22);
+    const a2 = any ? Math.min(0.6, alpha * 1.6) : alpha;
+    // Every thesis gets the same ink, so the cloud shows the true proportions of grades.
+    // Lines sit under the median/quartile bands (SVG), which carry the comparison.
     for (let g = 1; g <= 4; g++) {
       // light blue (grade 2) needs extra weight against the paper ground
-      const ga = (g === 2 ? a2 * 1.6 : a2) * boost[g - 1];
-      layer((r) => grade[r] === g && sel[r] === 1, ga, GRADE_HEX[g - 1], any ? 0.9 : 0.72);
+      const ga = g === 2 ? a2 * 1.6 : a2;
+      layer((r) => grade[r] === g && sel[r] === 1, ga, GRADE_HEX[g - 1], 0.55);
     }
   }
   const offs: HTMLCanvasElement[] = [];
@@ -157,7 +179,7 @@
   }
   $effect(() => {
     // dependencies
-    void data; void selection; void width; void canvas;
+    void data; void selection; void width; void canvas; void showLines;
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
@@ -250,6 +272,7 @@
         </button>
       {/each}
     </div>
+    <label class="lines"><input type="checkbox" bind:checked={showLines} />{L.t['grades.par.lines']}</label>
     <span class="selcount" aria-live="polite">{L.t['grades.par.selected'](L.f.int(selection.count), L.f.int(data.n))}</span>
     {#if selection.any}<button type="button" class="clear" onclick={clearBrushes}>{L.t['grades.par.clear']}</button>{/if}
   {/snippet}
@@ -265,10 +288,26 @@
     </table>
   {/snippet}
 
+  <p class="bandkey">
+    <svg width="26" height="12" aria-hidden="true"><rect x="0" y="2" width="26" height="8" fill="var(--ink-3)" opacity="0.3"/><line x1="0" x2="26" y1="6" y2="6" stroke="var(--ink)" stroke-width="2"/></svg>
+    <span>{L.t['grades.par.bands']}</span>
+    {#each [1, 2, 3, 4] as g (g)}
+      <span class="dk"><svg width="24" height="8" aria-hidden="true"><line x1="0" x2="24" y1="4" y2="4" stroke={GRADE_HEX[g - 1]} stroke-width="2.4" stroke-dasharray={['', '9 3', '5 3', '2 3'][g - 1]}/></svg>{g}</span>
+    {/each}
+  </p>
+  <div class="scroll">
   <div class="wrap" bind:clientWidth={width} style:height="{height}px">
     <canvas bind:this={canvas} style:width="{width}px" style:height="{height}px" aria-hidden="true"></canvas>
     <svg {width} {height} role="group" aria-label={L.t['grades.par.title']}>
       <g transform="translate({m.left},{m.top})">
+        <!-- rare grades first, so the common grades' medians stay on top; each grade has its own dash -->
+        {#each [...bands].reverse() as b (b.g)}
+          {@const xs = AXES.map((_, a) => ax(a))}
+          <path class="band" class:hatched={b.g === 4} fill={GRADE_HEX[b.g - 1]}
+            d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.q3[a])}`).join('L') + 'L' + xs.map((x, a) => `${x},${ih * (1 - b.q1[a])}`).reverse().join('L') + 'Z'} />
+          <path class="median-halo" d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.med[a])}`).join('L')} />
+          <path class="median" stroke={GRADE_HEX[b.g - 1]} stroke-dasharray={['', '9 3', '5 3', '2 3'][b.g - 1]} d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.med[a])}`).join('L')} />
+        {/each}
         {#each AXES as k, a (k)}
           {@const lines = splitLabel(axisLabel(k), iw / (AXES.length - 1))}
           <g transform="translate({ax(a)},0)">
@@ -288,15 +327,24 @@
       </g>
     </svg>
   </div>
+  </div>
 </Plate>
 
 <style>
-  .wrap { position: relative; width: 100%; }
-  canvas, svg { position: absolute; left: 0; top: 0; display: block; }
-  svg { overflow: visible; }
+  .scroll { overflow-x: auto; }
+  .wrap { position: relative; width: 100%; min-width: 660px; }
+  .band { fill-opacity: 0.13; stroke: none; }
+  .median { fill: none; stroke-width: 2.4; stroke-linejoin: round; }
+  .median-halo { fill: none; stroke: var(--paper); stroke-width: 5; stroke-linejoin: round; opacity: 0.8; }
+  .dk { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; }
+  .bandkey { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 4px; font-size: var(--fs-sm); color: var(--ink-2); }
+  .lines { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--ink-2); cursor: pointer; }
+  .lines input { margin: 0; }
+  .wrap > canvas, .wrap > svg { position: absolute; left: 0; top: 0; display: block; }
+  .wrap > svg { overflow: visible; }
   .axis-line { stroke: var(--ink); stroke-width: 1; shape-rendering: crispEdges; }
   .tick { stroke: var(--ink); shape-rendering: crispEdges; }
-  .tl { font-size: 10px; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
+  .tl { font-size: 10px; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 2.5px; stroke-opacity: 0.9; }
   .al { font-size: 12px; font-weight: 600; fill: var(--ink); }
   .brush :global(.selection) { fill: var(--petrol); fill-opacity: 0.12; stroke: var(--petrol); stroke-width: 1.5; }
   .brush :global(.overlay) { cursor: crosshair; }

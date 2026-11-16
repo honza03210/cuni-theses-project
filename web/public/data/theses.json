@@ -282,12 +282,12 @@
     "en": "Lexical diversity"
    },
    "unit": {
-    "cs": "MATTR",
-    "en": "MATTR"
+    "cs": "podíl různých slov (0–1)",
+    "en": "share of distinct words (0–1)"
    },
    "desc": {
-    "cs": "Průměrný poměr různých slov ke všem slovům v oknech po 500 slovech.",
-    "en": "Mean type–token ratio over 500-word windows."
+    "cs": "Jak pestrou slovní zásobu text používá: podíl různých slov v každém úseku 500 slov.",
+    "en": "How varied the vocabulary is: share of distinct words in each 500-word stretch."
    },
    "decimals": 3,
    "p01": 0.38993632793426514,
@@ -300,12 +300,12 @@
     "en": "Phrase repetition"
    },
    "unit": {
-    "cs": "podíl trigramů",
-    "en": "trigram share"
+    "cs": "podíl opakovaných frází",
+    "en": "share of repeated phrases"
    },
    "desc": {
-    "cs": "Podíl trojic slov, které se v okně 2 000 slov opakují.",
-    "en": "Share of word trigrams repeated within a 2,000-word window."
+    "cs": "Podíl tříslovných frází, které se opakují v rámci 2 000 slov.",
+    "en": "Share of three-word phrases repeated within 2,000 words."
    },
    "decimals": 3,
    "p01": 0.01479415874928236,

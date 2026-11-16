@@ -2,7 +2,6 @@
   import { scaleBand, scaleLinear } from 'd3';
   import type { GradeFac } from '../../lib/data/aggregate';
   import type { Faculty } from '../../lib/data/types';
-  import { MIN_CELL_N } from '../../lib/data/select';
   import { GRADE_VARS } from '../../lib/chart';
   import { L } from '../../lib/locale.svelte';
   import Tooltip from '../../lib/ui/Tooltip.svelte';
@@ -12,8 +11,14 @@
 
   // Horizontal 100 % bars: one row per faculty, so every label stays readable.
   let width = $state(420);
-  const sorted = $derived([...rows].filter((r) => r.total > 0)
-    .sort((a, b) => b.counts[0] / b.total - a.counts[0] / a.total));
+  // Faculties with fewer than SMALL theses are unreliable: faded and listed after the others,
+  // so a tiny faculty never tops what reads like a ranking.
+  const SMALL = 50;
+  const byShare = (a: GradeFac, b: GradeFac) => b.counts[0] / b.total - a.counts[0] / a.total;
+  const sorted = $derived([
+    ...rows.filter((r) => r.total >= SMALL).sort(byShare),
+    ...rows.filter((r) => r.total > 0 && r.total < SMALL).sort(byShare),
+  ]);
   const bars = $derived(all.total > 0 ? [all, ...sorted] : sorted);
   const rowH = 18;
   const m = { top: 4, right: 52, bottom: 22, left: 52 };
@@ -46,7 +51,7 @@
         <text x={x(t)} y={ih + 15} text-anchor="middle">{t * 100} %</text>
       {/each}
       {#each bars as b (b.fac)}
-        {@const small = b.total < MIN_CELL_N}
+        {@const small = b.total < SMALL}
         <g class="bar" class:small class:all={b.fac < 0} transform="translate(0,{y(b.fac)})"
           onpointermove={(e) => (hover = { r: b, cx: e.clientX, cy: e.clientY })}
           onpointerleave={() => (hover = null)} role="presentation">
@@ -71,7 +76,7 @@
         <div class="tt-row"><span><span class="swatch" style:background={GRADE_VARS[g]}></span>{g + 1} {L.t[`grade.${g + 1}` as 'grade.1']}</span><b>{L.f.pct(hover.r.counts[g] / hover.r.total)}</b></div>
       {/each}
       <div class="tt-row"><span>{L.t['common.n']}</span><b>{L.f.int(hover.r.total)}</b></div>
-      {#if hover.r.total < MIN_CELL_N}<div class="tt-row"><span>{L.t['common.smallSample']}</span></div>{/if}
+      {#if hover.r.total < SMALL}<div class="tt-row"><span>{L.t['common.smallSample']}</span></div>{/if}
     </Tooltip>
   {/if}
 </div>

@@ -138,3 +138,34 @@ describe('url state', () => {
     expect(decode('v=nope&y=3000-1&m=zzz&gy=abc', d)).toEqual(defaults(d));
   });
 });
+
+import { gradeShift, magnitude, metricShift } from './answers';
+
+describe('answer lines', () => {
+  it('measures a before/after shift and counts faculties that rose', () => {
+    const rows: { fac: number; year: number; v: number; grade?: number }[] = [];
+    for (let i = 0; i < 40; i++) {
+      rows.push({ fac: 0, year: 2020, v: 1 + (i % 2) * 0.2, grade: i < 20 ? 1 : 2 });
+      rows.push({ fac: 0, year: 2024, v: 1.3 + (i % 2) * 0.2, grade: i < 30 ? 1 : 4 });
+      rows.push({ fac: 1, year: 2020, v: 2, grade: 1 });
+      rows.push({ fac: 1, year: 2024, v: 1.9, grade: 1 });
+    }
+    const t = makeTheses(rows);
+    const m = filterMask(t, ALL);
+    const s = metricShift(t, m, 'm', 2025)!;
+    expect(s.pre).toBeCloseTo(1.55);
+    expect(s.post).toBeCloseTo(1.65);
+    expect(s.facCompared).toBe(2);
+    expect(s.facUp).toBe(1);
+    const g = gradeShift(t, m, 2025)!;
+    expect(g.pre[0]).toBeCloseTo(60 / 80);
+    expect(g.post[1]).toBeCloseTo(10 / 80);
+    expect(magnitude(0.01)).toBe('none');
+    expect(magnitude(0.16)).toBe('slight');
+    expect(magnitude(-0.7)).toBe('strong');
+  });
+  it('returns null when a window has no data', () => {
+    const t = makeTheses([{ fac: 0, year: 2010, v: 1 }]);
+    expect(metricShift(t, filterMask(t, ALL), 'm', 2025)).toBeNull();
+  });
+});

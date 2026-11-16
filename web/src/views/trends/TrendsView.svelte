@@ -7,6 +7,8 @@
   import { L } from '../../lib/locale.svelte';
   import Plate from '../../lib/ui/Plate.svelte';
   import TrendPanel from './TrendPanel.svelte';
+  import Lede from '../../lib/ui/Lede.svelte';
+  import { magnitude, metricShift } from '../../lib/data/answers';
 
   interface Props { theses: Theses; mask: Uint8Array }
   let { theses, mask }: Props = $props();
@@ -36,12 +38,26 @@
   const mixedLang = $derived(app.langs.length > 1);
   const hasData = $derived(series.overall.length > 0);
   const fmtV = (v: number) => L.f.num(v, metric.decimals);
+  const shift = $derived(metricShift(theses, mask, metric.key, Math.min(app.yearTo, meta.yearMax - 1)));
+  const phrase = $derived.by(() => {
+    if (!shift) return '';
+    const m = magnitude(shift.d);
+    return m === 'none' ? L.t['mag.none'] : L.t[`mag.${m}.${shift.post >= shift.pre ? 'up' : 'down'}` as 'mag.slight.up'];
+  });
   const tableYears = $derived(Array.from({ length: app.yearTo - app.yearFrom + 1 }, (_, i) => app.yearFrom + i));
   const byYear = (pts: { year: number; mean: number; n: number }[] | undefined, y: number) => pts?.find((p) => p.year === y);
 </script>
 
 <div class="trends">
   <div class="main">
+    <Lede howto={L.t['trends.howto']}>
+      {#if shift}
+        <b>{L.t['trends.lede'](L.pick(metric.label), phrase, fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit), L.f.pct(shift.rel, 1).replace(/^(?=\d)/, '+'), shift.postTo)}</b>
+        {#if shift.facCompared > 1}<span class="muted"> {L.t['trends.lede.facs'](shift.facUp, shift.facCompared)}</span>{/if}
+      {:else}
+        <span class="muted">{L.t['trends.lede.na']}</span>
+      {/if}
+    </Lede>
     <Plate id="trends" title={L.t['trends.title'](L.pick(metric.label))} unit={`${L.pick(metric.unit)} · ${app.yearFrom}–${app.yearTo}`} foot={L.t['trends.foot']}>
       {#snippet tools()}
         <ul class="legend" aria-label="Legend">
@@ -74,7 +90,7 @@
 
       {#if mixedLang}<p class="warn" role="status">{L.t['trends.mixedLang']}</p>{/if}
       {#if !facs.length || !hasData}
-        <p class="empty">{L.t['common.empty']}</p>
+        <p class="empty">{L.t['common.empty']} <button type="button" class="fix" onclick={() => (app.fac = meta.faculties.map((_, i) => i))}>{L.t['common.selectAll']}</button></p>
       {:else}
         <div class="grid" class:single={facs.length === 1}>
           {#each facs as f, fi (f)}
@@ -120,6 +136,7 @@
   .legend li { display: inline-flex; align-items: center; gap: 6px; }
   .warn { margin: 0 0 var(--s3); font-size: var(--fs-sm); color: var(--warn); font-weight: 600; }
   .empty { color: var(--ink-2); padding: var(--s6) 0; }
+  .fix { margin-left: 6px; border: 1px solid var(--ink-3); background: var(--paper); color: var(--ink); border-radius: 3px; padding: 3px 10px; font-size: var(--fs-sm); cursor: pointer; }
 
   .picker { position: sticky; top: calc(var(--band-h, 58px) + var(--s5)); }
   fieldset { border: 0; margin: 0; padding: 0; }

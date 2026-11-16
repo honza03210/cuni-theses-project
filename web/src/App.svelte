@@ -43,7 +43,10 @@
     error = null;
     try {
       const t = await loadTheses();
-      assign(decode(location.search, domainOf(t)));
+      const st = decode(location.search, domainOf(t));
+      // no explicit language in the link: Czech and Slovak browsers get Czech
+      if (!new URLSearchParams(location.search).has('l') && /^(cs|sk)\b/i.test(navigator.language ?? '')) st.locale = 'cs';
+      assign(st);
       theses = t;
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
@@ -85,6 +88,24 @@
   }
 </script>
 
+{#snippet prefsCtl()}
+      <div class="theme" role="group" aria-label={L.t['theme.label']}>
+    <button type="button" aria-pressed={theme === 'light'} title={L.t['theme.light']} onclick={() => setTheme('light')}>
+      <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg>
+      <span class="sr-only">{L.t['theme.light']}</span>
+    </button>
+    <button type="button" aria-pressed={theme === 'dark'} title={L.t['theme.dark']} onclick={() => setTheme('dark')}>
+      <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M13.5 9.6A5.6 5.6 0 0 1 6.4 2.5a5.6 5.6 0 1 0 7.1 7.1Z"/></svg>
+      <span class="sr-only">{L.t['theme.dark']}</span>
+    </button>
+  </div>
+  <div class="locale" role="group" aria-label={L.t['lang.switch']}>
+    <button type="button" lang="cs" aria-pressed={app.locale === 'cs'} onclick={() => (app.locale = 'cs')}>CS</button>
+    <button type="button" lang="en" aria-pressed={app.locale === 'en'} onclick={() => (app.locale = 'en')}>EN</button>
+  </div>
+{/snippet}
+
+<a class="skip" href="#view-panel">{L.t['common.skip']}</a>
 <div class="shell" class:drawer-open={drawerOpen} style:--band-h="{bandH}px">
   <header class="band" bind:clientHeight={bandH}>
     <div class="brand">
@@ -107,24 +128,12 @@
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         {L.t['filters.open']}
       </button>
-      <div class="theme" role="group" aria-label={L.t['theme.label']}>
-        <button type="button" aria-pressed={theme === 'light'} title={L.t['theme.light']} onclick={() => setTheme('light')}>
-          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg>
-          <span class="sr-only">{L.t['theme.light']}</span>
-        </button>
-        <button type="button" aria-pressed={theme === 'dark'} title={L.t['theme.dark']} onclick={() => setTheme('dark')}>
-          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M13.5 9.6A5.6 5.6 0 0 1 6.4 2.5a5.6 5.6 0 1 0 7.1 7.1Z"/></svg>
-          <span class="sr-only">{L.t['theme.dark']}</span>
-        </button>
-      </div>
-      <div class="locale" role="group" aria-label={L.t['lang.switch']}>
-        <button type="button" lang="cs" aria-pressed={app.locale === 'cs'} onclick={() => (app.locale = 'cs')}>CS</button>
-        <button type="button" lang="en" aria-pressed={app.locale === 'en'} onclick={() => (app.locale = 'en')}>EN</button>
-      </div>
+      <div class="prefs band-prefs">{@render prefsCtl()}</div>
     </div>
   </header>
 
   <aside id="filters" class="filters" aria-label={L.t['filters.title']}>
+    <div class="prefs drawer-prefs">{@render prefsCtl()}</div>
     {#if theses}
       <FilterPanel {theses} {matched} yearsLocked={app.view === 'words'}
         aiApplies={app.view === 'words' || app.yearTo >= theses.meta.aiYear} />
@@ -135,7 +144,7 @@
   {/if}
 
   <main>
-  <div id="view-panel" role="tabpanel" aria-labelledby={tabIds[app.view]}>
+  <div id="view-panel" role="tabpanel" tabindex="-1" aria-labelledby={tabIds[app.view]}>
     {#if error}
       <div class="state">
         <p><strong>{L.t['common.loadError']}</strong></p>
@@ -196,6 +205,7 @@
   .tabs button:hover { color: var(--band-ink); background: var(--band-hover); }
   .tabs button[aria-selected='true'] { background: var(--paper); color: var(--ink); }
   .tabs button:focus-visible { outline-color: var(--band-ink); outline-offset: -3px; }
+  .tabs button[aria-selected='true']:focus-visible { outline-color: var(--petrol); }
 
   .right { display: flex; align-items: center; gap: var(--s3); align-self: center; }
   .locale, .theme { display: inline-flex; border: 1px solid var(--band-line); border-radius: 3px; overflow: hidden; }
@@ -246,6 +256,15 @@
   .skel.short { height: 180px; }
   @keyframes pulse { 50% { opacity: 0.55; } }
   .scrim { display: none; }
+  .prefs { display: flex; align-items: center; gap: var(--s3); }
+  .drawer-prefs { display: none; }
+  #view-panel:focus { outline: none; }
+  .skip {
+    position: fixed; left: 12px; top: -60px; z-index: 100;
+    background: var(--ink); color: var(--paper); padding: 8px 14px; border-radius: 3px;
+    font-weight: 600; text-decoration: none; transition: top var(--t) var(--ease);
+  }
+  .skip:focus { top: 12px; }
 
   @media (max-width: 1023px) {
     .shell { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'band' 'main'; }
@@ -262,5 +281,16 @@
     .drawer-open .filters { transform: none; }
     .scrim { display: block; position: fixed; inset: 0; z-index: 30; border: 0; background: rgb(28 31 36 / 0.3); }
     main { padding: var(--s4) var(--s4) var(--s6); }
+  }
+  @media (max-width: 639px) {
+    .band-prefs { display: none; }
+    .brand { white-space: normal; }
+    h1 { font-size: var(--fs-md); }
+    /* in the drawer the switches sit on paper, not on the band */
+    .drawer-prefs {
+      display: flex; padding: var(--s3) var(--s4); border-bottom: 1px solid var(--rule);
+      --band-line: var(--rule); --band-ink: var(--ink); --band-ink-2: var(--ink-2); --band-hover: var(--paper-3); --petrol-deep: var(--paper);
+    }
+    .drawer-prefs :global(button) { min-height: 40px; min-width: 44px; justify-content: center; }
   }
 </style>

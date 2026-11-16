@@ -8,6 +8,8 @@
   import GradeArea from './GradeArea.svelte';
   import GradeBars from './GradeBars.svelte';
   import ParallelPlot from './ParallelPlot.svelte';
+  import Lede from '../../lib/ui/Lede.svelte';
+  import { gradeShift } from '../../lib/data/answers';
 
   interface Props { theses: Theses; mask: Uint8Array }
   let { theses, mask }: Props = $props();
@@ -21,6 +23,7 @@
   const allRow = $derived({ fac: -1, counts: sumCounts(byFac), total: byFac.reduce((s, r) => s + r.total, 0) });
   const hasData = $derived(byYear.some((r) => r.total > 0));
   const pct = (c: number, t: number) => (t ? L.f.pct(c / t) : '–');
+  const gshift = $derived(gradeShift(theses, mask, Math.min(app.yearTo, meta.yearMax - 1)));
 </script>
 
 {#snippet gradeLegend()}
@@ -32,8 +35,15 @@
 {/snippet}
 
 {#if !hasData}
-  <p class="empty">{L.t['common.empty']}</p>
+  <p class="empty">{L.t['common.empty']} <button type="button" class="fix" onclick={() => (app.fac = meta.faculties.map((_, i) => i))}>{L.t['common.selectAll']}</button></p>
 {:else}
+  <Lede howto={L.t['grades.howto']}>
+    {#if gshift}
+      <b>{L.t['grades.lede'](L.f.pct(gshift.pre[0]), L.f.pct(gshift.post[0]), L.f.pct(gshift.pre[1]), L.f.pct(gshift.post[1]), gshift.postTo)}</b>
+    {:else}
+      <span class="muted">{L.t['trends.lede.na']}</span>
+    {/if}
+  </Lede>
   <div class="grades">
     <div class="area">
       <Plate id="g-area" title={L.t['grades.area.title']} unit={`${L.t['grades.area.unit']} · ${app.yearFrom}–${app.yearTo}`}
@@ -53,7 +63,7 @@
       </Plate>
     </div>
     <div class="bars">
-      <Plate id="g-bars" title={L.t['grades.bars.title'](barYear)} unit={`${L.t['grades.bars.unit']} · ${L.t['grades.bars.sort']}`}>
+      <Plate id="g-bars" title={L.t['grades.bars.title'](barYear)} unit={`${L.t['grades.bars.unit']} · ${L.t['grades.bars.sort']}`} foot={L.t['grades.bars.small']}>
         {#snippet table()}
           <table>
             <thead><tr><th>{L.t['common.faculty']}</th>{#each [1, 2, 3, 4] as g (g)}<th>{g}</th>{/each}<th>{L.t['common.n']}</th></tr></thead>
@@ -83,6 +93,7 @@
   .area > :global(.plate), .bars > :global(.plate) { flex: 1 1 auto; }
   .par { grid-column: 1 / -1; min-width: 0; }
   .empty { color: var(--ink-2); padding: var(--s6) 0; }
+  .fix { margin-left: 6px; border: 1px solid var(--ink-3); background: var(--paper); color: var(--ink); border-radius: 3px; padding: 3px 10px; font-size: var(--fs-sm); cursor: pointer; }
   .glegend { display: flex; flex-wrap: wrap; gap: 2px 14px; list-style: none; margin: 0 0 var(--s3); padding: 0; font-size: var(--fs-sm); color: var(--ink-2); }
   .glegend li { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
   .sw { width: 11px; height: 11px; border-radius: 1px; box-shadow: inset 0 0 0 1px var(--swatch-edge); }

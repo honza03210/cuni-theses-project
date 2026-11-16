@@ -319,3 +319,7 @@ A paper box with a 1px ink border and the float shadow, at most 280px wide. It h
 ## Themes
 
 A light theme (the paper sheet) and a dark theme (charcoal sheet, light ink) share every rule above. The dark theme follows the OS preference until the viewer picks one with the sun/moon switch in the masthead; the pick is stored in `localStorage` (`cuni-theses-theme`) and applied before first paint by an inline script in `index.html`. Dark overrides live in `web/src/app.css` under `@media (prefers-color-scheme: dark)` (guarded by `:root:not([data-theme='light'])`) and `:root[data-theme='dark']`: paper #16191d / #1d2126 / #272c32, ink #e9e6df / #bdbab3 / #9a978f, petrol #6fb3cd (with dark `--on-petrol`), rise #6aaeea, fall #e8925a, avg #f2724a. Grade colours are shared by both themes. Masthead text uses its own `--band-ink` tokens so the selection colour can change per theme without touching the band.
+
+## Answer line (Lede)
+
+Each view opens with one computed, plain-language finding in the Lede role (21px, bold clause plus muted context). Below it is a "How to read this view" disclosure (`web/src/lib/ui/Lede.svelte`). The finding comes from `web/src/lib/data/answers.ts` and is never hand-written. Words in it are links that select the word, coloured with `--rise` / `--fall`. Plate titles step up to 20px, so the scale reads: answer line 21 → plate title 20 → body 16 → controls 13.

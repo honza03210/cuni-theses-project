@@ -283,3 +283,24 @@ aggregation code); the other takes phase 1's word cube and 3c.
   with a dotted whole-university reference line.
 - **d3-cloud is pinned to 1.x**: 2.0 (released during the build) replaced the
   API.
+
+### Critique round 1 (2026-11-16): changes
+- **Answer line per view** (`lib/ui/Lede.svelte`, `lib/data/answers.ts`): one computed finding (before = 2018–2022, after = 2023–last complete year) plus "How to read this view".
+- **New defaults:** Words compares 2023–2025 with the 2018–2022 trend. Trends opens on long-word share, which moved most relative to its spread (d ≈ +0.16; every measure moved only slightly).
+- **Words:**
+  - Ratios ("2.8×") replace log₂ in the legend, table and tooltips.
+  - Word search, including inflected forms.
+  - Clicking a word scrolls its detail into view.
+  - The cloud is fitted to its height and is a single tab stop with arrow-key navigation.
+  - The compare controls stay visible in table mode.
+- **Parallel plot:** lines drawn in true proportion (no rarity boost). A median and middle-half band per grade, each grade with its own dash. "Individual theses" toggle. Scrolls sideways on narrow screens.
+- **Grade bars:** faculties with fewer than 50 theses are faded and listed last.
+- **Mobile and accessibility:**
+  - Below 640px, the theme and language switches move into the drawer, so there is no horizontal overflow.
+  - Larger tap targets in the drawer.
+  - Skip link to the chart, and a focus ring on the active tab.
+  - The Years note is no longer greyed out.
+  - The ChatGPT label has a dark halo.
+  - Faculty codes in URLs are case-insensitive.
+  - Czech is picked automatically for cs/sk browsers.
+- **Type:** plate titles are 20px and the answer line 21px, over 16px body text.

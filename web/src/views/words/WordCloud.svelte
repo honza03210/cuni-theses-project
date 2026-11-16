@@ -58,32 +58,57 @@
 
   let hover: { s: WordScore; cx: number; cy: number } | null = $state(null);
   const dropped = $derived(rising.length + falling.length - placed.length);
+
+  // Fit the drawing to the words actually placed (no empty band above/below the cloud)
+  const bounds = $derived.by(() => {
+    if (!placed.length) return { top: -height / 2, h: height };
+    let lo = Infinity, hi = -Infinity;
+    for (const p of placed) { lo = Math.min(lo, p.y - p.size * 0.65); hi = Math.max(hi, p.y + p.size * 0.65); }
+    return { top: lo - 6, h: hi - lo + 12 };
+  });
+
+  // Keyboard: the cloud is one tab stop; arrow keys move through words in reading order
+  const order = $derived([...placed].sort((a, b) => (Math.abs(a.y - b.y) > 10 ? a.y - b.y : a.x - b.x)).map((p) => p.text));
+  let active = $state(0);
+  let svgEl: SVGSVGElement | undefined = $state();
+  function focusWord(i: number) {
+    active = Math.max(0, Math.min(order.length - 1, i));
+    const el = svgEl?.querySelector<SVGTextElement>(`[data-w="${CSS.escape(order[active])}"]`);
+    el?.focus();
+  }
   function onKey(e: KeyboardEvent, w: string) {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onpick(w); }
+    const i = order.indexOf(w);
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onpick(w); return; }
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    if (step) { e.preventDefault(); focusWord(i + step); }
+    else if (e.key === 'Home') { e.preventDefault(); focusWord(0); }
+    else if (e.key === 'End') { e.preventDefault(); focusWord(order.length - 1); }
   }
 </script>
 
 <div class="wrap" bind:clientWidth={width}>
-  <svg {width} {height} class:ready role="group" aria-label="{L.t['words.more']} / {L.t['words.less']}">
-    <g transform="translate({width / 2},{height / 2})">
+  <svg bind:this={svgEl} {width} height={bounds.h} class:ready role="group" aria-label="{L.t['words.more']} / {L.t['words.less']}" aria-describedby="cloud-keys">
+    <g transform="translate({width / 2},{-bounds.top})">
       {#each placed as p (p.text)}
         <text
           role="button"
           class="w" class:rise={p.rise} class:fall={!p.rise} class:sel={selected === p.text}
           style:transform="translate({p.x}px, {p.y}px)" style:font-size="{p.size}px" text-anchor="middle" dy="0.35em"
-          tabindex="0"
+          tabindex={order[active] === p.text || (!order.includes(order[active]) && order[0] === p.text) ? 0 : -1}
+          data-w={p.text}
           aria-label="{p.text}: {p.rise ? L.t['words.more'] : L.t['words.less']}, {L.f.pct(p.s.observed, 1)} / {L.f.pct(p.s.expected, 1)}"
           aria-pressed={selected === p.text}
           onclick={() => onpick(p.text)}
           onkeydown={(e) => onKey(e, p.text)}
           onpointermove={(e) => (hover = { s: p.s, cx: e.clientX, cy: e.clientY })}
           onpointerleave={() => (hover = null)}
-          onfocus={(e) => { const r = (e.currentTarget as SVGTextElement).getBoundingClientRect(); hover = { s: p.s, cx: r.right, cy: r.top + r.height / 2 }; }}
+          onfocus={(e) => { active = order.indexOf(p.text); const r = (e.currentTarget as SVGTextElement).getBoundingClientRect(); hover = { s: p.s, cx: r.right, cy: r.top + r.height / 2 }; }}
           onblur={() => (hover = null)}
         >{p.text}</text>
       {/each}
     </g>
   </svg>
+  <p id="cloud-keys" class="sr-only">{L.t['words.cloudKeys']}</p>
   {#if ready && dropped > 0}<p class="note">+{dropped}</p>{/if}
   {#if hover}
     <Tooltip x={hover.cx} y={hover.cy}>
@@ -91,7 +116,7 @@
       {#if forms && forms(hover.s.word).length}<div class="tt-forms">{forms(hover.s.word).join(', ')}</div>{/if}
       <div class="tt-row"><span>{L.t['words.col.obs']}</span><b>{L.f.pct(hover.s.observed, 2)}</b></div>
       <div class="tt-row"><span>{L.t['words.col.exp']}</span><b>{L.f.pct(hover.s.expected, 2)}</b></div>
-      <div class="tt-row"><span>{L.t['words.col.ratio']}</span><b>{L.f.signed(hover.s.score, 2)}</b></div>
+      <div class="tt-row"><span>{L.t['words.col.times']}</span><b>{L.t['words.ratio'](L.f.num(2 ** hover.s.score, 2))}</b></div>
       <div class="tt-row"><span>{L.t['words.col.docs']}</span><b>{L.f.int(hover.s.docs)}</b></div>
     </Tooltip>
   {/if}
@@ -99,7 +124,7 @@
 
 <style>
   .wrap { width: 100%; position: relative; }
-  svg { display: block; opacity: 0; transition: opacity 200ms var(--ease); }
+  svg { display: block; opacity: 0; transition: opacity 200ms var(--ease), height 500ms var(--ease); }
   svg.ready { opacity: 1; }
   .w { cursor: pointer; font-family: var(--font); transition: opacity var(--t) var(--ease), transform 700ms var(--ease), font-size 700ms var(--ease); animation: word-in 500ms var(--ease) both; }
   @keyframes word-in { from { opacity: 0; } }

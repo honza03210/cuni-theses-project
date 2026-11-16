@@ -115,8 +115,10 @@
         {@const inB = y >= baseFrom && y < cmp.from}
         <rect class="bar" class:t={inT} class:b={inB} class:partial={y === yearMax}
           x={xl(y) + step * 0.22} width={step * 0.56} y={ih - bh(v)} height={bh(v)} />
-        {#if (y - yearMin) % labelEvery === 0 || inT}
-          <text class="yl" class:t={inT} x={xl(y) + step / 2} y={ih + 13} text-anchor="middle">{labelEvery > 1 && !inT ? `'${String(y).slice(2)}` : y}</text>
+        {@const edge = inT && (y === cmp.from || y === cmp.to || step >= 34)}
+        {@const near = labelEvery > 1 && !inT && (Math.abs(y - cmp.from) <= 1 || Math.abs(y - cmp.to) <= 1)}
+        {#if ((y - yearMin) % labelEvery === 0 && !inT && !near) || edge}
+          <text class="yl" class:t={inT} x={xl(y) + step / 2} y={ih + 13} text-anchor="middle">{step < 34 ? `'${String(y).slice(2)}` : y}</text>
         {/if}
       {/each}
       <line class="gpt" x1={xl(Math.floor(CHATGPT_X)) + step * (CHATGPT_X % 1)} x2={xl(Math.floor(CHATGPT_X)) + step * (CHATGPT_X % 1)} y1="0" y2={ih} />

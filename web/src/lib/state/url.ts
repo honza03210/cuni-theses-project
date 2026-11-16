@@ -40,11 +40,13 @@ export function defaults(d: Domain): AppState {
     yearTo: d.yearMax - 1,  // current year is incomplete
     langs: [0],
     ai: [1, 2, 3, 4],
-    metric: d.metrics[0],
+    // the measure that moved most after ChatGPT (relative to its spread); see docs/PLAN.md
+    metric: d.metrics.includes('long_word_ratio') ? 'long_word_ratio' : d.metrics[0],
     word: null,
     wordLang: null,
     minFreq: 0.01,
-    wordFrom: d.yearMax - 1,  // last complete year
+    // before vs after ChatGPT: 2023 through the last complete year, against 2018–2022
+    wordFrom: Math.min(2023, d.yearMax - 1),
     wordTo: d.yearMax - 1,
     wordBase: 5,
     lemma: true,
@@ -102,7 +104,8 @@ export function decode(query: string, d: Domain): AppState {
     const raw = p.get(key);
     if (raw === null) return null;
     if (raw === '-') return [];
-    return raw.split(',').map((x) => names.indexOf(x)).filter((i) => i >= 0);
+    const lower = names.map((n) => n.toLowerCase());
+    return raw.split(',').map((x) => lower.indexOf(x.trim().toLowerCase())).filter((i) => i >= 0);
   };
   s.fac = list('f', d.facCodes) ?? s.fac;
   s.langs = list('lg', d.langs) ?? s.langs;

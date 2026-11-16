@@ -73,9 +73,9 @@
     <legend><span>{L.t['filters.years']}</span></legend>
     <YearRange min={meta.yearMin} max={meta.yearMax} from={app.yearFrom} to={app.yearTo}
       onchange={(a, b) => { app.yearFrom = a; app.yearTo = b; }} />
-    {#if yearsLocked}<p class="note">{L.t['filters.yearsWords']}</p>
-    {:else if app.yearTo === meta.yearMax}<p class="note">{L.t['filters.incomplete']}</p>{/if}
+    {#if !yearsLocked && app.yearTo === meta.yearMax}<p class="note">{L.t['filters.incomplete']}</p>{/if}
   </fieldset>
+  {#if yearsLocked}<p class="note locked">{L.t['filters.yearsWords']}</p>{/if}
 
   <fieldset>
     <legend><span>{L.t['filters.language']}</span></legend>
@@ -164,6 +164,15 @@
   .checks label:not(:has(.abbr)) .name { color: var(--ink); }
   .n { color: var(--ink-3); font-size: var(--fs-xs); }
   .note { margin: 6px 0 0; font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.45; }
+  .note.locked { margin: calc(-1 * var(--s4)) 0 0; color: var(--ink-2); }
+  @media (max-width: 1023px) {
+    label { padding: 8px 4px; min-height: 40px; }
+    input[type='checkbox'] { width: 18px; height: 18px; }
+    label { grid-template-columns: 22px auto 1fr auto; }
+    .checks label:not(:has(.abbr)) { grid-template-columns: 22px 1fr auto; }
+    .quick button { padding: 8px 10px; }
+    .reset { padding: 10px 16px; }
+  }
   .warn { margin: 6px 0 0; font-size: var(--fs-xs); color: var(--warn); font-weight: 600; }
   .reset {
     align-self: flex-start;
