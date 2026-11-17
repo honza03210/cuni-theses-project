@@ -58,7 +58,7 @@
           <text class="yl" x="-8" y={y.bandwidth() / 2} dy="0.32em" text-anchor="end">{label(b.fac)}</text>
           {#each segs(b) as s (s.g)}
             <rect x={x(s.x0)} width={Math.max(0, x(s.x1) - x(s.x0))} height={y.bandwidth()}
-              fill={s.g === 3 ? 'url(#hatch4b)' : GRADE_VARS[s.g]} />
+              fill={s.g === 3 ? 'url(#hatch4b)' : GRADE_VARS[s.g]} stroke={GRADE_VARS[s.g]} />
           {/each}
           <text class="yn" x={iw + 6} y={y.bandwidth() / 2} dy="0.32em">{L.f.int(b.total)}</text>
         </g>
@@ -85,8 +85,9 @@
   .wrap { width: 100%; }
   svg { display: block; overflow: visible; }
   .bar rect { stroke: var(--paper); stroke-width: 0.6; }
-  /* small faculties: fade the bar, keep the label readable */
-  .bar.small rect { opacity: 0.35; }
+  /* small faculties: hollow bars (outline + faint fill) read as weaker in both themes; label stays readable */
+  .bar rect { stroke-width: 0; }
+  .bar.small rect { fill-opacity: 0.14; stroke-width: 1; stroke-opacity: 0.8; }
   .bar.small .yl { font-weight: 400; font-style: italic; }
   .bar:hover rect { stroke: var(--ink); stroke-width: 1; }
   .yl { font-size: 12px; fill: var(--ink); font-weight: 600; }

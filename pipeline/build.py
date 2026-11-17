@@ -50,6 +50,7 @@ FACULTIES = [
 
 METRICS = [
     # column, cs label, en label, cs unit, en unit, cs description, en description, decimals
+# Shares (0–1) are stored as percentages so the public reads "38.4 %", not "0.384".
     ("mean_word_len", "Průměrná délka slova", "Average word length", "písmen", "letters",
      "Průměrný počet písmen ve slově.", "Mean number of letters per word.", 2),
     ("mean_sentence_len", "Průměrná délka věty", "Average sentence length", "slov", "words",
@@ -57,14 +58,14 @@ METRICS = [
     ("std_sentence_len", "Rozptyl délky vět", "Sentence-length spread", "slov (sm. odch.)", "words (std. dev.)",
      "Směrodatná odchylka délky vět: nízká = věty jsou si podobně dlouhé.",
      "Standard deviation of sentence length: low = sentences are uniformly long.", 1),
-    ("mattr", "Lexikální rozmanitost", "Lexical diversity", "podíl různých slov (0–1)", "share of distinct words (0–1)",
+    ("mattr", "Lexikální rozmanitost", "Lexical diversity", "% různých slov", "% distinct words",
      "Jak pestrou slovní zásobu text používá: podíl různých slov v každém úseku 500 slov.",
-     "How varied the vocabulary is: share of distinct words in each 500-word stretch.", 3),
-    ("repeated_trigram_ratio", "Opakování frází", "Phrase repetition", "podíl opakovaných frází", "share of repeated phrases",
+     "How varied the vocabulary is: share of distinct words in each 500-word stretch.", 1),
+    ("repeated_trigram_ratio", "Opakování frází", "Phrase repetition", "% opakovaných frází", "% repeated phrases",
      "Podíl tříslovných frází, které se opakují v rámci 2 000 slov.",
-     "Share of three-word phrases repeated within 2,000 words.", 3),
-    ("long_word_ratio", "Podíl dlouhých slov", "Long-word share", "podíl slov > 6 písmen", "share of words > 6 letters",
-     "Podíl slov delších než 6 písmen.", "Share of words longer than 6 letters.", 3),
+     "Share of three-word phrases repeated within 2,000 words.", 1),
+    ("long_word_ratio", "Podíl dlouhých slov", "Long-word share", "% slov > 6 písmen", "% of words > 6 letters",
+     "Podíl slov delších než 6 písmen.", "Share of words longer than 6 letters.", 1),
     ("em_dash_per_1000w", "Dlouhé pomlčky", "Em dashes", "na 1 000 slov", "per 1,000 words",
      "Počet dlouhých pomlček „—“ na 1 000 slov.", "Em dashes “—” per 1,000 words.", 2),
     ("comma_per_1000w", "Čárky", "Commas", "na 1 000 slov", "per 1,000 words",
@@ -73,6 +74,8 @@ METRICS = [
      "Zájmena a tvary 1. osoby jednotného čísla (já, jsem, můj…) na 1 000 slov.",
      "First-person singular pronouns and forms (I, my, …) per 1,000 words.", 2),
 ]
+
+PCT_METRICS = {"mattr", "repeated_trigram_ratio", "long_word_ratio"}
 
 # Word vocabulary per language: (max words, min theses overall)
 VOCAB = {"cs": (8000, 30), "en": (5000, 20), "sk": (4000, 15), "other": (2500, 10)}
@@ -124,6 +127,8 @@ def build_theses(con: duckdb.DuckDBPyConnection) -> dict:
     for m in METRICS:
         col, lcs, len_, ucs, uen, dcs, den, dec = m
         arr = df[col].to_numpy(np.float32)
+        if col in PCT_METRICS:
+            arr = arr * np.float32(100)
         # Style metrics are only meaningful for cleanly cut bodies
         arr = np.where(df["clean"].to_numpy() == 1, arr, np.nan).astype(np.float32)
         b = arr.tobytes()

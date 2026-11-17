@@ -56,7 +56,7 @@
   });
 
   let hidden = $state<number[]>([]);
-  let showLines = $state(true);
+  let showLines = $state(false);
 
   /** Median and quartiles per grade per axis (normalised 0..1), over the selected theses. */
   const bands = $derived.by(() => {

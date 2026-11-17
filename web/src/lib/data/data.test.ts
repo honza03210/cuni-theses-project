@@ -158,7 +158,7 @@ describe('url state', () => {
   });
 });
 
-import { gradeShift, magnitude, metricShift } from './answers';
+import { dataSpan, gradeShift, magnitude, metricShift } from './answers';
 
 describe('answer lines', () => {
   it('measures a before/after shift and counts faculties that rose', () => {
@@ -179,9 +179,18 @@ describe('answer lines', () => {
     const g = gradeShift(t, m, 2025)!;
     expect(g.pre[0]).toBeCloseTo(60 / 80);
     expect(g.post[1]).toBeCloseTo(10 / 80);
+    expect(g.same).toBe(false);
+    // only 2024 holds post-window data, so the label names 2024, not 2023–2025
+    expect(s.postSpan).toBe('2024');
+    expect(g.postSpan).toBe('2024');
     expect(magnitude(0.01)).toBe('none');
     expect(magnitude(0.16)).toBe('slight');
     expect(magnitude(-0.7)).toBe('strong');
+  });
+  it('labels only the years that hold enough theses', () => {
+    const n: Record<number, number> = { 2023: 3, 2024: 25, 2025: 40 };
+    expect(dataSpan((y) => n[y] ?? 0, 2023, 2025)).toBe('2024–2025');
+    expect(dataSpan((y) => n[y] ?? 0, 2023, 2023)).toBeNull();
   });
   it('returns null when a window has no data', () => {
     const t = makeTheses([{ fac: 0, year: 2010, v: 1 }]);

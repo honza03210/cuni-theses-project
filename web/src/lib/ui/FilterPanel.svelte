@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Theses } from '../data/types';
-  import { filterMask } from '../data/select';
+  import { aiFilterActive, filterMask } from '../data/select';
   import { app } from '../state/app.svelte';
   import { defaults } from '../state/url';
   import { domainOf } from '../state/app.svelte';
@@ -45,6 +45,7 @@
     <strong>{L.f.int(matched)}</strong>
     <span>{L.t['filters.match']}</span>
   </div>
+  {#if aiFilterActive(app.ai) && aiApplies}<p class="note counts-note ai-count">{L.t['filters.countAi']}</p>{/if}
   <p class="note counts-note">{L.t['filters.countsNote']}</p>
 
   <fieldset disabled={!aiApplies}>
@@ -171,7 +172,9 @@
   .name { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .checks label:not(:has(.abbr)) .name { color: var(--ink); }
   .n { color: var(--ink-3); font-size: var(--fs-xs); }
-  .note { margin: 6px 0 0; font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.45; }
+  .note { margin: 6px 0 0; font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.45; text-wrap: pretty; }
+  .ai-count { color: var(--warn); font-weight: 600; }
+  .ai-count + .counts-note { margin-top: 0; }
   .counts-note { margin: calc(-1 * var(--s4)) 0 0; }
   .defs { margin-top: 6px; font-size: var(--fs-xs); color: var(--ink-2); }
   .defs summary { cursor: pointer; font-weight: 600; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }

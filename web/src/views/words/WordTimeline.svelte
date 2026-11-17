@@ -86,7 +86,21 @@
   }
 
   const blockLabel = $derived(cmp.from === cmp.to ? `${cmp.from}` : `${cmp.from}–${cmp.to}`);
-  const baseLabel = $derived(`${L.t['words.detail.fit']} ${baseFrom}–${cmp.from - 1}`);
+  const baseLabelFull = $derived(`${L.t['words.detail.fit']} ${baseFrom}–${cmp.from - 1}`);
+  // Place the two labels above the bands without overlapping (estimated text widths;
+  // on narrow screens the trend label drops its word and keeps the years).
+  const labels = $derived.by(() => {
+    const tw = blockLabel.length * 7.2, cx = (xl(cmp.from) + xl(cmp.to + 1)) / 2;
+    const tx = Math.min(iw - tw / 2, Math.max(tw / 2, cx));
+    const tLeft = tx - tw / 2 - 8;
+    for (const text of [baseLabelFull, `${baseFrom}–${cmp.from - 1}`]) {
+      const bw = text.length * 6.2;
+      const bx = Math.min((xl(baseFrom) + xl(cmp.from)) / 2, tLeft - bw / 2);
+      if (bx - bw / 2 >= -m.left) return { tx, bx, base: text };
+    }
+    return { tx, bx: -1, base: '' };
+  });
+  const baseLabel = $derived(baseLabelFull);
   const cursor = $derived(mode?.kind === 'base' || hover === 'base' ? 'ew-resize' : hover === 'block' || mode?.kind === 'move' ? 'grab' : 'pointer');
 </script>
 
@@ -100,14 +114,14 @@
     <g transform="translate({m.left},{m.top})">
       <!-- baseline band -->
       <rect class="base" x={xl(baseFrom)} width={xl(cmp.from) - xl(baseFrom)} y="-2" height={ih + 2} />
-      <text class="blabel" x={(xl(baseFrom) + xl(cmp.from)) / 2} y="-8" text-anchor="middle">{baseLabel}</text>
+      {#if labels.base}<text class="blabel" x={labels.bx} y="-8" text-anchor="middle">{labels.base}</text>{/if}
       <g class="handle" class:active={hover === 'base' || mode?.kind === 'base'} transform="translate({xl(baseFrom)},0)">
         <line y1="-2" y2={ih} />
         <rect x="-3" y={ih / 2 - 9} width="6" height="18" rx="2" />
       </g>
       <!-- target block -->
       <rect class="block" x={xl(cmp.from)} width={xl(cmp.to + 1) - xl(cmp.from)} y="-2" height={ih + 2} />
-      <text class="tlabel" x={(xl(cmp.from) + xl(cmp.to + 1)) / 2} y="-8" text-anchor="middle">{blockLabel}</text>
+      <text class="tlabel" x={labels.tx} y="-8" text-anchor="middle">{blockLabel}</text>
 
       {#each totals as v, i (i)}
         {@const y = yearMin + i}

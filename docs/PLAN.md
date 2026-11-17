@@ -327,3 +327,19 @@ aggregation code); the other takes phase 1's word cube and 3c.
   - Search is a combobox with arrow-key navigation.
   - Small-faculty labels stay readable (only the bar fades).
   - Ink contour on the medians, stronger swatch edges.
+
+### Critique round 3 changes (29/40)
+
+- AI-declaration filter is framed honestly: while it narrows 2023+, the answer lines in Words,
+  Trends and Grades say they compare a different group (not before/after), name only the years
+  that hold ≥ 20 such theses (`dataSpan` in `answers.ts`), and each plate shows `AiCaveat`.
+  The filter panel notes that the count still includes all pre-2023 theses.
+- Share metrics (lexical diversity, phrase repetition, long-word share) are stored as
+  percentages by the pipeline (`PCT_METRICS`), so readers see "38.4 %", not "0.384".
+- Grades: the answer line opens with a verdict (`GradeShift.same`, both shares within 1.5 pp);
+  new "Writing style by grade" dot plot (`GradeDots.svelte`: median + middle half per grade,
+  shape-coded markers) precedes the parallel plot, whose individual lines are now off by default.
+- Words: glosses in the cloud's screen-reader labels; tooltip sits below the word; overflow
+  count explained; timeline labels no longer collide on phones.
+- Mobile drawer is `visibility: hidden` when closed (out of tab order) and only casts a shadow
+  when open. Dark mode: small-sample grade bars are outlined, selected tab has a petrol rule.

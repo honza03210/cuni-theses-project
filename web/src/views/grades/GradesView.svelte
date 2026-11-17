@@ -8,8 +8,11 @@
   import GradeArea from './GradeArea.svelte';
   import GradeBars from './GradeBars.svelte';
   import ParallelPlot from './ParallelPlot.svelte';
+  import GradeDots from './GradeDots.svelte';
   import Lede from '../../lib/ui/Lede.svelte';
   import { gradeShift } from '../../lib/data/answers';
+  import { aiFilterActive } from '../../lib/data/select';
+  import AiCaveat, { aiWho } from '../../lib/ui/AiCaveat.svelte';
 
   interface Props { theses: Theses; mask: Uint8Array }
   let { theses, mask }: Props = $props();
@@ -23,6 +26,7 @@
   const allRow = $derived({ fac: -1, counts: sumCounts(byFac), total: byFac.reduce((s, r) => s + r.total, 0) });
   const hasData = $derived(byYear.some((r) => r.total > 0));
   const pct = (c: number, t: number) => (t ? L.f.pct(c / t) : '–');
+  const aiOn = $derived(aiFilterActive(app.ai) && app.yearTo >= meta.aiYear);
   const gshift = $derived(gradeShift(theses, mask, Math.min(app.yearTo, meta.yearMax - 1)));
 </script>
 
@@ -38,12 +42,17 @@
   <p class="empty">{L.t['common.empty']} <button type="button" class="fix" onclick={() => (app.fac = meta.faculties.map((_, i) => i))}>{L.t['common.selectAll']}</button></p>
 {:else}
   <Lede howto={L.t['grades.howto']}>
-    {#if gshift}
-      <b>{L.t['grades.lede'](L.f.pct(gshift.pre[0]), L.f.pct(gshift.post[0]), L.f.pct(gshift.pre[1]), L.f.pct(gshift.post[1]), gshift.postTo)}</b>
+    {#if gshift && aiOn}
+      <b>{L.t['ai.lede.grades'](aiWho(), gshift.postSpan, L.f.pct(gshift.pre[0]), L.f.pct(gshift.post[0]), L.f.pct(gshift.pre[1]), L.f.pct(gshift.post[1]))}</b>
+      <span class="muted"> {L.t['ai.lede.note']}</span>
+    {:else if gshift}
+      <b>{gshift.same ? L.t['grades.verdict.same'] : L.t['grades.verdict.moved']}</b>
+      {L.t['grades.lede'](L.f.pct(gshift.pre[0]), L.f.pct(gshift.post[0]), L.f.pct(gshift.pre[1]), L.f.pct(gshift.post[1]), gshift.postTo)}
     {:else}
       <span class="muted">{L.t['trends.lede.na']}</span>
     {/if}
   </Lede>
+  {#if aiOn && gshift}<AiCaveat span={gshift.postSpan} />{/if}
   <div class="grades">
     <div class="area">
       <Plate id="g-area" title={L.t['grades.area.title']} unit={`${L.t['grades.area.unit']} · ${app.yearFrom}–${app.yearTo}`}
@@ -76,6 +85,9 @@
         {/snippet}
         <GradeBars rows={byFac} all={allRow} faculties={meta.faculties} />
       </Plate>
+    </div>
+    <div class="par">
+      <GradeDots {theses} {mask} keys={['mean_word_len', 'mean_sentence_len', 'std_sentence_len', 'mattr', 'repeated_trigram_ratio', 'long_word_ratio']} />
     </div>
     <div class="par">
       <ParallelPlot {theses} {mask} />

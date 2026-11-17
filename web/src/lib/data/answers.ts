@@ -12,8 +12,19 @@ export function magnitude(d: number): Magnitude {
   return a < 0.05 ? 'none' : a < 0.2 ? 'slight' : a < 0.5 ? 'noticeable' : 'strong';
 }
 
+/** First and last year of [from, to] with at least `min` theses, as a label ("2025" or "2023–2025"). */
+export function dataSpan(countByYear: (y: number) => number, from: number, to: number, min = 20): string | null {
+  let a = 0, b = 0;
+  for (let y = from; y <= to; y++) if (countByYear(y) >= min) { if (!a) a = y; b = y; }
+  return a ? (a === b ? `${a}` : `${a}–${b}`) : null;
+}
+
 export interface MetricShift {
   pre: number;
+  preN: number;
+  postN: number;
+  /** years of the post window that actually hold data (≥ 20 theses) */
+  postSpan: string;
   post: number;
   postTo: number;      // last year in the post window
   d: number;           // standardised difference
@@ -29,6 +40,7 @@ export function metricShift(t: Theses, mask: Uint8Array, metric: string, postTo:
   const nf = t.meta.faculties.length;
   const s = { pre: 0, preSq: 0, preN: 0, post: 0, postN: 0 };
   const fPre = new Float64Array(nf), fPreN = new Uint32Array(nf), fPost = new Float64Array(nf), fPostN = new Uint32Array(nf);
+  const perYear = new Map<number, number>();
   for (let i = 0; i < t.n; i++) {
     if (!mask[i]) continue;
     const x = v[i];
@@ -36,7 +48,7 @@ export function metricShift(t: Theses, mask: Uint8Array, metric: string, postTo:
     const y = t.year[i] + t.meta.yearMin;
     const f = t.fac[i];
     if (y >= PRE[0] && y <= PRE[1]) { s.pre += x; s.preSq += x * x; s.preN++; fPre[f] += x; fPreN[f]++; }
-    else if (y >= POST_FROM && y <= postTo) { s.post += x; s.postN++; fPost[f] += x; fPostN[f]++; }
+    else if (y >= POST_FROM && y <= postTo) { s.post += x; s.postN++; fPost[f] += x; fPostN[f]++; perYear.set(y, (perYear.get(y) ?? 0) + 1); }
   }
   if (s.preN < minN || s.postN < minN) return null;
   const pre = s.pre / s.preN, post = s.post / s.postN;
@@ -48,13 +60,16 @@ export function metricShift(t: Theses, mask: Uint8Array, metric: string, postTo:
       if (fPost[f] / fPostN[f] > fPre[f] / fPreN[f]) facUp++;
     }
   }
-  return { pre, post, postTo, d: (post - pre) / sd, rel: post / pre - 1, facUp, facCompared };
+  const postSpan = dataSpan((y) => perYear.get(y) ?? 0, POST_FROM, postTo) ?? `${POST_FROM}–${postTo}`;
+  return { pre, post, preN: s.preN, postN: s.postN, postSpan, postTo, d: (post - pre) / sd, rel: post / pre - 1, facUp, facCompared };
 }
 
-export interface GradeShift { pre: [number, number]; post: [number, number]; postTo: number } // [excellent, fail] shares
+// [excellent, fail] shares; `same` = both shares moved by less than 1.5 percentage points
+export interface GradeShift { pre: [number, number]; post: [number, number]; postTo: number; postN: number; postSpan: string; same: boolean }
 
 export function gradeShift(t: Theses, mask: Uint8Array, postTo: number, minN = 20): GradeShift | null {
   const c = { pre: [0, 0, 0], post: [0, 0, 0] }; // [excellent, fail, total]
+  const perYear = new Map<number, number>();
   for (let i = 0; i < t.n; i++) {
     if (!mask[i]) continue;
     const g = t.grade[i];
@@ -63,9 +78,14 @@ export function gradeShift(t: Theses, mask: Uint8Array, postTo: number, minN = 2
     const k = y >= PRE[0] && y <= PRE[1] ? c.pre : y >= POST_FROM && y <= postTo ? c.post : null;
     if (!k) continue;
     k[2]++;
+    if (k === c.post) perYear.set(y, (perYear.get(y) ?? 0) + 1);
     if (g === 1) k[0]++;
     if (g === 4) k[1]++;
   }
   if (c.pre[2] < minN || c.post[2] < minN) return null;
-  return { pre: [c.pre[0] / c.pre[2], c.pre[1] / c.pre[2]], post: [c.post[0] / c.post[2], c.post[1] / c.post[2]], postTo };
+  const pre: [number, number] = [c.pre[0] / c.pre[2], c.pre[1] / c.pre[2]];
+  const post: [number, number] = [c.post[0] / c.post[2], c.post[1] / c.post[2]];
+  const same = Math.abs(post[0] - pre[0]) < 0.015 && Math.abs(post[1] - pre[1]) < 0.015;
+  const postSpan = dataSpan((y) => perYear.get(y) ?? 0, POST_FROM, postTo) ?? `${POST_FROM}–${postTo}`;
+  return { pre, post, postTo, postN: c.post[2], postSpan, same };
 }

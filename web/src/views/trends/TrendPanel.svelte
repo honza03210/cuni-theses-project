@@ -118,7 +118,7 @@
         {/if}
         {#if aiOn && aiYear >= yearFrom}
           <line class="marker ai" x1={x(aiYear - 0.5)} x2={x(aiYear - 0.5)} y1="0" y2={ih} />
-          {#if large}<text class="mlabel" x={x(aiYear - 0.5) - 4} y="22" text-anchor="end">{L.t['common.aiStart']}</text>{/if}
+          {#if large || first}<text class="mlabel ai" x={x(aiYear - 0.5) - 4} y="22" text-anchor="end">{L.t['common.aiStart']}</text>{/if}
         {/if}
 
         {#if showOthers}
@@ -177,6 +177,7 @@
   .grid { stroke: var(--rule-soft); stroke-width: 1; shape-rendering: crispEdges; }
   .marker { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; shape-rendering: crispEdges; }
   .marker.ai { stroke: var(--warn); }
+  .mlabel.ai { fill: var(--warn); font-weight: 600; }
   .mlabel { font-size: 10.5px; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
   path { fill: none; stroke-linejoin: round; stroke-linecap: round; }
   .other { stroke: var(--context); stroke-width: 1; stroke-opacity: 0.5; }

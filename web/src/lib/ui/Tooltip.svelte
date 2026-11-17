@@ -1,13 +1,18 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  interface Props { x: number; y: number; children: Snippet }
-  let { x, y, children }: Props = $props();
+  /** Follows the pointer at (x, y); with `box`, sits below (or above) that element instead, never covering it. */
+  interface Props { x: number; y: number; box?: { left: number; top: number; bottom: number } | null; children: Snippet }
+  let { x, y, box = null, children }: Props = $props();
 
   let el: HTMLDivElement | undefined = $state();
   let w = $state(0), h = $state(0);
-  const left = $derived(x + 14 + w > window.innerWidth - 8 ? x - 14 - w : x + 14);
-  const top = $derived(Math.max(8, Math.min(y - h / 2, window.innerHeight - h - 8)));
+  const left = $derived(box
+    ? Math.max(8, Math.min(box.left, window.innerWidth - w - 8))
+    : x + 14 + w > window.innerWidth - 8 ? x - 14 - w : x + 14);
+  const top = $derived(box
+    ? (box.bottom + 8 + h <= window.innerHeight - 8 ? box.bottom + 8 : Math.max(8, box.top - 8 - h))
+    : Math.max(8, Math.min(y - h / 2, window.innerHeight - h - 8)));
 </script>
 
 <div class="tip" role="tooltip" bind:this={el} bind:clientWidth={w} bind:clientHeight={h}

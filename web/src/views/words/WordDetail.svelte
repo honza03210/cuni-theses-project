@@ -186,12 +186,13 @@
   svg:focus-visible { outline: 2px solid var(--petrol); outline-offset: 4px; }
   .grid { stroke: var(--rule-soft); shape-rendering: crispEdges; }
   .marker { stroke: var(--ink-3); stroke-dasharray: 2 3; }
-  .mlabel { font-size: 11px; fill: var(--ink-3); }
+  .mlabel { font-size: 11.5px; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
   .base { fill: var(--paper-2); }
   .target { fill: var(--petrol-tint); opacity: 0.7; }
   .span { stroke-width: 2; }
   .exp-span { stroke: var(--ink-2); stroke-dasharray: 4 3; }
-  .obs-span { stroke: var(--ink); }
+  /* the block's observed mean: petrol like the target block, so it is not read as the word's own line */
+  .obs-span { stroke: var(--petrol); stroke-width: 3; }
   path { fill: none; stroke-linejoin: round; stroke-linecap: round; }
   .ctx { stroke: var(--context); stroke-width: 1; stroke-opacity: 0.8; }
   .fit { stroke: var(--ink-2); stroke-width: 1.5; stroke-dasharray: 5 4; }

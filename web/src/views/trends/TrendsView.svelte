@@ -9,6 +9,7 @@
   import TrendPanel from './TrendPanel.svelte';
   import Lede from '../../lib/ui/Lede.svelte';
   import { magnitude, metricShift } from '../../lib/data/answers';
+  import AiCaveat, { aiWho } from '../../lib/ui/AiCaveat.svelte';
 
   interface Props { theses: Theses; mask: Uint8Array }
   let { theses, mask }: Props = $props();
@@ -66,7 +67,10 @@
 <div class="trends">
   <div class="main">
     <Lede howto={L.t['trends.howto']}>
-      {#if shift}
+      {#if shift && aiOn}
+        <b>{L.t['ai.lede.trends'](aiWho(), shift.postSpan, L.pick(metric.label), fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit))}</b>
+        <span class="muted"> {L.t['ai.lede.note']}</span>
+      {:else if shift}
         <b>{L.t['trends.lede'](L.pick(metric.label), phrase, fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit), L.f.pct(shift.rel, 1).replace(/^(?=\d)/, '+'), shift.postTo)}</b>
         {#if shift.facCompared > 1}<span class="muted"> {L.t['trends.lede.facs'](shift.facUp, shift.facCompared)}</span>{/if}
       {:else}
@@ -104,6 +108,7 @@
       {/snippet}
 
       {#if mixedLang}<p class="warn" role="status">{L.t['trends.mixedLang']}</p>{/if}
+      {#if aiOn && shift}<AiCaveat span={shift.postSpan} />{/if}
       {#if !facs.length || !hasData}
         <p class="empty">{L.t['common.empty']} <button type="button" class="fix" onclick={() => (app.fac = meta.faculties.map((_, i) => i))}>{L.t['common.selectAll']}</button></p>
       {:else}

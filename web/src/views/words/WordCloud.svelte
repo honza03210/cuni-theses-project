@@ -56,7 +56,8 @@
     return () => { cancelled = true; };
   });
 
-  let hover: { s: WordScore; cx: number; cy: number } | null = $state(null);
+  let hover: { s: WordScore; box: DOMRect } | null = $state(null);
+  const showAt = (s: WordScore, el: Element) => (hover = { s, box: el.getBoundingClientRect() });
   const dropped = $derived(rising.length + falling.length - placed.length);
 
   // Fit the drawing to the words actually placed (no empty band above/below the cloud)
@@ -96,23 +97,23 @@
           style:transform="translate({p.x}px, {p.y}px)" style:font-size="{p.size}px" text-anchor="middle" dy="0.35em"
           tabindex={order[active] === p.text || (!order.includes(order[active]) && order[0] === p.text) ? 0 : -1}
           data-w={p.text}
-          aria-label="{p.text}: {p.rise ? L.t['words.more'] : L.t['words.less']}, {L.f.pct(p.s.observed, 1)} / {L.f.pct(p.s.expected, 1)}"
+          aria-label="{p.text}{gloss?.(p.text) ? ` (${gloss(p.text)})` : ''}: {p.rise ? L.t['words.more'] : L.t['words.less']}, {L.f.pct(p.s.observed, 1)} / {L.f.pct(p.s.expected, 1)}"
           aria-pressed={selected === p.text}
           onclick={() => onpick(p.text)}
           onkeydown={(e) => onKey(e, p.text)}
-          onpointermove={(e) => (hover = { s: p.s, cx: e.clientX, cy: e.clientY })}
+          onpointerenter={(e) => showAt(p.s, e.currentTarget)}
           onpointerleave={() => (hover = null)}
-          onfocus={(e) => { active = order.indexOf(p.text); const r = (e.currentTarget as SVGTextElement).getBoundingClientRect(); hover = { s: p.s, cx: r.right, cy: r.top + r.height / 2 }; }}
+          onfocus={(e) => { active = order.indexOf(p.text); showAt(p.s, e.currentTarget); }}
           onblur={() => (hover = null)}
         >{p.text}</text>
       {/each}
     </g>
   </svg>
   <p id="cloud-keys" class="sr-only">{L.t['words.cloudKeys']}</p>
-  {#if ready && dropped > 0}<p class="note">+{dropped}</p>{/if}
+  {#if ready && dropped > 0}<p class="note">{L.t['words.cloud.dropped'](dropped)}</p>{/if}
   {#if hover}
-    <Tooltip x={hover.cx} y={hover.cy}>
-      <div class="tt-title">{hover.s.word}{#if gloss?.(hover.s.word)}<span class="tt-gloss"> ‘{gloss(hover.s.word)}’</span>{/if}</div>
+    <Tooltip x={0} y={0} box={hover.box}>
+      <div class="tt-title">{hover.s.word}{#if gloss?.(hover.s.word)}{' '}<span class="tt-gloss">‘{gloss(hover.s.word)}’</span>{/if}</div>
       {#if forms && forms(hover.s.word).length}<div class="tt-forms">{forms(hover.s.word).join(', ')}</div>{/if}
       <div class="tt-row"><span>{L.t['words.col.obs']}</span><b>{L.f.pct(hover.s.observed, 2)}</b></div>
       <div class="tt-row"><span>{L.t['words.col.exp']}</span><b>{L.f.pct(hover.s.expected, 2)}</b></div>
@@ -134,7 +135,7 @@
   .w:hover, .w:focus-visible { text-decoration: underline; text-decoration-thickness: 1.5px; outline: none; }
   .w.sel { fill: var(--petrol); text-decoration: underline; text-decoration-thickness: 2.5px; paint-order: stroke; stroke: var(--petrol-tint); stroke-width: 6px; }
   svg:has(.w:hover) .w:not(:hover):not(.sel) { opacity: 0.55; }
-  :global(.tt-gloss) { font-weight: 400; color: var(--ink-2); font-style: italic; }
+  :global(.tt-gloss) { font-weight: 400; color: var(--ink-2); }
   :global(.tt-forms) { font-size: var(--fs-xs); color: var(--ink-3); margin: -1px 0 4px; font-style: italic; }
-  .note { position: absolute; right: 0; bottom: 0; margin: 0; font-size: var(--fs-xs); color: var(--ink-3); }
+  .note { margin: var(--s2) 0 0; text-align: right; font-size: var(--fs-xs); color: var(--ink-3); }
 </style>

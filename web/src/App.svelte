@@ -217,7 +217,7 @@
     transition: background var(--t) var(--ease), color var(--t) var(--ease);
   }
   .tabs button:hover { color: var(--band-ink); background: var(--band-hover); }
-  .tabs button[aria-selected='true'] { background: var(--paper); color: var(--ink); }
+  .tabs button[aria-selected='true'] { background: var(--paper); color: var(--ink); box-shadow: inset 0 3px 0 var(--petrol); }
   .tabs button:focus-visible { outline-color: var(--band-ink); outline-offset: -3px; }
   .tabs button[aria-selected='true']:focus-visible { outline-color: var(--petrol); }
 
@@ -290,10 +290,15 @@
       position: fixed; z-index: 40; left: 0; top: 0; bottom: 0;
       height: 100vh; width: min(320px, 88vw);
       transform: translateX(-100%);
-      transition: transform 220ms var(--ease);
-      box-shadow: 4px 0 24px var(--shadow);
+      /* closed: hidden from tab order and screen readers once the slide-out ends */
+      visibility: hidden;
+      transition: transform 220ms var(--ease), visibility 0s linear 220ms, box-shadow 220ms var(--ease);
     }
-    .drawer-open .filters { transform: none; }
+    .drawer-open .filters {
+      transform: none; visibility: visible;
+      box-shadow: 4px 0 24px var(--shadow);
+      transition: transform 220ms var(--ease), visibility 0s, box-shadow 220ms var(--ease);
+    }
     .drawer-head {
       display: flex; align-items: center; justify-content: space-between;
       padding: var(--s3) var(--s4); border-bottom: 1px solid var(--rule);

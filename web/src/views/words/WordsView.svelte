@@ -11,6 +11,8 @@
   import WordTimeline from './WordTimeline.svelte';
   import Lede from '../../lib/ui/Lede.svelte';
   import { tick } from 'svelte';
+  import { dataSpan } from '../../lib/data/answers';
+  import AiCaveat, { aiWho } from '../../lib/ui/AiCaveat.svelte';
 
   interface Props { theses: Theses; filters: Filters }
   let { theses, filters }: Props = $props();
@@ -81,6 +83,10 @@
   const blockLabel = $derived(cmp.from === cmp.to ? `${cmp.from}` : `${cmp.from}–${cmp.to}`);
   const baselineLabel = $derived(`${cmp.from - cmp.base}–${cmp.from - 1}`);
   const totals = $derived(ctx ? ctx.total : new Array(meta.yearMax - meta.yearMin + 1).fill(0));
+  // With the AI-declaration filter on, the compared years hold a different group of students:
+  // say so, and name only the years that actually have such theses.
+  const aiGroup = $derived(aiOn && cmp.to >= meta.aiYear);
+  const aiSpan = $derived(aiGroup ? (dataSpan((y) => totals[y - meta.yearMin] ?? 0, Math.max(cmp.from, meta.aiYear), cmp.to) ?? blockLabel) : blockLabel);
   const fromYears = $derived(Array.from({ length: meta.yearMax - (meta.yearMin + BASE_MIN) + 1 }, (_, i) => meta.yearMin + BASE_MIN + i));
   const toYears = $derived(fromYears.filter((y) => y >= cmp.from));
   const baseOptions = $derived(Array.from({ length: BASE_MAX - BASE_MIN + 1 }, (_, i) => BASE_MIN + i).filter((b) => cmp.from - b >= meta.yearMin));
@@ -156,9 +162,10 @@
 <div class="words">
   <Lede howto={L.t['words.howto']}>
     {#if movers && result && !result.reason && movers.rising.length}
-      <b>{L.t['words.lede.up'](blockLabel, baselineLabel)}</b>
+      <b>{aiGroup ? L.t['ai.lede.words'](aiWho(), aiSpan, baselineLabel) : L.t['words.lede.up'](blockLabel, baselineLabel)}</b>
       {#each movers.rising.slice(0, 3) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw rise" onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({#if gloss(s.word)}‘{gloss(s.word)}’{', '}{/if}{figure(s)})</span>{/each}{#if movers.falling.length}; {L.t['words.lede.down']}{#each movers.falling.slice(0, 2) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw fall" onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({#if gloss(s.word)}‘{gloss(s.word)}’{', '}{/if}{figure(s)})</span>{/each}{/if}.
-      {#if cmp.to >= 2023}<span class="frame">{L.t['words.lede.frame']}</span>{/if}
+      {#if aiGroup}<span class="frame">{L.t['ai.lede.note']}</span>
+      {:else if cmp.to >= 2023}<span class="frame">{L.t['words.lede.frame']}</span>{/if}
     {:else}
       <span class="muted">{L.t['words.cloud.title']}.</span>
     {/if}
@@ -274,6 +281,7 @@
     {:else if !movers.rising.length && !movers.falling.length}
       <p class="msg">{L.t['words.none']}</p>
     {:else}
+      {#if aiGroup}<AiCaveat span={aiSpan} />{/if}
       {#if result.targetTotal < SMALL_TARGET}<p class="warn" role="status">{L.t['words.small'](result.targetTotal)}</p>{/if}
       <WordCloud rising={movers.rising} falling={movers.falling} {ramp} sizes={SIZES} {selected} onpick={pick} forms={useLemma ? formsOf : null} mode={app.wordRank} gloss={wantGloss ? gloss : null} />
     {/if}

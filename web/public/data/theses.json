@@ -282,16 +282,16 @@
     "en": "Lexical diversity"
    },
    "unit": {
-    "cs": "podíl různých slov (0–1)",
-    "en": "share of distinct words (0–1)"
+    "cs": "% různých slov",
+    "en": "% distinct words"
    },
    "desc": {
     "cs": "Jak pestrou slovní zásobu text používá: podíl různých slov v každém úseku 500 slov.",
     "en": "How varied the vocabulary is: share of distinct words in each 500-word stretch."
    },
-   "decimals": 3,
-   "p01": 0.38993632793426514,
-   "p99": 0.7181845903396606
+   "decimals": 1,
+   "p01": 38.99363327026367,
+   "p99": 71.8184585571289
   },
   {
    "key": "repeated_trigram_ratio",
@@ -300,16 +300,16 @@
     "en": "Phrase repetition"
    },
    "unit": {
-    "cs": "podíl opakovaných frází",
-    "en": "share of repeated phrases"
+    "cs": "% opakovaných frází",
+    "en": "% repeated phrases"
    },
    "desc": {
     "cs": "Podíl tříslovných frází, které se opakují v rámci 2 000 slov.",
     "en": "Share of three-word phrases repeated within 2,000 words."
    },
-   "decimals": 3,
-   "p01": 0.01479415874928236,
-   "p99": 0.2903570234775543
+   "decimals": 1,
+   "p01": 1.4794158935546875,
+   "p99": 29.035701751708984
   },
   {
    "key": "long_word_ratio",
@@ -318,16 +318,16 @@
     "en": "Long-word share"
    },
    "unit": {
-    "cs": "podíl slov > 6 písmen",
-    "en": "share of words > 6 letters"
+    "cs": "% slov > 6 písmen",
+    "en": "% of words > 6 letters"
    },
    "desc": {
     "cs": "Podíl slov delších než 6 písmen.",
     "en": "Share of words longer than 6 letters."
    },
-   "decimals": 3,
-   "p01": 0.21895642578601837,
-   "p99": 0.4823068380355835
+   "decimals": 1,
+   "p01": 21.895641326904297,
+   "p99": 48.230682373046875
   },
   {
    "key": "em_dash_per_1000w",
