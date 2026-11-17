@@ -171,6 +171,9 @@
     'key', 'crucial', 'comprehensive', 'delve', 'enhance', 'emphasise', 'emphasize', 'highlight', 'robust', 'foster', 'pivotal',
     'nuanced', 'notably', 'underscore', 'leverage', 'multifaceted', 'innovative', 'facilitate', 'significant']);
   const aiLike = $derived(movers ? movers.rising.slice(0, 12).map((s) => s.word).filter((w) => AI_VOCAB.has(w)).slice(0, 3) : []);
+  // topic words of the pandemic years: their 'drop' is the pandemic peak inside the trend, not a change in writing
+  const TOPICAL = new Set(['covid', 'pandemie', 'epidemie', 'koronavirus', 'očkování', 'distanční', 'lockdown', 'karanténa', 'pandémia', 'pandemic', 'coronavirus', 'vaccination', 'quarantine']);
+  const topical = $derived(movers ? movers.falling.slice(0, 2).map((s) => s.word).filter((w) => TOPICAL.has(w)) : []);
   const smallSample = $derived(!!result && !result.reason && result.targetTotal < SMALL_TARGET);
 </script>
 
@@ -181,6 +184,7 @@
       {#if smallSample}<span class="hedge">{L.t['words.lede.small'](result.targetTotal)}</span>{' '}{/if}
       <b>{aiGroup ? L.t['ai.lede.words'](aiWho(), aiSpan, baselineLabel) : L.t['words.lede.up'](blockLabel, baselineLabel)}</b>
       {#each movers.rising.slice(0, 3) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw" class:rise={!aiGroup} onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({#if gloss(s.word)}‘{gloss(s.word)}’{', '}{/if}{figure(s)})</span>{/each}{#if movers.falling.length}; {L.t['words.lede.down']}{#each movers.falling.slice(0, 2) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw" class:fall={!aiGroup} onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({#if gloss(s.word)}‘{gloss(s.word)}’{', '}{/if}{figure(s)})</span>{/each}{/if}.
+      {#if topical.length}<span class="frame">{L.t['words.lede.topical'](topical.join(', '))}</span>{/if}
       {#if !aiGroup && cmp.to >= 2023 && aiLike.length}<span class="frame">{L.t['words.lede.frame'](aiLike.join(', '))}</span>{/if}
     {:else}
       <span class="muted">{L.t['words.cloud.title']}.</span>

@@ -176,6 +176,9 @@ describe('answer lines', () => {
     expect(s.post).toBeCloseTo(1.65);
     expect(s.facCompared).toBe(2);
     expect(s.facUp).toBe(1);
+    // faculty 0 rose by 0.3 (spread 0.1), faculty 1 fell 2.0 -> 1.9 with no spread: both beyond chance
+    expect(s.facSigUp).toBe(1);
+    expect(s.facSigDown).toBe(1);
     const g = gradeShift(t, m, 2025)!;
     expect(g.pre[0]).toBeCloseTo(60 / 80);
     expect(g.post[1]).toBeCloseTo(10 / 80);

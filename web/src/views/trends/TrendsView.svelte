@@ -85,7 +85,10 @@
         <b>{L.t['ai.lede.trends'](aiWho(), shift.postSpan, L.pick(metric.label), fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit))}</b>
       {:else if shift}
         <b>{L.t['trends.lede'](L.pick(metric.label), phrase, fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit), relText(shift), shift.postTo)}</b>
-        {#if shift.facCompared > 1}<b class="facs"> {L.t['trends.lede.facs'](shift.facUp, shift.facCompared)}</b>{/if}
+        {#if shift.facCompared > 1}
+          {@const up = shift.post >= shift.pre}
+          <span class="muted"> {L.t['trends.lede.facsSig'](up ? shift.facSigUp : shift.facSigDown, up ? shift.facSigDown : shift.facSigUp, shift.facCompared, up)}</span>
+        {/if}
         {#if shift.step}<span class="when">{L.t['trends.lede.step'](shift.step.lateYear, shift.step.earlySpan, fmtV(shift.step.early), fmtV(shift.step.late))}</span>{/if}
       {:else}
         <span class="muted">{L.t['trends.lede.na']}</span>
@@ -99,7 +102,7 @@
     </label>
     <Plate id="trends" stickyHead title={facs.length === 1 ? L.t['trends.titleOne'](L.pick(metric.label), meta.faculties[facs[0]].abbr) : L.t['trends.title'](L.pick(metric.label))} unit={`${L.pick(metric.unit)} · ${app.yearFrom}–${app.yearTo}${facs.length > 1 ? ` · ${L.t['trends.sorted']}` : ''}`} foot={L.t['trends.foot']}>
       {#snippet tools()}
-        <ul class="legend" aria-label="Legend">
+        <ul class="legend" aria-label={L.t['common.legend']}>
           <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--ink)" stroke-width="2.25"/></svg>{L.t['trends.this']}</li>
           {#if facs.length === 1}
             <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--avg)" stroke-width="2.25" stroke-dasharray="5 3"/></svg>{L.t['trends.uni']}</li>

@@ -379,3 +379,21 @@ aggregation code); the other takes phase 1's word cube and 3c.
 - Parallel plot bands get a thin grade-coloured edge and fainter fill in dark mode; paired-bar key
   uses a grade colour; word-detail figures rounded to 1 decimal, ChatGPT label drawn above bands,
   observed-block mean is a translucent ink bar (petrol stays "selected" only).
+
+### Critique round 6 changes (29/40)
+
+- Privacy: no grade breakdown for fewer than 20 theses (`MIN_CELL_N`) anywhere on Grades. Faculty
+  bars skip such cells and list them by name; tables print "–" and "<20"; the over-time chart
+  veils such years opaquely and its tooltip hides their shares. With one faculty, no "All" row.
+- Over-time chart draws the 95 % interval of the fail share, so a small year's spike reads as a
+  wide band, not a confident hump.
+- Trends counts faculties whose change is beyond their own 95 % interval
+  (`facSigUp` / `facSigDown`), not just the direction. The Grades verdict says "differ between the
+  two periods" and adds the A–F scale caveat when ETF/FSV are in a small selection.
+- Filter panel: Faculty → Years → Language → AI declaration. AI is "All theses / Declared AI use
+  only", with the four categories folded behind it; on Words the count names its years.
+- Parallel plot: measures ordered by how much the grades differ (same order in the dot plot);
+  half gap after the grade axis; neutral grey bands, grade colour on medians only; grade 2
+  median cased; a note when all medians coincide; haloed tick labels.
+- Words lede notes that covid/pandemic drops are the pandemic years inside the trend. Signed
+  numbers use a true minus; the Trends legend label is translated.

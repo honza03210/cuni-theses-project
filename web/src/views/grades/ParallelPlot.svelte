@@ -10,7 +10,9 @@
   interface Props { theses: Theses; mask: Uint8Array }
   let { theses, mask }: Props = $props();
 
-  const AXES = ['grade', 'mean_word_len', 'std_sentence_len', 'mean_sentence_len', 'mattr', 'repeated_trigram_ratio', 'long_word_ratio'];
+  // measures ordered by how far the median excellent and failed thesis sit apart across all theses
+  // (largest gap next to the grade axis), so the eye meets the strongest difference first
+  const AXES = ['grade', 'repeated_trigram_ratio', 'mean_sentence_len', 'std_sentence_len', 'mean_word_len', 'long_word_ratio', 'mattr'];
   const meta = $derived(theses.meta);
   const metricOf = (k: string) => meta.metrics.find((m) => m.key === k)!;
 
@@ -79,6 +81,15 @@
     }
     return out;
   });
+  // do the grades' medians nearly coincide on every measure? (within 10 % of each axis range)
+  const overlap = $derived.by(() => {
+    if (bands.length < 2) return false;
+    for (let a = 1; a < AXES.length; a++) {
+      const meds = bands.map((b) => b.med[a]);
+      if (Math.max(...meds) - Math.min(...meds) > 0.1) return false;
+    }
+    return true;
+  });
   let live = $state<Record<string, [number, number]>>({ ...app.brushes });
   $effect(() => { live = { ...app.brushes }; });
 
@@ -105,7 +116,9 @@
   const m = { top: 46, right: 56, bottom: 26, left: 56 };
   const iw = $derived(Math.max(10, width - m.left - m.right));
   const ih = height - m.top - m.bottom;
-  const ax = (a: number) => (iw * a) / (AXES.length - 1);
+  // the grade axis only fans theses out into their grades: give it half a gap
+  const gap0 = $derived((iw / (AXES.length - 1)) * 0.5);
+  const ax = (a: number) => (a === 0 ? 0 : gap0 + ((iw - gap0) * (a - 1)) / (AXES.length - 2));
 
   let canvas: HTMLCanvasElement | undefined = $state();
   let raf = 0;
@@ -295,6 +308,7 @@
       <span class="dk"><svg width="24" height="8" aria-hidden="true"><line x1="0" x2="24" y1="4" y2="4" stroke={GRADE_HEX[g - 1]} stroke-width="2.4" stroke-dasharray={['', '9 3', '5 3', '2 3'][g - 1]}/></svg>{g}</span>
     {/each}
   </p>
+  {#if overlap}<p class="par-note">{L.t['grades.par.overlap']}</p>{/if}
   <p class="scroll-hint">{L.t['grades.par.scroll']}</p>
   <div class="scroll">
   <div class="wrap" bind:clientWidth={width} style:height="{height}px">
@@ -304,9 +318,9 @@
         <!-- rare grades first, so the common grades' medians stay on top; each grade has its own dash -->
         {#each [...bands].reverse() as b (b.g)}
           {@const xs = AXES.map((_, a) => ax(a))}
-          <path class="band" class:hatched={b.g === 4} fill={GRADE_HEX[b.g - 1]} style:color={GRADE_HEX[b.g - 1]}
+          <path class="band" class:hatched={b.g === 4}
             d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.q3[a])}`).join('L') + 'L' + xs.map((x, a) => `${x},${ih * (1 - b.q1[a])}`).reverse().join('L') + 'Z'} />
-          <path class="median-halo" d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.med[a])}`).join('L')} />
+          <path class="median-halo" class:pale={b.g === 2} d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.med[a])}`).join('L')} />
           <path class="median" stroke={GRADE_HEX[b.g - 1]} stroke-dasharray={['', '9 3', '5 3', '2 3'][b.g - 1]} d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.med[a])}`).join('L')} />
         {/each}
         {#each AXES as k, a (k)}
@@ -333,6 +347,7 @@
 
 <style>
   .scroll { overflow-x: auto; }
+  .par-note { margin: 0 0 6px; font-size: var(--fs-sm); color: var(--ink); font-weight: 600; }
   .scroll-hint { display: none; margin: 0 0 4px; font-size: var(--fs-xs); color: var(--ink-3); }
   @media (max-width: 720px) { .scroll-hint { display: block; } }
   @media (pointer: coarse) {
@@ -342,10 +357,13 @@
   }
   .wrap { position: relative; width: 100%; min-width: 660px; }
   /* bands: faint fill plus a thin edge, so four overlapping bands stay separable (dark mode mixes fills into mud) */
-  .band { fill-opacity: var(--pcp-band-fill, 0.13); stroke: currentColor; stroke-opacity: var(--pcp-band-edge, 0); stroke-width: 0.8; }
+  /* bands are neutral (they overlap almost completely); grade colour lives on the median lines only */
+  .band { fill: var(--ink-3); fill-opacity: 0.09; stroke: none; }
   .median { fill: none; stroke-width: 2.4; stroke-linejoin: round; }
   /* a thin ink contour gives the light grade-2 line enough contrast on paper (and on charcoal in dark mode) */
   .median-halo { fill: none; stroke: var(--ink); stroke-width: 4.6; stroke-linejoin: round; opacity: 0.45; }
+  /* pale-sky grade 2 needs a full-strength casing to stay visible on paper */
+  .median-halo.pale { stroke-width: 5.2; opacity: 0.85; }
   .dk { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; }
   .bandkey { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 4px; font-size: var(--fs-sm); color: var(--ink-2); }
   .lines { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--ink-2); cursor: pointer; }
@@ -354,7 +372,7 @@
   .wrap > svg { overflow: visible; }
   .axis-line { stroke: var(--ink); stroke-width: 1; shape-rendering: crispEdges; }
   .tick { stroke: var(--ink); shape-rendering: crispEdges; }
-  .tl { font-size: 10px; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 2.5px; stroke-opacity: 0.9; }
+  .tl { font-size: 10.5px; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
   .al { font-size: 12px; font-weight: 600; fill: var(--ink); }
   .brush :global(.selection) { fill: var(--petrol); fill-opacity: 0.12; stroke: var(--petrol); stroke-width: 1.5; }
   .brush :global(.overlay) { cursor: crosshair; }

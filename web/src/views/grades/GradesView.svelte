@@ -11,7 +11,7 @@
   import GradeDots from './GradeDots.svelte';
   import Lede from '../../lib/ui/Lede.svelte';
   import { gradeShift, PRE, POST_FROM } from '../../lib/data/answers';
-  import { aiFilterActive } from '../../lib/data/select';
+  import { aiFilterActive, MIN_CELL_N } from '../../lib/data/select';
   import AiCaveat, { aiWho } from '../../lib/ui/AiCaveat.svelte';
 
   interface Props { theses: Theses; mask: Uint8Array }
@@ -36,8 +36,12 @@
   const allRow = $derived(total(byFac));
   const prevAll = $derived(prevFac ? total(prevFac) : null);
   const hasData = $derived(byYear.some((r) => r.total > 0));
-  const pct = (c: number, t: number) => (t ? L.f.pct(c / t) : '–');
+  // Privacy and reliability: no grade breakdown is ever shown for fewer than MIN_CELL_N theses
+  const pct = (c: number, t: number) => (t >= MIN_CELL_N ? L.f.pct(c / t) : '–');
+  const nText = (t: number) => (t > 0 && t < MIN_CELL_N ? `<${MIN_CELL_N}` : L.f.int(t));
   const aiOn = $derived(aiFilterActive(app.ai) && app.yearTo >= meta.aiYear);
+  // faculties on the A–F scale in a small selection: their grading rules can drive a change
+  const scaleFacs = $derived(facs.length <= 3 && facs.some((f) => ['etf', 'fsv'].includes(meta.faculties[f].code)));
   const gshift = $derived(gradeShift(theses, mask, Math.min(app.yearTo, meta.yearMax - 1)));
 </script>
 
@@ -59,6 +63,7 @@
     {:else if gshift}
       <b>{gshift.same ? L.t['grades.verdict.same'] : gshift.clear ? L.t['grades.verdict.moved'] : L.t['grades.verdict.unclear']}</b>
       {L.t['grades.lede'](L.f.pct(gshift.pre[0]), L.f.pct(gshift.post[0]), L.f.pct(gshift.pre[1]), L.f.pct(gshift.post[1]), gshift.postTo)}
+      {#if !gshift.same && scaleFacs}<span class="muted">{L.t['grades.scaleNote']}</span>{/if}
     {:else}
       <span class="muted">{L.t['trends.lede.na']}</span>
     {/if}
@@ -73,7 +78,7 @@
             <thead><tr><th>{L.t['common.year']}</th>{#each [1, 2, 3, 4] as g (g)}<th>{g}</th>{/each}<th>{L.t['common.n']}</th></tr></thead>
             <tbody>
               {#each byYear as r (r.year)}
-                <tr><td>{r.year}</td>{#each r.counts as c, i (i)}<td>{pct(c, r.total)}</td>{/each}<td class="muted">{L.f.int(r.total)}</td></tr>
+                <tr><td>{r.year}</td>{#each r.counts as c, i (i)}<td>{pct(c, r.total)}</td>{/each}<td class="muted">{nText(r.total)}</td></tr>
               {/each}
             </tbody>
           </table>
@@ -96,12 +101,12 @@
           <table>
             <thead><tr><th>{L.t['common.faculty']}</th>{#if compare}<th>{L.t['common.year']}</th>{/if}{#each [1, 2, 3, 4] as g (g)}<th>{g}</th>{/each}<th>{L.t['common.n']}</th></tr></thead>
             <tbody>
-              {#each [allRow, ...byFac] as r (r.fac)}
+              {#each byFac.length > 1 ? [allRow, ...byFac] : byFac as r (r.fac)}
                 {@const p = compare ? (r.fac < 0 ? prevAll : prevFac?.find((x) => x.fac === r.fac)) : null}
                 {#if p}
-                  <tr><td>{r.fac < 0 ? L.t['common.all'] : meta.faculties[r.fac].abbr}</td><td class="muted">{preLabel}</td>{#each p.counts as c, i (i)}<td>{pct(c, p.total)}</td>{/each}<td class="muted">{L.f.int(p.total)}</td></tr>
+                  <tr><td>{r.fac < 0 ? L.t['common.all'] : meta.faculties[r.fac].abbr}</td><td class="muted">{preLabel}</td>{#each p.counts as c, i (i)}<td>{pct(c, p.total)}</td>{/each}<td class="muted">{nText(p.total)}</td></tr>
                 {/if}
-                <tr><td>{p ? '' : r.fac < 0 ? L.t['common.all'] : meta.faculties[r.fac].abbr}</td>{#if compare}<td class="muted">{postLabel}</td>{/if}{#each r.counts as c, i (i)}<td>{pct(c, r.total)}</td>{/each}<td class="muted">{L.f.int(r.total)}</td></tr>
+                <tr><td>{p ? '' : r.fac < 0 ? L.t['common.all'] : meta.faculties[r.fac].abbr}</td>{#if compare}<td class="muted">{postLabel}</td>{/if}{#each r.counts as c, i (i)}<td>{pct(c, r.total)}</td>{/each}<td class="muted">{nText(r.total)}</td></tr>
               {/each}
             </tbody>
           </table>
@@ -113,7 +118,7 @@
       <ParallelPlot {theses} {mask} />
     </div>
     <div class="par">
-      <GradeDots {theses} {mask} keys={['mean_word_len', 'std_sentence_len', 'mean_sentence_len', 'mattr', 'repeated_trigram_ratio', 'long_word_ratio']} />
+      <GradeDots {theses} {mask} keys={['repeated_trigram_ratio', 'mean_sentence_len', 'std_sentence_len', 'mean_word_len', 'long_word_ratio', 'mattr']} />
     </div>
   </div>
 {/if}

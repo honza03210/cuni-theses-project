@@ -35,6 +35,8 @@ export interface MetricShift {
   step: { early: number; late: number; earlySpan: string; lateYear: number } | null;
   rel: number;         // relative change
   facUp: number;       // faculties whose mean rose
+  facSigUp: number;    // ... rose beyond their own 95 % interval
+  facSigDown: number;  // ... fell beyond their own 95 % interval
   facCompared: number; // faculties with enough theses in both windows
 }
 
@@ -45,6 +47,7 @@ export function metricShift(t: Theses, mask: Uint8Array, metric: string, postTo:
   const nf = t.meta.faculties.length;
   const s = { pre: 0, preSq: 0, preN: 0, post: 0, postSq: 0, postN: 0 };
   const fPre = new Float64Array(nf), fPreN = new Uint32Array(nf), fPost = new Float64Array(nf), fPostN = new Uint32Array(nf);
+  const fPreSq = new Float64Array(nf), fPostSq = new Float64Array(nf);
   const perYear = new Map<number, number>();
   const ys = new Map<number, { s: number; q: number; n: number }>();
   for (let i = 0; i < t.n; i++) {
@@ -53,8 +56,8 @@ export function metricShift(t: Theses, mask: Uint8Array, metric: string, postTo:
     if (!Number.isFinite(x)) continue;
     const y = t.year[i] + t.meta.yearMin;
     const f = t.fac[i];
-    if (y >= PRE[0] && y <= PRE[1]) { s.pre += x; s.preSq += x * x; s.preN++; fPre[f] += x; fPreN[f]++; }
-    else if (y >= POST_FROM && y <= postTo) { s.post += x; s.postSq += x * x; s.postN++; fPost[f] += x; fPostN[f]++; perYear.set(y, (perYear.get(y) ?? 0) + 1);
+    if (y >= PRE[0] && y <= PRE[1]) { s.pre += x; s.preSq += x * x; s.preN++; fPre[f] += x; fPreSq[f] += x * x; fPreN[f]++; }
+    else if (y >= POST_FROM && y <= postTo) { s.post += x; s.postSq += x * x; s.postN++; fPost[f] += x; fPostSq[f] += x * x; fPostN[f]++; perYear.set(y, (perYear.get(y) ?? 0) + 1);
       const a = ys.get(y) ?? { s: 0, q: 0, n: 0 }; a.s += x; a.q += x * x; a.n++; ys.set(y, a); }
   }
   if (s.preN < minN || s.postN < minN) return null;
@@ -63,11 +66,15 @@ export function metricShift(t: Theses, mask: Uint8Array, metric: string, postTo:
   const postVar = Math.max(1e-12, (s.postSq - s.postN * post * post) / (s.postN - 1));
   const sd = Math.sqrt(preVar);
   const clear = Math.abs(post - pre) > 1.96 * Math.sqrt(preVar / s.preN + postVar / s.postN);
-  let facUp = 0, facCompared = 0;
+  let facUp = 0, facCompared = 0, facSigUp = 0, facSigDown = 0;
+  const variance = (sum: number, sq: number, n: number) => Math.max(1e-12, (sq - n * (sum / n) ** 2) / (n - 1));
   for (let f = 0; f < nf; f++) {
     if (fPreN[f] >= minN && fPostN[f] >= minN) {
       facCompared++;
-      if (fPost[f] / fPostN[f] > fPre[f] / fPreN[f]) facUp++;
+      const a = fPre[f] / fPreN[f], b = fPost[f] / fPostN[f];
+      if (b > a) facUp++;
+      const se = Math.sqrt(variance(fPre[f], fPreSq[f], fPreN[f]) / fPreN[f] + variance(fPost[f], fPostSq[f], fPostN[f]) / fPostN[f]);
+      if (Math.abs(b - a) > 1.96 * se) { if (b > a) facSigUp++; else facSigDown++; }
     }
   }
   const postSpan = dataSpan((y) => perYear.get(y) ?? 0, POST_FROM, postTo) ?? `${POST_FROM}–${postTo}`;
@@ -88,7 +95,7 @@ export function metricShift(t: Theses, mask: Uint8Array, metric: string, postTo:
       }
     }
   }
-  return { pre, post, preN: s.preN, postN: s.postN, postSpan, postTo, clear, step, d: (post - pre) / sd, rel: post / pre - 1, facUp, facCompared };
+  return { pre, post, preN: s.preN, postN: s.postN, postSpan, postTo, clear, step, facSigUp, facSigDown, d: (post - pre) / sd, rel: post / pre - 1, facUp, facCompared };
 }
 
 // [excellent, fail] shares; `same` = both shares moved by less than 1.5 percentage points

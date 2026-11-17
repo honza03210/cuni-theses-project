@@ -37,11 +37,27 @@
     const raw = order.map((k) => { const mid = acc + last.s[k] / 2; acc += last.s[k]; return { k, y: y(mid) }; });
     raw.sort((a, b) => a.y - b.y);
     for (let i = 1; i < raw.length; i++) if (raw[i].y - raw[i - 1].y < 15) raw[i].y = raw[i - 1].y + 15;
+    // labels pushed below the plot (e.g. 'good' and 'fail' both near 0 %): pull them back up from the bottom
+    if (raw.length && raw[raw.length - 1].y > ih) {
+      raw[raw.length - 1].y = ih;
+      for (let i = raw.length - 2; i >= 0; i--) if (raw[i + 1].y - raw[i].y < 15) raw[i].y = raw[i + 1].y - 15;
+    }
     return raw;
   });
 
   // Years resting on fewer than MIN_CELL_N theses: veiled, so a handful of theses never reads as a trend
   const thin = $derived(valid.filter((r) => r.total < MIN_CELL_N));
+  // 95 % interval of the fail share per year (fails sit at the bottom of the stack): a small year's
+  // spike shows up as a wide band instead of a confident hump
+  const failCI = $derived.by(() => {
+    const pts = valid.filter((r) => r.total >= MIN_CELL_N).map((r) => {
+      const p = r.counts[3] / r.total, h = 1.96 * Math.sqrt(p * (1 - p) / r.total + 1e-9);
+      return { year: r.year, lo: Math.max(0, p - h), hi: Math.min(1, p + h), wide: h > 0.03 };
+    });
+    if (pts.length < 2) return null;
+    const top = pts.map((d) => `${x(d.year)},${y(d.hi)}`), bot = pts.map((d) => `${x(d.year)},${y(d.lo)}`).reverse();
+    return { d: `M${top.join('L')}L${bot.join('L')}Z`, wide: pts.some((d) => d.wide) };
+  });
   const slot = (yr: number) => {
     const a = x(Math.max(from, yr - 0.5)), b = x(Math.min(to, yr + 0.5));
     return { x: a, w: Math.max(2, b - a) };
@@ -81,7 +97,7 @@
         <line x1="0" y1="0" x2="0" y2="5" stroke="rgb(255 255 255 / 0.55)" stroke-width="1.6" />
       </pattern>
       <pattern id="thinveil" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-        <rect width="6" height="6" fill="var(--paper)" opacity="0.55" />
+        <rect width="6" height="6" fill="var(--paper)" opacity="0.85" />
         <line x1="0" y1="0" x2="0" y2="6" stroke="var(--paper)" stroke-width="2.4" />
       </pattern>
     </defs>
@@ -96,6 +112,7 @@
       {#each ticks as t (t)}
         {#if !marked || Math.abs(x(t) - x(selected)) > 42}<text x={x(t)} y={ih + 16} text-anchor="middle">{t}</text>{/if}
       {/each}
+      {#if failCI}<path class="ci" d={failCI.d} />{/if}
       {#each thin as r (r.year)}
         <rect class="thin" x={slot(r.year).x} width={slot(r.year).w} y="0" height={ih} fill="url(#thinveil)" />
       {/each}
@@ -120,14 +137,17 @@
     </g>
   </svg>
 </div>
+  {#if failCI?.wide}<p class="thin-note"><svg width="16" height="10" aria-hidden="true"><rect y="2" width="16" height="6" class="ci" /></svg>{L.t['grades.area.ci']}</p>{/if}
   {#if thin.length}<p class="thin-note"><svg width="16" height="10" aria-hidden="true"><rect width="16" height="10" fill="var(--grade-1)"/><rect width="16" height="10" fill="url(#thinveil)"/></svg>{L.t['grades.area.thin'](thin.map((r) => r.year).join(', '))}</p>{/if}
   {#if hover && hoverRow}
     <Tooltip x={hover.cx} y={hover.cy}>
       <div class="tt-title">{hoverRow.year}</div>
-      {#each [0, 1, 2, 3] as g (g)}
-        <div class="tt-row"><span><span class="swatch" style:background={GRADE_VARS[g]}></span>{g + 1} {L.t[`grade.${g + 1}` as 'grade.1']}</span><b>{L.f.pct(hoverRow.counts[g] / hoverRow.total)}</b></div>
-      {/each}
-      <div class="tt-row"><span>{L.t['common.n']}</span><b>{L.f.int(hoverRow.total)}</b></div>
+      {#if hoverRow.total >= MIN_CELL_N}
+        {#each [0, 1, 2, 3] as g (g)}
+          <div class="tt-row"><span><span class="swatch" style:background={GRADE_VARS[g]}></span>{g + 1} {L.t[`grade.${g + 1}` as 'grade.1']}</span><b>{L.f.pct(hoverRow.counts[g] / hoverRow.total)}</b></div>
+        {/each}
+      {/if}
+      <div class="tt-row"><span>{L.t['common.n']}</span><b>{hoverRow.total < MIN_CELL_N ? `<${MIN_CELL_N}` : L.f.int(hoverRow.total)}</b></div>
       {#if hoverRow.total < MIN_CELL_N}<div class="tt-row"><span>{L.t['common.smallSample']}</span></div>{/if}
     </Tooltip>
   {/if}
@@ -150,4 +170,5 @@
   .mlabel.ai { fill: var(--warn); stroke: var(--paper); }
   .thin-note { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: var(--fs-xs); color: var(--ink-2); }
   .thin-note svg { flex: none; }
+  .ci { fill: var(--ink); fill-opacity: 0.16; stroke: var(--ink); stroke-width: 0.8; stroke-dasharray: 2 2; }
 </style>

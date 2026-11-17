@@ -39,6 +39,8 @@
     return { post, pre };
   });
 
+  const aiMode = $derived(app.ai.length === 4 ? 'all' : app.ai.length === 1 && app.ai[0] === 1 ? 'declared' : 'custom');
+
   function toggle(list: number[], v: number): number[] {
     return list.includes(v) ? list.filter((x) => x !== v) : [...list, v].sort((a, b) => a - b);
   }
@@ -53,33 +55,11 @@
 <div class="panel">
   <div class="count" aria-live="polite">
     <strong>{L.f.int(matched)}</strong>
-    <span>{L.t['filters.match']}</span>
+    <span>{yearsLocked ? L.t['filters.matchYears'](app.yearFrom, app.yearTo) : L.t['filters.match']}</span>
   </div>
   {#if split}<p class="note counts-note ai-count">{L.t['filters.countSplit'](L.f.int(split.post), L.f.int(split.pre))}</p>{/if}
   <p class="note counts-note">{L.t['filters.countsNote']}</p>
 
-  <fieldset disabled={!aiApplies}>
-    <legend><span>{L.t['filters.ai']}</span></legend>
-    <ul class="checks">
-      {#each [1, 2, 3, 4] as a (a)}
-        <li>
-          <label>
-            <input type="checkbox" checked={app.ai.includes(a)} onchange={() => (app.ai = toggle(app.ai, a))} />
-            <span class="name">{L.t[`ai.${a}` as 'ai.1']}</span>
-            <span class="n">{L.f.int(counts.ai[a])}</span>
-          </label>
-        </li>
-      {/each}
-    </ul>
-    <p class="note">{L.t['filters.aiNote']}</p>
-    <details class="defs">
-      <summary>{L.t['filters.aiWhat']}</summary>
-      <dl>
-        {#each [1, 2, 3, 4] as a (a)}<dt>{L.t[`ai.${a}` as 'ai.1']}</dt><dd>{L.t[`ai.def.${a}` as 'ai.def.1']}</dd>{/each}
-      </dl>
-    </details>
-    {#if !app.ai.length}<p class="warn" role="status">{L.t['filters.noAi']}</p>{/if}
-  </fieldset>
 
   <fieldset>
     <legend>
@@ -131,6 +111,45 @@
     {#if !app.langs.length}<p class="warn" role="status">{L.t['filters.noLang']}</p>{/if}
   </fieldset>
 
+  <fieldset disabled={!aiApplies}>
+    <legend><span>{L.t['filters.ai']}</span></legend>
+    <!-- the common choice up front; the four declaration categories fold behind it -->
+    <ul class="checks">
+      <li>
+        <label>
+          <input type="radio" name="ai-mode" checked={aiMode === 'all'} onchange={() => (app.ai = [1, 2, 3, 4])} />
+          <span class="name">{L.t['filters.aiAll']}</span>
+        </label>
+      </li>
+      <li>
+        <label>
+          <input type="radio" name="ai-mode" checked={aiMode === 'declared'} onchange={() => (app.ai = [1])} />
+          <span class="name">{L.t['filters.aiDeclared']}</span>
+          <span class="n">{L.f.int(counts.ai[1])}</span>
+        </label>
+      </li>
+    </ul>
+    <details class="defs" open={aiMode === 'custom'}>
+      <summary>{L.t['filters.aiCats']}</summary>
+      <ul class="checks sub">
+        {#each [1, 2, 3, 4] as a (a)}
+          <li>
+            <label>
+              <input type="checkbox" checked={app.ai.includes(a)} onchange={() => (app.ai = toggle(app.ai, a))} />
+              <span class="name">{L.t[`ai.${a}` as 'ai.1']}</span>
+              <span class="n">{L.f.int(counts.ai[a])}</span>
+            </label>
+          </li>
+        {/each}
+      </ul>
+      <dl>
+        {#each [1, 2, 3, 4] as a (a)}<dt>{L.t[`ai.${a}` as 'ai.1']}</dt><dd>{L.t[`ai.def.${a}` as 'ai.def.1']}</dd>{/each}
+      </dl>
+    </details>
+    <p class="note">{L.t['filters.aiNote']}</p>
+    {#if !app.ai.length}<p class="warn" role="status">{L.t['filters.noAi']}</p>{/if}
+  </fieldset>
+
   <button type="button" class="reset" onclick={reset}>{L.t['filters.reset']}</button>
 </div>
 
@@ -179,7 +198,8 @@
   }
   label:hover { background: var(--paper-3); }
   .checks label:not(:has(.abbr)) { grid-template-columns: 18px 1fr auto; }
-  input[type='checkbox'] { margin: 0; width: 15px; height: 15px; cursor: pointer; }
+  input[type='checkbox'], input[type='radio'] { margin: 0; width: 15px; height: 15px; cursor: pointer; accent-color: var(--petrol); }
+  .checks.sub { margin-top: 6px; }
   .abbr { font-weight: 600; min-width: 3.4em; }
   .name { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .checks label:not(:has(.abbr)) .name { color: var(--ink); }
@@ -195,7 +215,7 @@
   .defs dd { margin: 1px 0 0; line-height: 1.45; }
   @media (max-width: 1023px) {
     label { padding: 8px 4px; min-height: 40px; }
-    input[type='checkbox'] { width: 18px; height: 18px; }
+    input[type='checkbox'], input[type='radio'] { width: 18px; height: 18px; }
     label { grid-template-columns: 22px auto 1fr auto; }
     .checks label:not(:has(.abbr)) { grid-template-columns: 22px 1fr auto; }
     .quick button { padding: 8px 10px; }

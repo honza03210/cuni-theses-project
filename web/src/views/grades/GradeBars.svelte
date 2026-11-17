@@ -5,6 +5,7 @@
   import { GRADE_VARS } from '../../lib/chart';
   import { L } from '../../lib/locale.svelte';
   import Tooltip from '../../lib/ui/Tooltip.svelte';
+  import { MIN_CELL_N } from '../../lib/data/select';
 
   /** Horizontal 100 % bars, one row per faculty. With `prev`, each row holds two bars:
    *  the earlier period (thin, upper) and the later one (full, lower), labelled by `tags`. */
@@ -19,11 +20,16 @@
   const prevOf = (f: number) => (f < 0 ? prevAll : prev?.find((r) => r.fac === f)) ?? null;
   const isSmall = (r: GradeFac) => r.total < SMALL || (paired && (prevOf(r.fac)?.total ?? 0) < SMALL);
   const byShare = (a: GradeFac, b: GradeFac) => b.counts[0] / b.total - a.counts[0] / a.total;
+  // Fewer than MIN_CELL_N theses: never drawn (a handful of theses can point to one student); listed by name instead.
+  const shown = $derived(rows.filter((r) => r.total >= MIN_CELL_N));
+  const hidden = $derived(rows.filter((r) => r.total > 0 && r.total < MIN_CELL_N).map((r) => faculties[r.fac].abbr));
   const sorted = $derived([
-    ...rows.filter((r) => r.total > 0 && !isSmall(r)).sort(byShare),
-    ...rows.filter((r) => r.total > 0 && isSmall(r)).sort(byShare),
+    ...shown.filter((r) => !isSmall(r)).sort(byShare),
+    ...shown.filter((r) => isSmall(r)).sort(byShare),
   ]);
-  const bars = $derived(all.total > 0 ? [all, ...sorted] : sorted);
+  // one faculty: the "All" row would only repeat it
+  const bars = $derived(all.total >= MIN_CELL_N && rows.length > 1 ? [all, ...sorted] : sorted);
+  const prevShown = (f: number) => { const p = prevOf(f); return p && p.total >= MIN_CELL_N ? p : null; };
   const rowH = $derived(paired ? 26 : 18);
   const m = { top: 4, right: 52, bottom: 22, left: 52 };
   const ih = $derived(bars.length * rowH + 8);
@@ -46,7 +52,7 @@
   let hover: { r: GradeFac; tag: string; cx: number; cy: number } | null = $state(null);
   const missing = $derived(rows.filter((r) => r.total === 0).map((r) => faculties[r.fac].abbr));
   const ariaText = $derived(bars.map((b) => {
-    const p = prevOf(b.fac);
+    const p = prevShown(b.fac);
     return paired && p?.total
       ? `${label(b.fac)}: 1 ${L.f.pct(p.counts[0] / p.total)} → ${L.f.pct(b.counts[0] / b.total)}`
       : `${label(b.fac)}: 1 ${L.f.pct(b.counts[0] / b.total)}`;
@@ -78,7 +84,7 @@
         <text x={x(t)} y={ih + 15} text-anchor="middle">{t * 100} %</text>
       {/each}
       {#each bars as b (b.fac)}
-        {@const p = prevOf(b.fac)}
+        {@const p = prevShown(b.fac)}
         <g class="bar" class:small={isSmall(b)} class:all={b.fac < 0} transform="translate(0,{y(b.fac)})">
           <text class="yl" x="-8" y={paired ? parts.curY + parts.curH / 2 - 3 : y.bandwidth() / 2} dy="0.32em" text-anchor="end">{label(b.fac)}</text>
           {#if paired && p && p.total}{@render bar(p, parts.prevY, parts.prevH, tags[0])}{/if}
@@ -92,6 +98,7 @@
     </g>
   </svg>
   {#if missing.length}<p class="note">{missing.join(', ')}: 0 {L.t['common.theses']}</p>{/if}
+  {#if hidden.length}<p class="note">{L.t['grades.bars.hidden'](hidden.join(', '))}</p>{/if}
   {#if hover}
     <Tooltip x={hover.cx} y={hover.cy}>
       <div class="tt-title">{hover.r.fac < 0 ? L.t['common.all'] : L.pick(faculties[hover.r.fac].name)}{#if hover.tag}{' '}<span class="tt-tag">{hover.tag}</span>{/if}</div>
