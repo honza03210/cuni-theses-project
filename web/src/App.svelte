@@ -89,12 +89,12 @@
   });
   $effect(() => { document.documentElement.lang = app.locale; document.title = L.t.title; });
 
-  const filters = $derived({ fac: app.fac, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai, genders: app.genders });
+  const filters = $derived({ fac: app.fac, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai, genders: app.genders, grades: app.grades });
   const mask = $derived(theses ? filterMask(theses, filters) : null);
   const matched = $derived(mask ? countMask(mask) : 0);
   // Words compares a baseline with target years: its count covers exactly those years
   const wordYears = $derived<[number, number] | null>(theses ? [Math.max(theses.meta.yearMin, app.wordFrom - app.wordBase), app.wordTo] : null);
-  const wordMatched = $derived(theses && wordYears ? countMask(filterMask(theses, { ...filters, yearFrom: wordYears[0], yearTo: wordYears[1] })) : 0);
+  const wordMatched = $derived(theses && wordYears ? countMask(filterMask(theses, { ...filters, yearFrom: wordYears[0], yearTo: wordYears[1], grades: [0, 1, 2, 3, 4] })) : 0);
 
   const views: View[] = ['words', 'trends', 'grades'];
   const tabIds = { words: 'tab-words', trends: 'tab-trends', grades: 'tab-grades' } as const;
@@ -166,7 +166,7 @@
     </div>
     {#if theses}
       <FilterPanel {theses} matched={app.view === 'words' ? wordMatched : matched} countYears={wordYears} yearsLocked={app.view === 'words'}
-        aiApplies={app.view === 'words' || app.yearTo >= theses.meta.aiYear} />
+        aiApplies={app.view === 'words' || app.yearTo >= theses.meta.aiYear} gradeApplies={app.view !== 'words'} />
     {/if}
     <!-- theme and language come after the filters, so Tab reaches the filters first -->
     <div class="prefs drawer-prefs">{@render prefsCtl()}</div>

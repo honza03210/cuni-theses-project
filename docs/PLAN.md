@@ -445,3 +445,9 @@ aggregation code); the other takes phase 1's word cube and 3c.
   the same years as the lede; mode switch is a "Show details" text toggle. Caveats stay detailed-only (user's choice).
 - Minor: dot-plot double bracket, "Not clear from name", "Other", equal finding weights, `text-wrap: pretty` on notes.
 - Zoom: drag on any time-series chart zooms all of them; double-click / Esc / zoom bar resets.
+
+## Grade filter
+
+- Filter panel "Grade": 1 excellent … 4 fail, plus "No grade"; URL key `gr`. Applies to Trends and Grades.
+- Words cannot honour it (the word cubes have no grade split; adding one would make them ~5× larger), so the
+  fieldset is disabled there with a one-line reason shown in both versions; `buildWordContext` ignores it.

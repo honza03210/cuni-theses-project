@@ -40,7 +40,7 @@
   const uniAll = $derived.by(() => {
     if (facs.length !== 1) return null;
     const all = meta.faculties.map((_, i) => i);
-    const m = filterMask(theses, { fac: all, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai, genders: app.genders });
+    const m = filterMask(theses, { fac: all, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai, genders: app.genders, grades: app.grades });
     return metricSeries(theses, m, metric.key, all, app.yearFrom, app.yearTo);
   });
   const uniRef = $derived(uniAll?.overall ?? null);

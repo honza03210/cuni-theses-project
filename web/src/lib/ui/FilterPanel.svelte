@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Theses } from '../data/types';
-  import { aiFilterActive, filterMask, GENDER_ALL } from '../data/select';
+  import { aiFilterActive, filterMask, GENDER_ALL, GRADE_ALL } from '../data/select';
   import { app } from '../state/app.svelte';
   import { defaults } from '../state/url';
   import { domainOf } from '../state/app.svelte';
@@ -8,35 +8,38 @@
   import YearRange from './YearRange.svelte';
   import { FAC_SHORT } from '../faculties';
 
-  interface Props { theses: Theses; matched: number; aiApplies: boolean; yearsLocked?: boolean; countYears?: [number, number] | null }
-  let { theses, matched, aiApplies, yearsLocked = false, countYears = null }: Props = $props();
+  interface Props { theses: Theses; matched: number; aiApplies: boolean; gradeApplies?: boolean; yearsLocked?: boolean; countYears?: [number, number] | null }
+  let { theses, matched, aiApplies, gradeApplies = true, yearsLocked = false, countYears = null }: Props = $props();
 
   const meta = $derived(theses.meta);
 
   // Per-option counts given all *other* filters (so a count shows what ticking it would add)
   const counts = $derived.by(() => {
-    const base = { fac: app.fac, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai, genders: app.genders };
+    const base = { fac: app.fac, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai, genders: app.genders, grades: app.grades };
     const fac = new Array(meta.faculties.length).fill(0);
     const lang = new Array(meta.langs.length).fill(0);
     const ai = new Array(5).fill(0);
     const gender = new Array(3).fill(0);
+    const grade = new Array(5).fill(0);
     const mFac = filterMask(theses, { ...base, fac: meta.faculties.map((_, i) => i) });
     const mLang = filterMask(theses, { ...base, langs: meta.langs.map((_, i) => i) });
     const mAi = filterMask(theses, { ...base, ai: [1, 2, 3, 4] });
     const mG = filterMask(theses, { ...base, genders: [0, 1, 2] });
+    const mGr = filterMask(theses, { ...base, grades: [0, 1, 2, 3, 4] });
     for (let i = 0; i < theses.n; i++) {
       if (mFac[i]) fac[theses.fac[i]]++;
       if (mLang[i]) lang[theses.lang[i]]++;
       if (mAi[i] && theses.year[i] + meta.yearMin >= meta.aiYear) ai[theses.ai[i]]++;
       if (mG[i]) gender[theses.gender[i]]++;
+      if (mGr[i]) grade[theses.grade[i]]++;
     }
-    return { fac, lang, ai, gender };
+    return { fac, lang, ai, gender, grade };
   });
 
   // With the AI filter on, the count mixes two groups: declared theses from 2023 on + all earlier ones.
   const split = $derived.by(() => {
     if (!aiFilterActive(app.ai) || !aiApplies) return null;
-    const m = filterMask(theses, { fac: app.fac, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai, genders: app.genders });
+    const m = filterMask(theses, { fac: app.fac, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai, genders: app.genders, grades: app.grades });
     const aiY = meta.aiYear - meta.yearMin;
     let post = 0, pre = 0;
     for (let i = 0; i < theses.n; i++) if (m[i]) { if (theses.year[i] >= aiY) post++; else pre++; }
@@ -52,7 +55,7 @@
   function reset() {
     const d = defaults(domainOf(theses));
     app.fac = d.fac; app.yearFrom = d.yearFrom; app.yearTo = d.yearTo;
-    app.langs = d.langs; app.ai = d.ai; app.genders = d.genders; app.brushes = {};
+    app.langs = d.langs; app.ai = d.ai; app.genders = d.genders; app.grades = d.grades; app.brushes = {};
   }
 </script>
 
@@ -117,6 +120,24 @@
       {/each}
     </ul>
     {#if !app.langs.length}<p class="warn" role="status">{L.t['filters.noLang']}</p>{/if}
+  </fieldset>
+
+  <fieldset disabled={!gradeApplies}>
+    <legend><span>{L.t['filters.grade']}</span></legend>
+    <ul class="checks">
+      {#each GRADE_ALL as g (g)}
+        <li>
+          <label>
+            <input type="checkbox" checked={app.grades.includes(g)} onchange={() => (app.grades = toggle(app.grades, g))} />
+            <span class="name">{g ? `${g} ${L.t[`grade.${g}` as 'grade.1']}` : L.t['filters.gradeNone']}</span>
+            <span class="n full-only">{L.f.int(counts.grade[g])}</span>
+          </label>
+        </li>
+      {/each}
+    </ul>
+    <!-- not full-only: a disabled filter must say why, in both versions -->
+    {#if !gradeApplies}<p class="note">{L.t['filters.gradeWords']}</p>{/if}
+    {#if gradeApplies && !app.grades.length}<p class="warn" role="status">{L.t['filters.noGrade']}</p>{/if}
   </fieldset>
 
   <fieldset>

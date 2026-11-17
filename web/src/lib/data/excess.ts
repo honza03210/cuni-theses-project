@@ -1,4 +1,4 @@
-import { filterMask } from './select';
+import { filterMask, GRADE_ALL } from './select';
 import type { Filters, Theses, WordCube } from './types';
 
 export const BASELINE_YEARS = 5;   // default baseline length
@@ -30,7 +30,8 @@ export function buildWordContext(t: Theses, cube: WordCube, f: Filters, aiOn: bo
   const { yearMin, yearMax, aiYear } = t.meta;
   const ny = yearMax - yearMin + 1;
   // Denominators cover every year (the baseline may precede the selected range)
-  const mask = filterMask(t, { ...f, yearFrom: yearMin, yearTo: yearMax, langs: [cube.langIndex] });
+  // the word data has no grade split, so the grade filter does not apply here
+  const mask = filterMask(t, { ...f, yearFrom: yearMin, yearTo: yearMax, langs: [cube.langIndex], grades: GRADE_ALL });
   const pos = new Map(f.fac.map((fac, i) => [fac, i]));
   const denom = f.fac.map(() => new Array<number>(ny).fill(0));
   for (let i = 0; i < t.n; i++) {

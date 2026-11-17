@@ -76,4 +76,5 @@ export interface Filters {
   langs: number[];    // selected language indices
   ai: number[];       // selected AI declaration indices (1..4); all four = no filter
   genders: number[];  // selected author genders (0 unknown, 1 female, 2 male); all three = no filter
+  grades: number[];   // selected grades (1–4 on the common scale, 0 = no grade); all five = no filter
 }

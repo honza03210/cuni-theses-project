@@ -23,7 +23,7 @@ function makeTheses(rows: { fac: number; year: number; lang?: number; ai?: numbe
   };
 }
 
-const ALL = { fac: [0, 1], yearFrom: 2006, yearTo: 2026, langs: [0], ai: [1, 2, 3, 4], genders: [0, 1, 2] };
+const ALL = { fac: [0, 1], yearFrom: 2006, yearTo: 2026, langs: [0], ai: [1, 2, 3, 4], genders: [0, 1, 2], grades: [0, 1, 2, 3, 4] };
 
 describe('filterMask', () => {
   const t = makeTheses([
@@ -40,6 +40,11 @@ describe('filterMask', () => {
   it('AI filter only narrows 2023+ rows', () => {
     const m = filterMask(t, { ...ALL, ai: [1] });
     expect(Array.from(m)).toEqual([1, 1, 1, 0, 0, 0]);
+  });
+  it('grade filter keeps only the selected grades', () => {
+    const g = makeTheses([{ fac: 0, year: 2010, grade: 1 }, { fac: 0, year: 2024, grade: 4 }, { fac: 0, year: 2010, grade: 0 }]);
+    expect(Array.from(filterMask(g, { ...ALL, grades: [1, 2] }))).toEqual([1, 0, 0]);
+    expect(Array.from(filterMask(g, { ...ALL, grades: [4, 0] }))).toEqual([0, 1, 1]);
   });
   it('gender filter narrows every year', () => {
     const g = makeTheses([{ fac: 0, year: 2010, gender: 1 }, { fac: 0, year: 2024, gender: 2 }, { fac: 0, year: 2010, gender: 0 }]);
@@ -166,7 +171,7 @@ describe('url state', () => {
   const d: Domain = { facCodes: ['a', 'b', 'c'], langs: ['cs', 'en', 'sk', 'other'], yearMin: 2006, yearMax: 2026, metrics: ['m1', 'm2'] };
   it('round-trips', () => {
     const s = { ...defaults(d), view: 'grades' as const, locale: 'cs' as const, detailed: true, fac: [0, 2], yearFrom: 2010, yearTo: 2024,
-      langs: [0, 1], ai: [1], genders: [1], metric: 'm2', word: 'čeština', wordLang: 1, minFreq: 0.02, wordFrom: 2023, wordTo: 2025, wordBase: 4, lemma: false, wordRank: 'ratio' as const, gradeYear: 2020,
+      langs: [0, 1], ai: [1], genders: [1], grades: [1, 4], metric: 'm2', word: 'čeština', wordLang: 1, minFreq: 0.02, wordFrom: 2023, wordTo: 2025, wordBase: 4, lemma: false, wordRank: 'ratio' as const, gradeYear: 2020,
       brushes: { mattr: [0.7, 0.75] as [number, number] }, table: { trends: true } };
     expect(decode(encode(s, d), d)).toEqual(s);
   });
