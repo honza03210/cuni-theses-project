@@ -7,7 +7,7 @@
   import { app, assign, domainOf } from './lib/state/app.svelte';
   import { decode, encode, type View } from './lib/state/url';
   import { L } from './lib/locale.svelte';
-  import { zoom, resetZoom } from './lib/state/zoom.svelte';
+  import { zoom, resetZoom, applyZoom } from './lib/state/zoom.svelte';
   import FilterPanel from './lib/ui/FilterPanel.svelte';
   import WordsView from './views/words/WordsView.svelte';
   import TrendsView from './views/trends/TrendsView.svelte';
@@ -194,6 +194,8 @@
         <div class="zoombar" role="status">
           <span>{L.t['zoom.on'](`${zoom.range[0]}–${zoom.range[1]}`)}</span>
           <button type="button" onclick={resetZoom}>{L.t['zoom.reset']}</button>
+          <!-- Words compares fixed periods, so its year filter is locked -->
+          {#if app.view !== 'words'}<button type="button" onclick={applyZoom}>{L.t['zoom.apply']}</button>{/if}
           <span class="zhint">{L.t['zoom.hint']}</span>
         </div>
       {/if}
@@ -260,6 +262,7 @@
     border-radius: 3px 3px 0 0;
     transition: background var(--t) var(--ease), color var(--t) var(--ease);
   }
+  @media (pointer: coarse), (max-width: 639px) { .tabs button { min-height: 44px; } .drawer-btn { min-height: 44px; padding-inline: 12px; } }
   .tabs button:hover { color: var(--band-ink); background: var(--band-hover); }
   .tabs button[aria-selected='true'] { background: var(--paper); color: var(--ink); box-shadow: inset 0 3px 0 var(--petrol); }
   .tabs button:focus-visible { outline-color: var(--band-ink); outline-offset: -3px; }

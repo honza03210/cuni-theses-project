@@ -1,9 +1,7 @@
 <script lang="ts">
   import type { Theses } from '../data/types';
   import { aiFilterActive, filterMask, GENDER_ALL, GRADE_ALL } from '../data/select';
-  import { app } from '../state/app.svelte';
-  import { defaults } from '../state/url';
-  import { domainOf } from '../state/app.svelte';
+  import { app, resetFilters } from '../state/app.svelte';
   import { L } from '../locale.svelte';
   import YearRange from './YearRange.svelte';
   import { FAC_SHORT } from '../faculties';
@@ -52,11 +50,7 @@
     return list.includes(v) ? list.filter((x) => x !== v) : [...list, v].sort((a, b) => a - b);
   }
 
-  function reset() {
-    const d = defaults(domainOf(theses));
-    app.fac = d.fac; app.yearFrom = d.yearFrom; app.yearTo = d.yearTo;
-    app.langs = d.langs; app.ai = d.ai; app.genders = d.genders; app.grades = d.grades; app.brushes = {};
-  }
+  const reset = () => resetFilters(theses);
 </script>
 
 <div class="panel">
@@ -83,7 +77,8 @@
             <input type="checkbox" checked={app.fac.includes(i)} onchange={() => (app.fac = toggle(app.fac, i))} />
             {#if app.detailed}
               <span class="abbr">{fac.abbr}</span>
-              <span class="name">{L.pick(fac.name)}</span>
+              <!-- the same short names as the charts; the official name is on hover -->
+              <span class="name">{FAC_SHORT[fac.code] ? L.pick(FAC_SHORT[fac.code]) : L.pick(fac.name)}</span>
             {:else}
               <span class="short">{FAC_SHORT[fac.code] ? L.pick(FAC_SHORT[fac.code]) : fac.abbr}</span>
             {/if}
@@ -104,6 +99,10 @@
     </fieldset>
   {:else}
     <p class="note years-moved full-only">{L.t['filters.yearsOnTimeline']}</p>
+    <!-- years chosen on Trends or Grades do not apply here: say so instead of ignoring them silently -->
+    {#if app.yearFrom !== meta.yearMin || app.yearTo !== meta.yearMax - 1}
+      <p class="note years-other">{L.t['filters.yearsElsewhere'](app.yearFrom, app.yearTo)}</p>
+    {/if}
   {/if}
 
   <fieldset>
@@ -210,7 +209,9 @@
   .count span { font-size: var(--fs-sm); color: var(--ink-2); }
 
   fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
-  fieldset:disabled { opacity: 0.55; }
+  /* only the inert options fade; the legend and the note saying why stay at full contrast */
+  fieldset:disabled .checks, fieldset:disabled .sub { opacity: 0.5; }
+  fieldset:disabled .note { color: var(--ink-2); }
   legend {
     display: flex; justify-content: space-between; align-items: baseline;
     width: 100%;
@@ -254,6 +255,7 @@
   .note { margin: 6px 0 0; font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.45; text-wrap: pretty; }
   /* a count, not a warning: the one ochre caveat lives in the answer line */
   .ai-count { color: var(--ink-2); }
+  .years-other { color: var(--ink-2); margin: 0; }
   .ai-count + .counts-note { margin-top: 0; }
   .counts-note { margin: calc(-1 * var(--s4)) 0 0; }
   .defs { margin-top: 6px; font-size: var(--fs-xs); color: var(--ink-2); }

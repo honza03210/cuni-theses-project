@@ -24,6 +24,8 @@ export interface AppState {
   lemma: boolean;           // word cloud: merge inflected forms (lemmas)
   wordRank: 'gap' | 'ratio'; // word cloud: rank by absolute (pp) or relative (×) change
   gradeYear: number | null;
+  /** shared chart zoom (visual only; the filters keep yearFrom–yearTo) */
+  zoom: [number, number] | null;
   brushes: Record<string, [number, number]>;
   table: Record<string, boolean>;
 }
@@ -60,6 +62,7 @@ export function defaults(d: Domain): AppState {
     lemma: true,
     wordRank: 'gap',
     gradeYear: null,
+    zoom: null,
     brushes: {},
     table: {},
   };
@@ -94,6 +97,7 @@ export function encode(s: AppState, d: Domain): string {
   if (!s.lemma) p.set('wf', '1');
   if (s.wordRank !== def.wordRank) p.set('wr', s.wordRank);
   if (s.gradeYear !== null) p.set('gy', String(s.gradeYear));
+  if (s.zoom) p.set('z', `${s.zoom[0]}-${s.zoom[1]}`);
   const b = Object.entries(s.brushes)
     .map(([k, [lo, hi]]) => `${k}:${+lo.toPrecision(4)}:${+hi.toPrecision(4)}`);
   if (b.length) p.set('b', b.join(';'));
@@ -144,6 +148,11 @@ export function decode(query: string, d: Domain): AppState {
   const mf = Number(p.get('mf'));
   if (p.has('mf') && mf >= 0.001 && mf <= 0.2) s.minFreq = mf;
   s.gradeYear = intIn(p.get('gy'), d.yearMin, d.yearMax);
+  const z = p.get('z')?.match(/^(\d{4})-(\d{4})$/);
+  if (z) {
+    const a = intIn(z[1], d.yearMin, d.yearMax), b = intIn(z[2], d.yearMin, d.yearMax);
+    if (a !== null && b !== null && a < b) s.zoom = [a, b];
+  }
   const wy = p.get('wy')?.match(/^(\d{4})(?:-(\d{4}))?$/);
   if (wy) {
     const a = intIn(wy[1], d.yearMin, d.yearMax), b = intIn(wy[2] ?? wy[1], d.yearMin, d.yearMax);

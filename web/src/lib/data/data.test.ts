@@ -171,13 +171,13 @@ describe('url state', () => {
   const d: Domain = { facCodes: ['a', 'b', 'c'], langs: ['cs', 'en', 'sk', 'other'], yearMin: 2006, yearMax: 2026, metrics: ['m1', 'm2'] };
   it('round-trips', () => {
     const s = { ...defaults(d), view: 'grades' as const, locale: 'cs' as const, detailed: true, fac: [0, 2], yearFrom: 2010, yearTo: 2024,
-      langs: [0, 1], ai: [1], genders: [1], grades: [1, 4], metric: 'm2', word: 'čeština', wordLang: 1, minFreq: 0.02, wordFrom: 2023, wordTo: 2025, wordBase: 4, lemma: false, wordRank: 'ratio' as const, gradeYear: 2020,
+      langs: [0, 1], ai: [1], genders: [1], grades: [1, 4], metric: 'm2', word: 'čeština', wordLang: 1, minFreq: 0.02, wordFrom: 2023, wordTo: 2025, wordBase: 4, lemma: false, wordRank: 'ratio' as const, gradeYear: 2020, zoom: [2013, 2018] as [number, number],
       brushes: { mattr: [0.7, 0.75] as [number, number] }, table: { trends: true } };
     expect(decode(encode(s, d), d)).toEqual(s);
   });
   it('defaults encode to an empty query and junk is ignored', () => {
     expect(encode(defaults(d), d)).toBe('');
-    expect(decode('v=nope&y=3000-1&m=zzz&gy=abc', d)).toEqual(defaults(d));
+    expect(decode('v=nope&y=3000-1&m=zzz&gy=abc&z=2020-2010', d)).toEqual(defaults(d));
   });
 });
 
@@ -251,6 +251,14 @@ describe('chart zoom', async () => {
     expect(zoomed(2018, 2025)).toEqual([2018, 2020]);
     expect(zoomed(2021, 2025)).toEqual([2021, 2025]);
     resetZoom();
+    expect(zoom.range).toBeNull();
+  });
+  it('turns the zoom into the year filter', async () => {
+    const { app } = await import('../state/app.svelte');
+    const { applyZoom } = await import('../state/zoom.svelte');
+    zoom.range = [2012, 2019];
+    applyZoom();
+    expect([app.yearFrom, app.yearTo]).toEqual([2012, 2019]);
     expect(zoom.range).toBeNull();
   });
 });

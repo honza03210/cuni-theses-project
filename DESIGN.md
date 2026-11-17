@@ -343,4 +343,6 @@ screen-reader-only table.
 Dragging across any time-series chart (Trends panels, grades over time, word over time) with a mouse zooms every such
 chart to those years (`lib/state/zoom.svelte.ts`). Double-click, Escape or the "Show all years" link in the sticky
 zoom bar zooms out. The selection is a dashed ink rectangle (`.zsel`); zoom is visual only and never changes the
-filters or the computed answer lines. Touch keeps scrolling the page.
+filters or the computed answer lines. Touch keeps scrolling the page. The zoom is kept in the URL (`z=2013-2018`); chart subtitles
+show the zoomed years marked "(zoomed)", and "Use as year filter" in the zoom bar turns the zoom into the year filter
+(not on Words, whose years are fixed periods).

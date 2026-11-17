@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { metricSeries } from '../../lib/data/aggregate';
   import { aiFilterActive, filterMask } from '../../lib/data/select';
   import type { Theses } from '../../lib/data/types';
@@ -8,6 +9,8 @@
   import Plate from '../../lib/ui/Plate.svelte';
   import TrendPanel from './TrendPanel.svelte';
   import Lede from '../../lib/ui/Lede.svelte';
+  import { yearsLabel } from '../../lib/state/zoom.svelte';
+  import EmptyNote from '../../lib/ui/EmptyNote.svelte';
   import { magnitude, metricShift } from '../../lib/data/answers';
   import { aiWho } from '../../lib/ui/AiCaveat.svelte';
 
@@ -18,6 +21,16 @@
   const metric = $derived(meta.metrics.find((m) => m.key === app.metric) ?? meta.metrics[0]);
   let showOthers = $state(true);
   let gridW = $state(900);
+  let grid: HTMLElement | undefined = $state();
+  // one Tab stop for the whole grid; arrow keys move between panels
+  let activePanel = $state(0);
+  async function nav(fi: number, key: string) {
+    const n = shown.length;
+    activePanel = key === 'Home' ? 0 : key === 'End' ? n - 1
+      : Math.max(0, Math.min(n - 1, fi + (key === 'ArrowDown' ? 1 : -1)));
+    await tick();
+    grid?.querySelectorAll<SVGElement>('svg[role="slider"]')[activePanel]?.focus();
+  }
   // phones get two narrower columns, so 15 faculties are not a 15-screen scroll
   const colMin = $derived(gridW < 600 ? 150 : 220);
   const cols = $derived(Math.max(1, Math.floor((gridW + 16) / (colMin + 16))));
@@ -92,11 +105,14 @@
 <div class="trends">
   <div class="main">
     <Lede howto={`${L.t['trends.howto']} ${L.t['zoom.how']}`}>
-      {#if shift && aiOn}
+      {#if !hasData}
+        <EmptyNote {theses} />
+      {:else if shift && aiOn}
         <span class="lead-note">{L.t['ai.lede.note']}</span>
         <b>{L.t['ai.lede.trends'](aiWho(), shift.postSpan, L.pick(metric.label), fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit))}</b><span class="muted">{L.t['ai.lede.chance'](shift.clear)}</span>
       {:else if shift}
-        <b>{L.t['trends.lede'](L.pick(metric.label), phrase, fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit), relText(shift), shift.postTo)}</b>
+        <b>{L.t['trends.lede'](L.pick(metric.label), phrase)}</b>{L.t['trends.lede.vals'](fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit), shift.postTo)}
+        <span class="muted full-only">{L.t['trends.lede.rel'](relText(shift))}</span>
         {#if shift.facCompared > 1}
           {@const up = shift.post >= shift.pre}
           <span class="muted full-only"> {L.t['trends.lede.facsSig'](up ? shift.facSigUp : shift.facSigDown, up ? shift.facSigDown : shift.facSigUp, shift.facCompared, up)}</span>
@@ -112,7 +128,7 @@
         {#each meta.metrics as m (m.key)}<option value={m.key}>{L.pick(m.label)}</option>{/each}
       </select>
     </label>
-    <Plate id="trends" stickyHead title={facs.length === 1 ? L.t['trends.titleOne'](L.pick(metric.label), meta.faculties[facs[0]].abbr) : L.t['trends.title'](L.pick(metric.label))} unit={`${L.pick(metric.unit)} · ${app.yearFrom}–${app.yearTo}${facs.length > 1 ? ` · ${L.t['trends.sorted']}` : ''}`} foot={L.t['trends.foot']}>
+    <Plate id="trends" stickyHead title={facs.length === 1 ? L.t['trends.titleOne'](L.pick(metric.label), meta.faculties[facs[0]].abbr) : L.t['trends.title'](L.pick(metric.label))} unit={`${L.pick(metric.unit)} · ${yearsLabel(app.yearFrom, app.yearTo)}${facs.length > 1 ? ` · ${app.yearTo >= 2023 ? L.t['trends.sorted'] : L.t['trends.sortedNone']}` : ''}`} foot={L.t['trends.foot']}>
       {#snippet tools()}
         <div class="legend-head">{@render legend()}</div>
       {/snippet}
@@ -136,20 +152,16 @@
 
       {#if mixedLang}<p class="warn" role="status">{L.t['trends.mixedLang']}</p>{/if}
       {#if noPost.length}<p class="nopost">{L.t['trends.noPost'](noPost.map((f) => meta.faculties[f].abbr).join(', '))}</p>{/if}
-      {#if !facs.length || !hasData}
-        <p class="empty">{L.t['common.empty']} <button type="button" class="fix" onclick={() => (app.fac = meta.faculties.map((_, i) => i))}>{L.t['common.selectAll']}</button></p>
-      {:else}
-        <div class="grid" class:single={facs.length === 1} bind:clientWidth={gridW} style:--col-min="{colMin}px">
+      {#if facs.length && hasData}
+        <div class="grid" class:single={facs.length === 1} bind:this={grid} bind:clientWidth={gridW} style:--col-min="{colMin}px">
           {#each shown as f, fi (f)}
-            <TrendPanel first={fi < cols} showOthers={showOthers && app.detailed}
+            <TrendPanel first={fi < cols} tabStop={fi === Math.min(activePanel, shown.length - 1)} onnav={(k) => nav(fi, k)} showOthers={showOthers && app.detailed}
               fac={f} faculty={meta.faculties[f]} {series} {facs} {yDomain} {metric} {aiOn}
               yearFrom={app.yearFrom} yearTo={app.yearTo} yearMax={meta.yearMax} aiYear={meta.aiYear}
               faculties={meta.faculties} uniRef={uniRef} large={facs.length === 1}
             />
           {/each}
         </div>
-        <!-- phones: the legend sits under the charts, so the first chart comes up sooner -->
-        <div class="legend-foot">{@render legend()}</div>
       {/if}
     </Plate>
   </div>
@@ -188,11 +200,6 @@
   /* a default legend state, not a choice: ink, not petrol */
   .others input { margin: 0; accent-color: var(--ink-2); }
   .when { display: block; margin-top: 6px; font-size: var(--fs-md); color: var(--ink-2); }
-  .legend-foot { display: none; }
-  @media (max-width: 639px) {
-    .legend-head { display: none; }
-    .legend-foot { display: block; margin-top: var(--s4); }
-  }
   .nopost { margin: 0 0 var(--s3); font-size: var(--fs-sm); color: var(--ink-2); }
   .msel { display: none; }
   @media (max-width: 639px) {
@@ -202,8 +209,6 @@
     .picker { display: none; }
   }
   .warn { margin: 0 0 var(--s3); font-size: var(--fs-sm); color: var(--warn); font-weight: 600; }
-  .empty { color: var(--ink-2); padding: var(--s6) 0; }
-  .fix { margin-left: 6px; border: 1px solid var(--ink-3); background: var(--paper); color: var(--ink); border-radius: 3px; padding: 3px 10px; font-size: var(--fs-sm); cursor: pointer; }
 
   .picker { position: sticky; top: calc(var(--band-h, 58px) + var(--s5)); }
   fieldset { border: 0; margin: 0; padding: 0; }

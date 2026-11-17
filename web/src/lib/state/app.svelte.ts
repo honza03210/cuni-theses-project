@@ -22,3 +22,10 @@ export function domainOf(t: Theses): Domain {
 export function assign(next: AppState) {
   Object.assign(app, next);
 }
+
+/** Put every filter back to its default (the panel's "Reset to defaults" and empty-state recovery). */
+export function resetFilters(t: Theses) {
+  const d = defaults(domainOf(t));
+  app.fac = d.fac; app.yearFrom = d.yearFrom; app.yearTo = d.yearTo;
+  app.langs = d.langs; app.ai = d.ai; app.genders = d.genders; app.grades = d.grades; app.brushes = {}; app.zoom = null;
+}

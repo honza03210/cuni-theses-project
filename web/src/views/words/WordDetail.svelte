@@ -59,12 +59,15 @@
   const expected = $derived(fit && blockD
     ? block.reduce((s, p) => s + Math.max(0, fit.intercept + fit.slope * p.year) * p.d, 0) / blockD : NaN);
   const blockLabel = $derived(T0 === T1 ? `${T0}` : `${T0}–${T1}`);
+  const shortSpan = (a: number, b: number) => (a === b ? `${a}` : `${a}–${String(b).slice(2)}`);
 
   let width = $state(800);
+  // phones: the difference label moves under the chart, so the plot keeps its width
+  const narrow = $derived(width < 480);
   const height = 300;
-  const m = { top: 14, right: 120, bottom: 24, left: 52 };
+  const m = $derived({ top: 14, right: narrow ? 36 : 120, bottom: 24, left: narrow ? 44 : 52 });
   const iw = $derived(Math.max(10, width - m.left - m.right));
-  const ih = height - m.top - m.bottom;
+  const ih = $derived(height - m.top - m.bottom);
   // the shared zoom narrows the visible years; everything drawn is clipped to the plot
   const span = $derived(zoomed(from, yearTo));
   const zf = $derived(span[0]);
@@ -73,7 +76,9 @@
   const yMax = $derived(Math.max(
     // the simple version draws no faculty lines, so the scale follows the whole selection
     ...total.map((p) => p.v), ...(app.detailed ? perFac.flatMap((f) => f.pts.map((p) => p.v)) : []),
-    Number.isFinite(expected) ? expected : 0, 0.001));
+    Number.isFinite(expected) ? expected : 0, 0.001,
+    // the dashed trend is drawn too, so it must fit inside the plot
+    ...(fit && result.baseline.length ? [result.baseline[0], T1].map((yy) => fit.intercept + fit.slope * yy) : [])));
   const y = $derived(scaleLinear().domain([0, yMax * 1.08]).range([ih, 0]).nice(5));
   const gen = $derived(line<{ year: number; v: number }>().x((d) => x(d.year)).y((d) => y(d.v)));
   const solidPart = (pts: { year: number; v: number }[]) => pts.filter((p) => p.year < yearMax || p.year === pts[0]?.year);
@@ -119,7 +124,7 @@
       <span class="full-only"><i class="k ctx"></i>{L.t['words.detail.faculties']}</span>
       <span><i class="k fit"></i>{L.t['words.detail.fit']} {result.baseline[0]}–{result.baseline[result.baseline.length - 1]}</span>
       <span><i class="k dot hollow"></i>{L.t['words.detail.expected']}</span>
-      <span><i class="k dot"></i>{L.t['words.detail.observed']}</span>
+      <span><i class="k dot"></i>{L.t['words.detail.observedAvg'](blockLabel)}</span>
     {/if}
   </div>
   <div class="chart" bind:clientWidth={width}>
@@ -151,14 +156,26 @@
         {#if result.baseline.length}
           {@const b0 = Math.max(result.baseline[0], zf)}
           {@const b1 = Math.min(result.baseline[result.baseline.length - 1], zt)}
-          {#if b1 >= b0}<text class="band-l" x={(x(b0 - 0.5) + x(b1 + 0.5)) / 2} y={ih - 6} text-anchor="middle">{L.t['words.detail.bandTrend'](`${result.baseline[0]}–${result.baseline[result.baseline.length - 1]}`)}</text>{/if}
+          <!-- narrow plots: short year spans ('2018–22') on one row, without the word "trend" -->
+          {#if b1 >= b0}<text class="band-l" x={(x(b0 - 0.5) + x(b1 + 0.5)) / 2} y={ih - 6} text-anchor="middle">{narrow ? shortSpan(result.baseline[0], result.baseline[result.baseline.length - 1]) : L.t['words.detail.bandTrend'](`${result.baseline[0]}–${result.baseline[result.baseline.length - 1]}`)}</text>{/if}
         {/if}
         {#if Math.min(T1, zt) >= Math.max(T0, zf)}
-          <text class="band-l" x={(x(Math.max(T0, zf) - 0.5) + x(Math.min(T1, zt) + 0.5)) / 2} y={ih - 6} text-anchor="middle">{blockLabel}</text>
+          {@const tx = (x(Math.max(T0, zf) - 0.5) + x(Math.min(T1, zt) + 0.5)) / 2}
+          {#if narrow}
+            <text class="band-l" x={Math.min(iw, x(Math.min(T1, zt) + 0.5)) - 2} y={ih - 6} text-anchor="end">{shortSpan(T0, T1)}</text>
+          {:else}
+            <text class="band-l" x={tx} y={ih - 6} text-anchor="middle">{blockLabel}</text>
+          {/if}
         {/if}
         {#if CHATGPT_X >= zf && CHATGPT_X <= zt}
-          <line class="marker" x1={x(CHATGPT_X)} x2={x(CHATGPT_X)} y1="0" y2={ih} />
-          <text class="mlabel" x={x(CHATGPT_X) + 4} y="10">{seam ? L.t['common.chatgptAi'] : L.t['common.chatgpt']}</text>
+          {@const mx = x(CHATGPT_X)}
+          <line class="marker" x1={mx} x2={mx} y1="0" y2={ih} />
+          <!-- near the right edge the label sits left of its line, so it is never clipped -->
+          {#if mx > iw - 80}
+            <text class="mlabel" x={mx - 4} y="10" text-anchor="end">{seam ? L.t['common.chatgptAi'] : L.t['common.chatgpt']}</text>
+          {:else}
+            <text class="mlabel" x={mx + 4} y="10">{seam ? L.t['common.chatgptAi'] : L.t['common.chatgpt']}</text>
+          {/if}
         {/if}
         {#each app.detailed ? perFac : [] as f (f.f)}
           {#if f.pts.length > 1}<path class="ctx" d={gen(f.pts)} />{/if}
@@ -186,10 +203,12 @@
           {/if}
           <circle class="exp" cx={x0} cy={y(expected)} r="5" />
           <circle class="obs" cx={x0} cy={y(observed)} r="5" />
-          <text class="diff" class:up={diffPP > 0} class:down={diffPP < 0} x={x0 + 22} y={(y(observed) + y(expected)) / 2} dy="0.32em">
-            {L.t['words.diff'](L.f.signed(diffPP, 1))}
-          </text>
-          <text class="lbl" x={x0 + 22} y={(y(observed) + y(expected)) / 2} dy="1.6em">{L.f.pct(expected, 1)} → {L.f.pct(observed, 1)}</text>
+          {#if !narrow}
+            <text class="diff" class:up={diffPP > 0} class:down={diffPP < 0} x={x0 + 22} y={(y(observed) + y(expected)) / 2} dy="0.32em">
+              <title>{L.t['words.diff.long'](L.f.signed(diffPP, 1))}</title>{L.t['words.diff'](L.f.signed(diffPP, 1))}
+            </text>
+            <text class="lbl" x={x0 + 22} y={(y(observed) + y(expected)) / 2} dy="1.6em">{L.f.pct(expected, 1)} → {L.f.pct(observed, 1)}</text>
+          {/if}
         {/if}
         {#if drag.active}<rect class="zsel" x={x(drag.lo)} width={Math.max(0, x(drag.hi) - x(drag.lo))} y="0" height={ih} />{/if}
         {#if hoverYear !== null}
@@ -199,6 +218,9 @@
       </g>
     </svg>
   </div>
+  {#if narrow && Number.isFinite(diffPP)}
+    <p class="diff-line"><b class:up={diffPP > 0} class:down={diffPP < 0}>{L.t['words.diff.long'](L.f.signed(diffPP, 1))}</b> {blockLabel}: {L.f.pct(expected, 1)} → {L.f.pct(observed, 1)}</p>
+  {/if}
   {#if hoverYear !== null && perFac.length > 1 && app.detailed}
     <p class="facs">
       {#each perFac as f (f.f)}
@@ -245,6 +267,10 @@
   .band-l { font-size: 11px; font-weight: 600; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
   .cursor { stroke: var(--ink-3); shape-rendering: crispEdges; }
   .hdot { fill: var(--ink); }
+  .diff-line { margin: 2px 0 0; font-size: var(--fs-sm); color: var(--ink-2); }
+  .diff-line b { color: var(--ink); }
+  .diff-line b.up { color: var(--rise); }
+  .diff-line b.down { color: var(--fall); }
   .facs { display: flex; flex-wrap: wrap; gap: 2px 14px; margin: 4px 0 0; font-size: var(--fs-xs); color: var(--ink-3); }
   .facs b { color: var(--ink); font-weight: 600; }
 </style>

@@ -10,6 +10,8 @@
   import ParallelPlot from './ParallelPlot.svelte';
   import GradeDots from './GradeDots.svelte';
   import Lede from '../../lib/ui/Lede.svelte';
+  import { yearsLabel } from '../../lib/state/zoom.svelte';
+  import EmptyNote from '../../lib/ui/EmptyNote.svelte';
   import { gradeShift, PRE, POST_FROM } from '../../lib/data/answers';
   import { aiFilterActive, MIN_CELL_N } from '../../lib/data/select';
   import { aiWho } from '../../lib/ui/AiCaveat.svelte';
@@ -60,7 +62,7 @@
 {/snippet}
 
 {#if !hasData}
-  <p class="empty">{L.t['common.empty']} <button type="button" class="fix" onclick={() => (app.fac = meta.faculties.map((_, i) => i))}>{L.t['common.selectAll']}</button></p>
+  <div class="empty"><EmptyNote {theses} /></div>
 {:else}
   <Lede howto={`${L.t['grades.howto']} ${L.t['zoom.how']}`}>
     {#if gshift && aiOn}
@@ -77,7 +79,7 @@
   {@render gradeLegend()}
   <div class="grades">
     <div class="area">
-      <Plate id="g-area" grow title={L.t['grades.area.title']} unit={`${L.t['grades.area.unit']} · ${app.yearFrom}–${app.yearTo}`}
+      <Plate id="g-area" grow title={L.t['grades.area.title']} unit={`${L.t['grades.area.unit']} · ${yearsLabel(app.yearFrom, app.yearTo)}`}
         foot={`${L.t['grades.area.hint']} ${L.t['grades.foot']}`}>
         {#snippet table()}
           <table>
@@ -93,7 +95,7 @@
       </Plate>
     </div>
     <div class="bars">
-      <Plate id="g-bars" title={compare ? L.t['grades.bars.titleCmp'](preLabel, postLabel) : L.t['grades.bars.title'](barYear)} unit={app.detailed ? `${L.t['grades.bars.unit']} · ${L.t['grades.bars.sort']}` : L.t['grades.bars.unit']} foot={L.t['grades.bars.small']}>
+      <Plate id="g-bars" title={compare ? L.t['grades.bars.titleCmp'](preLabel, postLabel) : L.t['grades.bars.title'](barYear)} unit={app.detailed ? `${L.t['grades.bars.unit']} · ${L.t['grades.bars.sort']}` : L.t['grades.bars.unitSimple']} foot={L.t['grades.bars.small']}>
         {#snippet tools()}
           {#if canCompare}
             <div class="seg" role="group" aria-label={L.t['grades.bars.mode']}>
@@ -143,12 +145,11 @@
   .area > :global(.plate), .bars > :global(.plate) { flex: 1 1 auto; }
   .par { grid-column: 1 / -1; min-width: 0; }
   .empty { color: var(--ink-2); padding: var(--s6) 0; }
-  .fix { margin-left: 6px; border: 1px solid var(--ink-3); background: var(--paper); color: var(--ink); border-radius: 3px; padding: 3px 10px; font-size: var(--fs-sm); cursor: pointer; }
   .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
   .seg button { border: 0; background: transparent; padding: 3px 10px; font-size: var(--fs-sm); cursor: pointer; color: var(--ink-2); }
   .seg button + button { border-left: 1px solid var(--rule); }
   .seg button[aria-pressed='true'] { background: var(--petrol); color: var(--on-petrol); }
-  @media (pointer: coarse) { .seg button { min-height: 40px; } }
+  @media (pointer: coarse), (max-width: 639px) { .seg button { min-height: 44px; } }
   .glegend { display: flex; flex-wrap: wrap; gap: 4px 22px; list-style: none; margin: 0 0 var(--s4); padding: 0; font-size: var(--fs-sm); color: var(--ink-2); }
   .glegend li { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
   .sw { width: 11px; height: 11px; border-radius: 1px; box-shadow: inset 0 0 0 1px var(--swatch-edge); }

@@ -72,6 +72,8 @@
   // Keyboard: the cloud is one tab stop; arrow keys move through words in reading order
   const order = $derived([...placed].sort((a, b) => (Math.abs(a.y - b.y) > 10 ? a.y - b.y : a.x - b.x)).map((p) => p.text));
   let active = $state(0);
+  // the roving Tab stop starts on the selected word, so keyboard users land where the detail chart is
+  $effect(() => { const i = selected ? order.indexOf(selected) : -1; if (i >= 0) active = i; });
   let svgEl: SVGSVGElement | undefined = $state();
   function focusWord(i: number) {
     active = Math.max(0, Math.min(order.length - 1, i));
@@ -98,7 +100,7 @@
           style:transform="translate({p.x}px, {p.y}px)" style:font-size="{p.size}px" text-anchor="middle"
           tabindex={order[active] === p.text || (!order.includes(order[active]) && order[0] === p.text) ? 0 : -1}
           data-w={p.text}
-          aria-label="{p.text}{gloss?.(p.text) ? ` (${gloss(p.text)})` : ''}: {p.rise ? L.t['words.more'] : L.t['words.less']}, {L.f.pct(p.s.observed, 1)} / {L.f.pct(p.s.expected, 1)}"
+          aria-label="{p.text}{gloss?.(p.text) ? ` (${gloss(p.text)})` : ''}: {p.rise ? L.t['words.more'] : L.t['words.less']}, {L.t['words.detail.observed']} {L.f.pct(p.s.observed, 1)}, {L.t['words.detail.expected']} {L.f.pct(p.s.expected, 1)}"
           aria-pressed={selected === p.text}
           onclick={() => onpick(p.text)}
           onkeydown={(e) => onKey(e, p.text)}

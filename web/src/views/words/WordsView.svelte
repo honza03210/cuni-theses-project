@@ -10,6 +10,7 @@
   import WordDetail from './WordDetail.svelte';
   import WordTimeline from './WordTimeline.svelte';
   import Lede from '../../lib/ui/Lede.svelte';
+  import EmptyNote from '../../lib/ui/EmptyNote.svelte';
   import { tick } from 'svelte';
   import { dataSpan } from '../../lib/data/answers';
   import { aiWho } from '../../lib/ui/AiCaveat.svelte';
@@ -30,6 +31,7 @@
   });
   const N_EACH = 25;
 
+  const empty = $derived(!filters.fac.length || !filters.langs.length || !filters.genders.length || !filters.ai.length);
   const wordLang = $derived(app.wordLang !== null && app.langs.includes(app.wordLang) ? app.wordLang : app.langs[0] ?? null);
 
   const lemmaAvailable = $derived(wordLang !== null && LEMMA_LANGS.includes(meta.langs[wordLang]));
@@ -242,7 +244,9 @@
 
 <div class="words">
   <Lede howto={`${L.t['words.howto']} ${L.t['zoom.how']}`}>
-    {#if movers && result && !result.reason && movers.rising.length}
+    {#if empty || wordLang === null}
+      <EmptyNote {theses} grades={false} />
+    {:else if movers && result && !result.reason && movers.rising.length}
       {#if aiGroup}<span class="lead-note">{L.t['ai.lede.note']}</span>{/if}
       {#if smallSample}<span class="hedge">{L.t['words.lede.small'](result.targetTotal)}</span>{' '}{/if}
       <!-- one sentence: three words, with English glosses; figures live in the cloud, tooltip and table -->
@@ -300,9 +304,12 @@
     </div>
     {/snippet}
 
+    {#if !empty}
     <div class="legend">
       <span class="lk rise">{L.t['words.more']}</span>
       <span class="lk fall">{L.t['words.less']}</span>
+      <!-- simple version: what size means, in words; the detailed version has the size ramp -->
+      {#if listRows.length}<span class="size-key simple-only">{L.t['words.legend.size']}</span>{/if}
       {#if listRows.length}
         <span class="ramp full-only">
           {#each SIZES as sz, i (i)}<span aria-hidden="true" style:font-size="{Math.max(11, sz * 0.75)}px">Aa</span>{/each}
@@ -312,11 +319,12 @@
         </span>
       {/if}
     </div>
+    {/if}
 
     {#if cubeError}
       <p class="msg">{L.t['common.loadError']} <span class="detail">{cubeError}</span></p>
-    {:else if !filters.fac.length || wordLang === null}
-      <p class="msg">{L.t['common.empty']} <button type="button" class="fix" onclick={() => (app.fac = meta.faculties.map((_, i) => i))}>{L.t['common.selectAll']}</button></p>
+    {:else if empty || wordLang === null}
+      <!-- the answer line above names the empty filter; nothing to draw here -->
     {:else if !cube || !result || !movers}
       <div class="skel" aria-busy="true"><span class="sr-only">{L.t['common.loading']}</span></div>
     {:else if result.reason === 'too-early'}
@@ -333,7 +341,7 @@
     {/if}
   </Plate>
 
-  <div bind:this={detailEl} class="detail-anchor">
+  <div bind:this={detailEl} class="detail-anchor" hidden={empty}>
   <Plate id="w-detail" title={selected ? L.t['words.detail.title'](selected) : L.t['words.detail.none']}
     unit={[selected && gloss(selected) ? `‘${gloss(selected)}’` : null,
       selected && useLemma && formsOf(selected).length ? `${L.t['words.detail.unitLemma']} · ${L.t['words.detail.forms'](formsOf(selected).join(', '))}` : L.t['words.detail.unit']].filter(Boolean).join(' · ')}>
@@ -372,8 +380,6 @@
   .detail-anchor { scroll-margin-top: calc(var(--band-h, 58px) + 12px); }
   .lw { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: var(--rule); }
   .lw:hover { text-decoration-color: currentColor; }
-  .fix { margin-left: 6px; border: 1px solid var(--ink-3); background: var(--paper); color: var(--ink); border-radius: 3px; padding: 3px 10px; font-size: var(--fs-sm); cursor: pointer; }
-  .fix:hover { border-color: var(--ink); background: var(--paper-2); }
   .search { position: relative; }
   .search input {
     width: 200px; font-size: var(--fs-sm); color: var(--ink); background: var(--paper);
@@ -414,6 +420,7 @@
   .ramp span { line-height: 1; font-weight: 600; }
   .ramp small { font-size: var(--fs-xs); margin-left: 4px; }
   .msg { color: var(--ink-2); padding: var(--s5) 0; max-width: 70ch; }
+  .size-key { font-size: var(--fs-xs); color: var(--ink-3); }
   .msg.empty { color: var(--ink-3); padding: var(--s4) 0; }
   .detail { color: var(--ink-3); font-size: var(--fs-sm); }
   .warn { margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--warn); font-weight: 600; }
@@ -428,10 +435,13 @@
   }
   .sentence select:hover { border-color: var(--ink-3); }
   .player { display: inline-flex; gap: 4px; }
-  @media (pointer: coarse) {
-    .seg button, .player button { min-height: 40px; min-width: 44px; }
-    .more summary { padding: 10px 0; }
-    .search input { min-height: 40px; }
+  /* touch: 44px hit areas; the lede's inline word buttons grow an invisible hit area instead of breaking the line */
+  @media (pointer: coarse), (max-width: 639px) {
+    .seg button, .player button { min-height: 44px; min-width: 44px; }
+    .more summary { padding: 12px 0; }
+    .search input { min-height: 44px; }
+    .lw { position: relative; }
+    .lw::after { content: ''; position: absolute; inset: -12px -4px; }
   }
   .player button {
     display: inline-flex; align-items: center; gap: 6px;

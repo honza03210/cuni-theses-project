@@ -7,6 +7,7 @@
   import Tooltip from '../../lib/ui/Tooltip.svelte';
   import { MIN_CELL_N } from '../../lib/data/select';
   import { app } from '../../lib/state/app.svelte';
+  import { FAC_SHORT } from '../../lib/faculties';
 
   /** Horizontal 100 % bars, one row per faculty. With `prev`, each row holds two bars:
    *  the earlier period (thin, upper) and the later one (full, lower), labelled by `tags`. */
@@ -44,7 +45,8 @@
   const bars = $derived(all.total >= MIN_CELL_N && rows.length > 1 ? [all, ...visible] : visible);
   const prevShown = (f: number) => { const p = prevOf(f); return p && p.total >= MIN_CELL_N ? p : null; };
   const rowH = $derived(paired ? 26 : 18);
-  const m = { top: 4, right: 52, bottom: 22, left: 52 };
+  // simple version: the short names the filter uses (codes only in the detailed version)
+  const m = $derived({ top: 4, right: paired ? 62 : 52, bottom: 22, left: app.detailed ? 52 : 132 });
   const ih = $derived(bars.length * rowH + 8);
   const height = $derived(ih + m.top + m.bottom);
   const iw = $derived(Math.max(10, width - m.left - m.right));
@@ -54,7 +56,8 @@
   const AF = ['etf', 'fsv'];
   // the † and its note belong to the detailed version
   const isAF = (f: number) => app.detailed && f >= 0 && AF.includes(faculties[f].code);
-  const label = (f: number) => (f < 0 ? L.t['filters.all'] : faculties[f].abbr + (isAF(f) ? '†' : ''));
+  const facName = (f: number) => (!app.detailed && FAC_SHORT[faculties[f].code] ? L.pick(FAC_SHORT[faculties[f].code]) : faculties[f].abbr);
+  const label = (f: number) => (f < 0 ? L.t['filters.all'] : facName(f) + (isAF(f) ? '†' : ''));
   const anyAF = $derived(bars.some((b) => isAF(b.fac)));
   // paired rows: earlier bar 40 % of the band, later bar 60 %, 2px apart
   const parts = $derived.by(() => {
@@ -78,7 +81,7 @@
 </script>
 
 {#snippet bar(r: GradeFac, yy: number, h: number, tag: string)}
-  <g class="seg-row" role="presentation" onpointermove={(e) => (hover = { r, tag, cx: e.clientX, cy: e.clientY })} onpointerleave={() => (hover = null)}>
+  <g class="seg-row" class:prev={paired && tag === tags[0]} role="presentation" onpointermove={(e) => (hover = { r, tag, cx: e.clientX, cy: e.clientY })} onpointerleave={() => (hover = null)}>
     {#each segs(r) as s (s.g)}
       <rect x={x(s.x0)} y={yy} width={Math.max(0, x(s.x1) - x(s.x0))} height={h}
         fill={s.g === 3 ? 'url(#hatch4b)' : GRADE_VARS[s.g]} stroke={GRADE_VARS[s.g]} />
@@ -87,7 +90,7 @@
 {/snippet}
 
 <div class="wrap" bind:clientWidth={width}>
-  {#if trimmed}<p class="cut full-only">{L.t['grades.bars.cut'](TOP)}</p>{/if}
+  {#if trimmed}<p class="cut">{app.detailed ? L.t['grades.bars.cut'](TOP) : L.t['grades.bars.cutShort'](TOP)}</p>{/if}
   {#if paired}
     <p class="pkey"><span class="pk prev"></span>{tags[0]}<span class="pk cur"></span>{tags[1]}</p>
   {/if}
@@ -100,7 +103,7 @@
     </defs>
     <g transform="translate({m.left},{m.top})">
       {#each [0, 0.25, 0.5, 0.75, 1] as t (t)}
-        <text x={x(t)} y={ih + 15} text-anchor="middle">{t * 100} %</text>
+        <text x={x(t)} y={ih + 15} text-anchor="middle">{L.f.pct(t, 0)}</text>
       {/each}
       {#each bars as b (b.fac)}
         {@const p = prevShown(b.fac)}
@@ -108,7 +111,13 @@
           <text class="yl" x="-8" y={paired ? parts.curY + parts.curH / 2 - 3 : y.bandwidth() / 2} dy="0.32em" text-anchor="end">{label(b.fac)}</text>
           {#if paired && p && p.total}{@render bar(p, parts.prevY, parts.prevH, tags[0])}{/if}
           {@render bar(b, parts.curY, parts.curH, paired ? tags[1] : '')}
-          <text class="yn" x={iw + 6} y={paired ? parts.curY + parts.curH / 2 : y.bandwidth() / 2} dy="0.32em">{L.f.int(b.total)}</text>
+          {#if paired && b === bars[0]}
+            <!-- the first pair names its periods directly; the rest follow the same order -->
+            <text class="ytag" x={iw + 6} y={parts.prevY + parts.prevH / 2} dy="0.32em">{tags[0]}</text>
+            <text class="ytag cur" x={iw + 6} y={parts.curY + parts.curH / 2} dy="0.32em">{tags[1]}</text>
+          {:else}
+            <text class="yn" x={iw + 6} y={paired ? parts.curY + parts.curH / 2 : y.bandwidth() / 2} dy="0.32em">{L.f.int(b.total)}</text>
+          {/if}
         </g>
       {/each}
       {#if bars.length > 1}
@@ -119,11 +128,13 @@
   {#if paired && sorted.length > TOP + 1}
     <button type="button" class="more-btn" onclick={() => (showAll = !showAll)}>{showAll ? L.t['grades.bars.fewer'](TOP) : L.t['grades.bars.all'](sorted.length)}</button>
   {/if}
+  <!-- the detailed version explains outlined bars in the plate foot -->
+  {#if !app.detailed && bars.some((b) => isSmall(b))}<p class="note">{L.t['grades.bars.smallShort']}</p>{/if}
   {#if anyAF}<p class="note full-only">{L.t['grades.bars.af']}</p>{/if}
   {#if missing.length || hidden.length}<p class="note full-only">{L.t['grades.bars.notShown'](missing.join(', '), hidden.join(', '))}</p>{/if}
   {#if hover}
     <Tooltip x={hover.cx} y={hover.cy}>
-      <div class="tt-title">{hover.r.fac < 0 ? L.t['common.all'] : L.pick(faculties[hover.r.fac].name)}{#if hover.tag}{' '}<span class="tt-tag">{hover.tag}</span>{/if}</div>
+      <div class="tt-title">{hover.r.fac < 0 ? L.t['common.all'] : app.detailed ? L.pick(faculties[hover.r.fac].name) : facName(hover.r.fac)}{#if hover.tag}{' '}<span class="tt-tag">{hover.tag}</span>{/if}</div>
       {#each [0, 1, 2, 3] as g (g)}
         <div class="tt-row"><span><span class="swatch" style:background={GRADE_VARS[g]}></span>{g + 1} {L.t[`grade.${g + 1}` as 'grade.1']}</span><b>{L.f.pct(hover.r.counts[g] / hover.r.total)}</b></div>
       {/each}
@@ -144,15 +155,20 @@
   .yl { font-size: 12px; fill: var(--ink); font-weight: 600; }
   .bar.all .yl { font-weight: 700; }
   .yn { font-size: 11px; fill: var(--ink-3); }
+  .ytag { font-size: 10px; fill: var(--ink-3); }
+  .ytag.cur { fill: var(--ink); font-weight: 600; }
+  /* the earlier period is the thinner, lighter bar */
+  .bar:not(.small) .seg-row.prev rect { fill-opacity: 0.6; }
   .sep { stroke: var(--rule); stroke-dasharray: 2 2; }
   .note { margin: 4px 0 0; font-size: var(--fs-xs); color: var(--ink-3); text-wrap: pretty; }
   .cut { margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); text-wrap: pretty; }
   .pkey { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); }
   /* the period is encoded by thickness, so the key is ink: grade colours stay for grades */
   .pk { display: inline-block; width: 18px; background: var(--ink-2); border-radius: 1px; }
-  .pk.prev { height: 5px; }
+  .pk.prev { height: 5px; opacity: 0.6; }
   .pk.cur { height: 9px; margin-left: 12px; }
   .more-btn { margin: 6px 0 0; border: 0; background: none; padding: 4px 0; cursor: pointer; font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+  @media (pointer: coarse), (max-width: 639px) { .more-btn { min-height: 44px; } }
   .more-btn:hover { color: var(--ink); text-decoration-color: var(--ink); }
   :global(.tt-tag) { font-weight: 400; color: var(--ink-2); }
 </style>

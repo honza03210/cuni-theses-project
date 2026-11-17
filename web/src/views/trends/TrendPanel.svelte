@@ -26,8 +26,11 @@
     large: boolean;
     first?: boolean;
     showOthers?: boolean;
+    /** roving tabindex: only one panel of the grid is a Tab stop; Up/Down (and Home/End) move between panels */
+    tabStop?: boolean;
+    onnav?: (key: string) => void;
   }
-  let { fac, faculty, faculties, series, facs, yDomain, metric, yearFrom, yearTo, yearMax, aiYear, aiOn, uniRef, large, first = false, showOthers = true }: Props = $props();
+  let { fac, faculty, faculties, series, facs, yDomain, metric, yearFrom, yearTo, yearMax, aiYear, aiOn, uniRef, large, first = false, showOthers = true, tabStop = true, onnav }: Props = $props();
 
   let width = $state(260);
   const height = $derived(large ? 380 : 168);
@@ -61,6 +64,14 @@
   const readOwn = $derived(readYear !== null ? own.find((p) => p.year === readYear) : undefined);
   const readAvg = $derived(readYear !== null ? series.overall.find((p) => p.year === readYear) : undefined);
   const readHover = $derived(readYear !== null && hoverOther !== null ? series.byFac.get(hoverOther)?.find((p) => p.year === readYear) : undefined);
+  // the highlighted faculty is named at the end of its own line, in every panel
+  const hoverEnd = $derived.by(() => {
+    if (hoverOther === null) return null;
+    const pts = (series.byFac.get(hoverOther) ?? []).filter(inZ);
+    return pts.length ? pts[pts.length - 1] : null;
+  });
+  // a zoom can leave the keyboard readout on a year that is no longer drawn
+  $effect(() => { if (readYear !== null && (readYear < zf || readYear > zt)) readYear = null; });
   const fmtV = (v: number) => L.f.num(v, metric.decimals);
 
   const drag = new YearDrag();
@@ -83,7 +94,8 @@
       const d = Math.abs(y(p.mean) - py);
       if (d < bestD) { bestD = d; best = f; }
     }
-    ui.hoverFac = best;
+    // the simple version draws no other faculties, so it highlights none either
+    ui.hoverFac = app.detailed ? best : null;
   }
   function onLeave() { readYear = null; ui.hoverFac = null; }
   function onKey(e: KeyboardEvent) {
@@ -91,17 +103,19 @@
     if (e.key === 'ArrowLeft') readYear = Math.max(zf, cur - 1);
     else if (e.key === 'ArrowRight') readYear = Math.min(zt, cur + 1);
     else if (e.key === 'Escape') readYear = null;
+    else if (onnav && ['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) onnav(e.key);
     else return;
     e.preventDefault();
   }
-  const label = $derived(`${faculty.abbr}, ${L.pick(metric.label)}`);
+  const short = $derived(FAC_SHORT[faculty.code] ? L.pick(FAC_SHORT[faculty.code]) : faculty.abbr);
+  const label = $derived(`${short} (${faculty.abbr}), ${L.pick(metric.label)}`);
 </script>
 
 <figure class="panel" class:large>
   <figcaption>
     {#if !app.detailed && FAC_SHORT[faculty.code]}
       <!-- simple version: a short name the public can read, the abbreviation after it -->
-      <span class="abbr" title={L.pick(faculty.name)}>{L.pick(FAC_SHORT[faculty.code])}<span class="ab2"> · {faculty.abbr}</span></span>
+      <span class="abbr" title={L.pick(faculty.name)}>{L.pick(FAC_SHORT[faculty.code])}<span class="ab2">{' · '}{faculty.abbr}</span></span>
     {:else}
       <span class="abbr" title={L.pick(faculty.name)}>{faculty.abbr}</span>
     {/if}
@@ -117,7 +131,7 @@
     </span>
   </figcaption>
   <div class="chart" bind:clientWidth={width}>
-    <svg {width} {height} role="slider" aria-label={label} tabindex="0"
+    <svg {width} {height} role="slider" aria-label={label} tabindex={tabStop ? 0 : -1}
       aria-valuemin={yearFrom} aria-valuemax={yearTo} aria-valuenow={readYear ?? yearTo}
       aria-valuetext={readYear !== null && readOwn ? `${readYear}: ${fmtV(readOwn.mean)}` : faculty.abbr}
       onpointerdown={(e) => drag.begin(e, fracYear(e))} onpointerup={() => drag.end()} onpointercancel={() => drag.cancel()}
@@ -156,6 +170,7 @@
         {#if hoverPaths}
           <path class="hover" d={hoverPaths.solid} />
           <path class="hover dotted" d={hoverPaths.dotted} />
+          {#if hoverEnd && hoverOther !== null}<text class="hlabel" x={x(hoverEnd.year) - 2} y={y(hoverEnd.mean) - 6} text-anchor="end">{faculties[hoverOther].abbr}</text>{/if}
         {/if}
         <path class="own" d={ownPaths.solid} />
         <path class="own dotted" d={ownPaths.dotted} />
@@ -174,7 +189,7 @@
 <style>
   .panel { margin: 0; min-width: 0; }
   figcaption {
-    display: flex; align-items: baseline; gap: 8px;
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px;
     padding-bottom: 4px;
     border-bottom: 1px solid var(--rule);
     min-height: 26px;
@@ -182,14 +197,14 @@
   }
   .abbr { font-weight: 700; font-size: var(--fs-md); flex: none; }
   .ab2 { font-weight: 400; color: var(--ink-3); }
-  .readout { display: flex; gap: 10px; align-items: baseline; font-size: var(--fs-xs); color: var(--ink-2); min-width: 0; white-space: nowrap; }
+  .readout { display: flex; flex-wrap: wrap; gap: 0 10px; align-items: baseline; font-size: var(--fs-xs); color: var(--ink-2); min-width: 0; white-space: nowrap; }
   .name { overflow: hidden; text-overflow: ellipsis; color: var(--ink-3); }
   .ry { font-weight: 700; color: var(--ink); }
   .rv { display: inline-flex; align-items: center; gap: 4px; color: var(--ink); }
   .rv small { color: var(--ink-3); font-size: inherit; }
   .k { display: inline-block; width: 10px; height: 2px; background: var(--ink); }
   .k.avg { background: repeating-linear-gradient(90deg, var(--avg) 0 4px, transparent 4px 6px); height: 2px; }
-  .k.hov { background: var(--petrol); }
+  .k.hov { background: var(--ink-2); }
   .chart { width: 100%; }
   svg { display: block; overflow: visible; cursor: crosshair; }
   svg:focus-visible { outline: 2px solid var(--petrol); outline-offset: 2px; }
@@ -202,7 +217,9 @@
   .other.uni { stroke: var(--avg); stroke-width: 2.1; stroke-dasharray: 5 3; stroke-opacity: 1; }
   .band { fill: var(--ink); fill-opacity: 0.08; stroke: none; }
   .avg { stroke: var(--avg); stroke-width: 2.1; stroke-dasharray: 5 3; }
-  .hover { stroke: var(--petrol); stroke-width: 2; }
+  /* ink, not petrol: petrol means selected, and a hovered peer is only a reference */
+  .hover { stroke: var(--ink-2); stroke-width: 1.8; }
+  .hlabel { font-size: 11px; font-weight: 600; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
   .own { stroke: var(--ink); stroke-width: 2.2; }
   .dotted { stroke-dasharray: 1.5 3; }
   .avg.dotted { stroke-dasharray: 1.5 3; }

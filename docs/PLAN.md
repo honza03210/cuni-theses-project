@@ -451,3 +451,33 @@ aggregation code); the other takes phase 1's word cube and 3c.
 - Filter panel "Grade": 1 excellent … 4 fail, plus "No grade"; URL key `gr`. Applies to Trends and Grades.
 - Words cannot honour it (the word cubes have no grade split; adding one would make them ~5× larger), so the
   fieldset is disabled there with a one-line reason shown in both versions; `buildWordContext` ignores it.
+
+## Critique round 10 (28/40) changes
+
+- Empty selection: `lib/ui/EmptyNote.svelte` names the empty filter (faculty, language, gender, grade, AI) in the
+  answer line and offers "Select all faculties" or "Reset to defaults" (`resetFilters` in `app.svelte.ts`).
+- Words detail on phones (< 480 px): the difference moves under the chart in words ("+17.8 percentage points"),
+  the two band labels stack, the ChatGPT label flips left near the right edge. The observed dot is labelled as the
+  target-period average.
+- Zoom joins the URL (`z=`), subtitles show zoomed years, and the zoom bar can apply it as the year filter.
+- Trends grid: one Tab stop, ↑/↓/Home/End move between panels (roving tabindex); fixed "Name · ABBR" spacing.
+- Disabled filter groups fade only their options; the reason stays at full contrast.
+- Faculty short names everywhere in Simple (Grades bars too) and next to the code in the Detailed filter; the first
+  before/after bar pair names its periods, the earlier bar is lighter.
+- Percent ticks through `L.f.pct`; plate titles 20 px; the masthead subtitle no longer claims a full 2026.
+
+## Critique round 11 (per view: Words 30, Grades 29, Trends 27) changes
+
+- Trends: the answer line is a sentence (verdict in bold, then "from X to Y unit (periods)"; the relative change is
+  Detailed-only). Hovering highlights a peer faculty only in Detailed, in ink with its abbreviation at the line end
+  (petrol stays "selected"). The legend sits in the plate header on phones too. A zoom clears an out-of-range
+  keyboard readout; the subtitle says "in faculty order" when no year after 2022 is selected.
+- Words: a note in the filter panel when the chosen years differ from the default (Words uses its own periods);
+  the empty state uses the shared EmptyNote in the answer line and hides the legend and detail plate; Simple shows
+  "bigger word = bigger gap"; the cloud's Tab stop starts on the selected word and its labels name observed/expected;
+  the phone detail chart uses short spans ("2018–22") on one row and fits the trend line inside the plot.
+- Grades: Simple subtitle says what the number on the right is; the trimmed bar list says "The 6 faculties where the
+  'excellent' share changed most"; a one-line key explains outlined (small-sample) bars; tooltips use short names.
+- EmptyNote restores only the empty group (e.g. "Select Czech", "Select all", "All theses").
+- Touch / phone widths: 44 px tap targets for tabs, the Filters button, segmented buttons, "Show all", the word
+  search; the answer line's word buttons get an invisible 44 px hit area.

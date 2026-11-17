@@ -126,7 +126,7 @@
       {/each}
       {#each [0, 0.25, 0.5, 0.75, 1] as t (t)}
         <line class="grid" x1="0" x2={iw} y1={y(t)} y2={y(t)} />
-        <text x="-6" y={y(t)} dy="0.32em" text-anchor="end">{t * 100} %</text>
+        <text x="-6" y={y(t)} dy="0.32em" text-anchor="end">{L.f.pct(t, 0)}</text>
       {/each}
       {#each ticks as t (t)}
         {#if !marked || selected < from || selected > to || Math.abs(x(t) - x(selected)) > 42}<text x={x(t)} y={ih + 16} text-anchor="middle">{t}</text>{/if}

@@ -93,7 +93,8 @@
   .titles { min-width: 0; flex: 1 1 340px; }
   h2 {
     margin: 0;
-    font-size: var(--fs-lg);
+    /* a clear step above the 16px body text */
+    font-size: var(--fs-xl);
     font-weight: 700;
     line-height: 1.25;
     letter-spacing: -0.005em;

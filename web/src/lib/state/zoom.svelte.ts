@@ -1,10 +1,32 @@
+import { app } from './app.svelte';
+import { L } from '../locale.svelte';
+
 /** Shared year zoom for every time-series chart: drag across a chart to zoom all of them to
  *  those years, double-click (or Escape, or the reset button) to zoom out. Visual only: the
- *  filters, answer lines and statistics keep using the selected year range. */
-export const zoom = $state({ range: null as [number, number] | null });
+ *  filters, answer lines and statistics keep using the selected year range. It lives in the
+ *  app state, so a shared link keeps it (`z=` in the URL). */
+export const zoom = {
+  get range() { return app.zoom; },
+  set range(v: [number, number] | null) { app.zoom = v; },
+};
 
 export function resetZoom() {
   zoom.range = null;
+}
+
+/** Make the zoom the year filter: the lens becomes the selection. */
+export function applyZoom() {
+  const r = zoom.range;
+  if (!r) return;
+  app.yearFrom = r[0];
+  app.yearTo = r[1];
+  zoom.range = null;
+}
+
+/** "2006–2025", or the zoomed span marked as such, for chart subtitles. */
+export function yearsLabel(from: number, to: number): string {
+  const [a, b] = zoomed(from, to);
+  return a === from && b === to ? `${from}–${to}` : `${a}–${b} ${L.t['zoom.tag']}`;
 }
 
 /** The years a chart covering [from, to] shows under the current zoom. */
