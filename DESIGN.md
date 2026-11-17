@@ -326,10 +326,21 @@ Each view opens with one computed, plain-language finding in the Lede role (21px
 
 ## Simple and detailed versions
 
-The site opens in the **simple** version; a Simple / Detailed switch in the header (URL `d=1`) shows everything.
+The site opens in the **simple** version; a quiet "Show details" text toggle in the header (URL `d=1`) shows everything.
 Simple keeps each view's answer line, one legend and the charts, and drops what explains or qualifies them:
 "how to read" panels, secondary lede sentences, plate footnotes and sources, chart/table toggles, tinted plate heads,
 filter counts and notes, faculty full names (a 3-column abbreviation grid instead), the Words year/option controls
 (the default 2023+ vs 2018–2022 comparison stays), and faculty context lines in Trends and the word detail.
 Mark anything detail-only with the class `full-only` (hidden under `.simple` in `app.css`); honesty caveats that
 change how a finding reads (the AI-filter note, small-sample hedges) stay in both versions.
+
+In Simple, faculties carry short names (`web/src/lib/faculties.ts`) instead of abbreviations, the Grades view drops
+the parallel plot (the dot plot carries the same finding), and every plate whose table holds no buttons keeps it as a
+screen-reader-only table.
+
+## Chart zoom
+
+Dragging across any time-series chart (Trends panels, grades over time, word over time) with a mouse zooms every such
+chart to those years (`lib/state/zoom.svelte.ts`). Double-click, Escape or the "Show all years" link in the sticky
+zoom bar zooms out. The selection is a dashed ink rectangle (`.zsel`); zoom is visual only and never changes the
+filters or the computed answer lines. Touch keeps scrolling the page.

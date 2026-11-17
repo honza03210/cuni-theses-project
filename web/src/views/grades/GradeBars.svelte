@@ -145,8 +145,8 @@
   .bar.all .yl { font-weight: 700; }
   .yn { font-size: 11px; fill: var(--ink-3); }
   .sep { stroke: var(--rule); stroke-dasharray: 2 2; }
-  .note { margin: 4px 0 0; font-size: var(--fs-xs); color: var(--ink-3); }
-  .cut { margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); }
+  .note { margin: 4px 0 0; font-size: var(--fs-xs); color: var(--ink-3); text-wrap: pretty; }
+  .cut { margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); text-wrap: pretty; }
   .pkey { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); }
   /* the period is encoded by thickness, so the key is ink: grade colours stay for grades */
   .pk { display: inline-block; width: 18px; background: var(--ink-2); border-radius: 1px; }

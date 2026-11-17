@@ -133,3 +133,8 @@ svg .axis .domain { stroke: var(--ink-3); }
 
 /* Simple version (the default): elements marked .full-only appear only in the detailed version */
 .simple .full-only { display: none !important; }
+
+/* drag-to-zoom selection on time-series charts */
+.zsel { fill: var(--ink); fill-opacity: 0.08; stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 3 2; pointer-events: none; }
+/* chart labels are not text to select (dragging across a chart zooms it) */
+svg text { -webkit-user-select: none; user-select: none; }

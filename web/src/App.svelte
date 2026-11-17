@@ -7,6 +7,7 @@
   import { app, assign, domainOf } from './lib/state/app.svelte';
   import { decode, encode, type View } from './lib/state/url';
   import { L } from './lib/locale.svelte';
+  import { zoom, resetZoom } from './lib/state/zoom.svelte';
   import FilterPanel from './lib/ui/FilterPanel.svelte';
   import WordsView from './views/words/WordsView.svelte';
   import TrendsView from './views/trends/TrendsView.svelte';
@@ -91,6 +92,9 @@
   const filters = $derived({ fac: app.fac, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai, genders: app.genders });
   const mask = $derived(theses ? filterMask(theses, filters) : null);
   const matched = $derived(mask ? countMask(mask) : 0);
+  // Words compares a baseline with target years: its count covers exactly those years
+  const wordYears = $derived<[number, number] | null>(theses ? [Math.max(theses.meta.yearMin, app.wordFrom - app.wordBase), app.wordTo] : null);
+  const wordMatched = $derived(theses && wordYears ? countMask(filterMask(theses, { ...filters, yearFrom: wordYears[0], yearTo: wordYears[1] })) : 0);
 
   const views: View[] = ['words', 'trends', 'grades'];
   const tabIds = { words: 'tab-words', trends: 'tab-trends', grades: 'tab-grades' } as const;
@@ -109,10 +113,8 @@
 </script>
 
 {#snippet prefsCtl()}
-  <div class="mode" role="group" aria-label={L.t['mode.label']}>
-    <button type="button" aria-pressed={!app.detailed} onclick={() => (app.detailed = false)}>{L.t['mode.simple']}</button>
-    <button type="button" aria-pressed={app.detailed} onclick={() => (app.detailed = true)}>{L.t['mode.detailed']}</button>
-  </div>
+  <!-- a quiet text toggle, so it does not read as a third segmented switch beside theme and language -->
+  <button type="button" class="mode-toggle" onclick={() => (app.detailed = !app.detailed)}>{app.detailed ? L.t['mode.hide'] : L.t['mode.show']}</button>
       <div class="theme" role="group" aria-label={L.t['theme.label']}>
     <button type="button" aria-pressed={theme === 'light'} title={L.t['theme.light']} onclick={() => setTheme('light')}>
       <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg>
@@ -163,7 +165,7 @@
       <button type="button" class="drawer-close" onclick={closeDrawer}>{L.t['filters.done']}</button>
     </div>
     {#if theses}
-      <FilterPanel {theses} {matched} yearsLocked={app.view === 'words'}
+      <FilterPanel {theses} matched={app.view === 'words' ? wordMatched : matched} countYears={wordYears} yearsLocked={app.view === 'words'}
         aiApplies={app.view === 'words' || app.yearTo >= theses.meta.aiYear} />
     {/if}
     <!-- theme and language come after the filters, so Tab reaches the filters first -->
@@ -186,18 +188,44 @@
         <div class="skel w60"></div><div class="skel block"></div><div class="skel w40"></div><div class="skel block short"></div>
         <span class="sr-only">{L.t['common.loading']}</span>
       </div>
-    {:else if app.view === 'words'}
-      <WordsView {theses} {filters} />
-    {:else if app.view === 'trends'}
-      <TrendsView {theses} {mask} />
     {:else}
-      <GradesView {theses} {mask} />
+      {#if zoom.range}
+        <!-- the shared chart zoom: say it is on and how to leave it -->
+        <div class="zoombar" role="status">
+          <span>{L.t['zoom.on'](`${zoom.range[0]}–${zoom.range[1]}`)}</span>
+          <button type="button" onclick={resetZoom}>{L.t['zoom.reset']}</button>
+          <span class="zhint">{L.t['zoom.hint']}</span>
+        </div>
+      {/if}
+      {#if app.view === 'words'}
+        <WordsView {theses} {filters} />
+      {:else if app.view === 'trends'}
+        <TrendsView {theses} {mask} />
+      {:else}
+        <GradesView {theses} {mask} />
+      {/if}
     {/if}
   </div>
   </main>
 </div>
 
+<svelte:window onkeydown={(e) => { if (e.key === 'Escape' && zoom.range && !drawerOpen) resetZoom(); }} />
+
 <style>
+  .zoombar {
+    position: sticky; top: calc(var(--band-h, 58px) + 8px); z-index: 7;
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px;
+    width: fit-content; margin: 0 0 var(--s4); padding: 6px 12px;
+    background: var(--paper); border: 1px solid var(--ink-3); border-radius: 3px;
+    box-shadow: 0 4px 12px var(--shadow);
+    font-size: var(--fs-sm); color: var(--ink);
+  }
+  .zoombar button {
+    border: 0; background: none; padding: 0; cursor: pointer; font: inherit; font-weight: 600; color: var(--ink);
+    text-decoration: underline; text-decoration-color: var(--ink-3); text-underline-offset: 3px;
+  }
+  .zoombar button:hover { text-decoration-color: var(--ink); }
+  .zhint { color: var(--ink-3); font-size: var(--fs-xs); }
   .shell {
     display: grid;
     grid-template-columns: 272px minmax(0, 1fr);
@@ -238,18 +266,25 @@
   .tabs button[aria-selected='true']:focus-visible { outline-color: var(--petrol); }
 
   .right { display: flex; align-items: center; gap: var(--s3); align-self: center; }
-  .locale, .theme, .mode { display: inline-flex; border: 1px solid var(--band-line); border-radius: 3px; overflow: hidden; }
-  .locale button, .theme button, .mode button {
+  .locale, .theme { display: inline-flex; border: 1px solid var(--band-line); border-radius: 3px; overflow: hidden; }
+  .locale button, .theme button {
     border: 0; background: transparent; color: var(--band-ink-2);
     font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em;
     padding: 4px 9px; cursor: pointer;
   }
-  .locale button[aria-pressed='true'], .theme button[aria-pressed='true'], .mode button[aria-pressed='true'] { background: var(--band-ink); color: var(--petrol-deep); }
-  .locale button:focus-visible, .theme button:focus-visible, .mode button:focus-visible { outline-color: var(--band-ink); }
-  .locale button:not([aria-pressed='true']):hover, .theme button:not([aria-pressed='true']):hover, .mode button:not([aria-pressed='true']):hover { color: var(--band-ink); background: var(--band-hover); }
+  .locale button[aria-pressed='true'], .theme button[aria-pressed='true'] { background: var(--band-ink); color: var(--petrol-deep); }
+  .locale button:focus-visible, .theme button:focus-visible { outline-color: var(--band-ink); }
+  .locale button:not([aria-pressed='true']):hover, .theme button:not([aria-pressed='true']):hover { color: var(--band-ink); background: var(--band-hover); }
   .theme button { display: inline-flex; align-items: center; padding: 4px 8px; }
   .theme svg { display: block; }
-  .mode button { letter-spacing: 0.02em; padding: 4px 10px; }
+  .mode-toggle {
+    border: 0; background: none; padding: 4px 2px; cursor: pointer;
+    font-size: var(--fs-sm); font-weight: 600; color: var(--band-ink-2);
+    text-decoration: underline; text-decoration-color: var(--band-line); text-underline-offset: 3px;
+  }
+  .mode-toggle:hover { color: var(--band-ink); text-decoration-color: var(--band-ink); }
+  .mode-toggle:focus-visible { outline-color: var(--band-ink); }
+  .drawer-prefs .mode-toggle { color: var(--ink-2); text-decoration-color: var(--rule); }
   .drawer-btn {
     display: none;
     align-items: center; gap: 6px;

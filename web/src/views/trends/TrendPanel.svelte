@@ -5,6 +5,9 @@
   import { CHATGPT_X, bandPath, seriesPaths, yearTicks } from '../../lib/chart';
   import { ui } from '../../lib/state/app.svelte';
   import { L } from '../../lib/locale.svelte';
+  import { app } from '../../lib/state/app.svelte';
+  import { FAC_SHORT } from '../../lib/faculties';
+  import { YearDrag, resetZoom, zoomed } from '../../lib/state/zoom.svelte';
 
   interface Props {
     fac: number;
@@ -31,19 +34,24 @@
   const m = { top: 8, right: 10, bottom: 22, left: 38 };
   const iw = $derived(Math.max(10, width - m.left - m.right));
   const ih = $derived(height - m.top - m.bottom);
-  const x = $derived(scaleLinear().domain([yearFrom - 0.25, Math.max(yearTo, yearFrom + 1) + 0.25]).range([0, iw]));
+  // the shared zoom narrows the visible years; data outside them is not drawn
+  const span = $derived(zoomed(yearFrom, yearTo));
+  const zf = $derived(span[0]);
+  const zt = $derived(span[1]);
+  const x = $derived(scaleLinear().domain([zf - 0.25, Math.max(zt, zf + 1) + 0.25]).range([0, iw]));
   const y = $derived(scaleLinear().domain(yDomain).range([ih, 0]).nice(4));
   const yTicks = $derived(y.ticks(large ? 6 : 4));
   const tickDec = $derived(yTicks.length > 1 ? precisionFixed(yTicks[1] - yTicks[0]) : metric.decimals);
-  const xTicks = $derived(yearTicks(yearFrom, yearTo, iw, large ? 44 : 40));
+  const xTicks = $derived(yearTicks(zf, zt, iw, large ? 44 : 40));
 
-  const toV = (pts: Point[]) => pts.map((p) => ({ year: p.year, v: p.mean }));
+  const inZ = (p: { year: number }) => p.year >= zf && p.year <= zt;
+  const toV = (pts: Point[]) => pts.filter(inZ).map((p) => ({ year: p.year, v: p.mean }));
   const own = $derived(series.byFac.get(fac) ?? []);
   const ownPaths = $derived(seriesPaths(toV(own), x, y, yearMax));
   const avgPaths = $derived(seriesPaths(toV(series.overall), x, y, yearMax));
   const uniPaths = $derived(uniRef ? seriesPaths(toV(uniRef), x, y, yearMax) : null);
   const others = $derived(facs.filter((f) => f !== fac).map((f) => ({ f, p: seriesPaths(toV(series.byFac.get(f) ?? []), x, y, yearMax) })));
-  const band = $derived(bandPath(own, x, y));
+  const band = $derived(bandPath(own.filter(inZ), x, y));
 
   const hoverOther = $derived(ui.hoverFac !== null && ui.hoverFac !== fac && facs.includes(ui.hoverFac) ? ui.hoverFac : null);
   const hoverPaths = $derived(hoverOther !== null ? others.find((o) => o.f === hoverOther)?.p ?? null : null);
@@ -55,12 +63,17 @@
   const readHover = $derived(readYear !== null && hoverOther !== null ? series.byFac.get(hoverOther)?.find((p) => p.year === readYear) : undefined);
   const fmtV = (v: number) => L.f.num(v, metric.decimals);
 
+  const drag = new YearDrag();
+  const fracYear = (e: PointerEvent) => {
+    const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
+    return Math.max(zf, Math.min(zt, x.invert(e.clientX - rect.left - m.left)));
+  };
   function onMove(e: PointerEvent) {
     const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
-    const px = e.clientX - rect.left - m.left;
     const py = e.clientY - rect.top - m.top;
-    const yr = Math.round(x.invert(px));
-    readYear = Math.max(yearFrom, Math.min(yearTo, yr));
+    const fy = fracYear(e);
+    drag.move(fy);
+    readYear = Math.round(fy);
     // nearest other faculty line at this year -> shared hover across panels
     let best: number | null = null, bestD = 14;
     for (const f of facs) {
@@ -74,9 +87,9 @@
   }
   function onLeave() { readYear = null; ui.hoverFac = null; }
   function onKey(e: KeyboardEvent) {
-    const cur = readYear ?? yearTo;
-    if (e.key === 'ArrowLeft') readYear = Math.max(yearFrom, cur - 1);
-    else if (e.key === 'ArrowRight') readYear = Math.min(yearTo, cur + 1);
+    const cur = readYear ?? zt;
+    if (e.key === 'ArrowLeft') readYear = Math.max(zf, cur - 1);
+    else if (e.key === 'ArrowRight') readYear = Math.min(zt, cur + 1);
     else if (e.key === 'Escape') readYear = null;
     else return;
     e.preventDefault();
@@ -86,7 +99,12 @@
 
 <figure class="panel" class:large>
   <figcaption>
-    <span class="abbr" title={L.pick(faculty.name)}>{faculty.abbr}</span>
+    {#if !app.detailed && FAC_SHORT[faculty.code]}
+      <!-- simple version: a short name the public can read, the abbreviation after it -->
+      <span class="abbr" title={L.pick(faculty.name)}>{L.pick(FAC_SHORT[faculty.code])}<span class="ab2"> · {faculty.abbr}</span></span>
+    {:else}
+      <span class="abbr" title={L.pick(faculty.name)}>{faculty.abbr}</span>
+    {/if}
     <span class="readout" aria-live="polite">
       {#if readYear !== null}
         <span class="ry">{readYear}</span>
@@ -102,6 +120,8 @@
     <svg {width} {height} role="slider" aria-label={label} tabindex="0"
       aria-valuemin={yearFrom} aria-valuemax={yearTo} aria-valuenow={readYear ?? yearTo}
       aria-valuetext={readYear !== null && readOwn ? `${readYear}: ${fmtV(readOwn.mean)}` : faculty.abbr}
+      onpointerdown={(e) => drag.begin(e, fracYear(e))} onpointerup={() => drag.end()} onpointercancel={() => drag.cancel()}
+      ondblclick={resetZoom}
       onpointermove={onMove} onpointerleave={onLeave} onkeydown={onKey} onblur={() => (readYear = null)}>
       <g transform="translate({m.left},{m.top})">
         {#each yTicks as t (t)}
@@ -112,7 +132,7 @@
           <text x={x(t)} y={ih + 15} text-anchor="middle">{large ? t : `'${String(t).slice(2)}`}</text>
         {/each}
 
-        {#if CHATGPT_X >= yearFrom && CHATGPT_X <= yearTo + 0.25}
+        {#if CHATGPT_X >= zf && CHATGPT_X <= zt + 0.25}
           <line class="marker" x1={x(CHATGPT_X)} x2={x(CHATGPT_X)} y1="0" y2={ih} />
           <!-- one marker: ChatGPT (Nov 2022) and the AI filter's start (2023) are a few pixels apart -->
           {#if large || first}<text class="mlabel" class:ai={aiOn && aiYear >= yearFrom} x={x(CHATGPT_X) - 3} y="9" text-anchor="end">{aiOn && aiYear >= yearFrom ? L.t['common.chatgptAi'] : L.t['common.chatgpt']}</text>{/if}
@@ -141,6 +161,7 @@
         <path class="own dotted" d={ownPaths.dotted} />
         {#each ownPaths.singles as s (s.year)}<circle class="own-dot" cx={x(s.year)} cy={y(s.v)} r="2.5" />{/each}
 
+        {#if drag.active}<rect class="zsel" x={x(drag.lo)} width={Math.max(0, x(drag.hi) - x(drag.lo))} y="0" height={ih} />{/if}
         {#if readYear !== null}
           <line class="cursor" x1={x(readYear)} x2={x(readYear)} y1="0" y2={ih} />
           {#if readOwn}<circle class="own-dot" cx={x(readYear)} cy={y(readOwn.mean)} r="3.5" />{/if}
@@ -160,6 +181,7 @@
     overflow: hidden;
   }
   .abbr { font-weight: 700; font-size: var(--fs-md); flex: none; }
+  .ab2 { font-weight: 400; color: var(--ink-3); }
   .readout { display: flex; gap: 10px; align-items: baseline; font-size: var(--fs-xs); color: var(--ink-2); min-width: 0; white-space: nowrap; }
   .name { overflow: hidden; text-overflow: ellipsis; color: var(--ink-3); }
   .ry { font-weight: 700; color: var(--ink); }

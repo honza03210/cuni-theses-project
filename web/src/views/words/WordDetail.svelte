@@ -1,17 +1,18 @@
 <script lang="ts">
   import { line, scaleLinear } from 'd3';
   import { wordCounts, type ScoreResult, type WordContext } from '../../lib/data/excess';
-  import { MIN_CELL_N } from '../../lib/data/select';
+  import { MIN_CELL_N, aiFilterActive } from '../../lib/data/select';
   import type { Faculty, WordCube } from '../../lib/data/types';
   import { CHATGPT_X, yearTicks } from '../../lib/chart';
   import { L } from '../../lib/locale.svelte';
   import { app } from '../../lib/state/app.svelte';
+  import { YearDrag, resetZoom, zoomed } from '../../lib/state/zoom.svelte';
 
   interface Props {
     cube: WordCube; ctx: WordContext; word: string; result: ScoreResult;
-    faculties: Faculty[]; yearFrom: number; yearTo: number; yearMax: number;
+    faculties: Faculty[]; yearFrom: number; yearTo: number; yearMax: number; aiYear: number;
   }
-  let { cube, ctx, word, result, faculties, yearFrom, yearTo, yearMax }: Props = $props();
+  let { cube, ctx, word, result, faculties, yearFrom, yearTo, yearMax, aiYear }: Props = $props();
 
   // faculty lines need more theses than trend cells: single-word shares are noisy
   const FAC_MIN = Math.max(50, MIN_CELL_N);
@@ -64,7 +65,11 @@
   const m = { top: 14, right: 120, bottom: 24, left: 52 };
   const iw = $derived(Math.max(10, width - m.left - m.right));
   const ih = height - m.top - m.bottom;
-  const x = $derived(scaleLinear().domain([from - 0.3, yearTo + 0.3]).range([0, iw]));
+  // the shared zoom narrows the visible years; everything drawn is clipped to the plot
+  const span = $derived(zoomed(from, yearTo));
+  const zf = $derived(span[0]);
+  const zt = $derived(span[1]);
+  const x = $derived(scaleLinear().domain([zf - 0.3, zt + 0.3]).range([0, iw]));
   const yMax = $derived(Math.max(
     // the simple version draws no faculty lines, so the scale follows the whole selection
     ...total.map((p) => p.v), ...(app.detailed ? perFac.flatMap((f) => f.pts.map((p) => p.v)) : []),
@@ -75,22 +80,31 @@
   const tailPart = (pts: { year: number; v: number }[]) => (pts.length >= 2 && pts[pts.length - 1].year === yearMax ? pts.slice(-2) : []);
   const fitPts = $derived(fit && result.baseline.length
     ? [result.baseline[0], T1].map((yy) => ({ year: yy, v: Math.max(0, fit.intercept + fit.slope * yy) })) : []);
-  const ticks = $derived(yearTicks(from, yearTo, iw, 40));
+  const ticks = $derived(yearTicks(zf, zt, iw, 40));
   const pctTick = (v: number) => L.f.pct(v, v < 0.1 && yMax < 0.05 ? 1 : 0);
 
   let hoverYear: number | null = $state(null);
   const hp = $derived(hoverYear !== null ? total.find((p) => p.year === hoverYear) : undefined);
-  function onMove(e: PointerEvent) {
+  const drag = new YearDrag();
+  const clipId = $props.id();
+  function fracYear(e: PointerEvent) {
     const r = (e.currentTarget as SVGElement).getBoundingClientRect();
-    hoverYear = Math.max(from, Math.min(yearTo, Math.round(x.invert(e.clientX - r.left - m.left))));
+    return Math.max(zf, Math.min(zt, x.invert(e.clientX - r.left - m.left)));
+  }
+  function onMove(e: PointerEvent) {
+    const fy = fracYear(e);
+    drag.move(fy);
+    hoverYear = Math.round(fy);
   }
   function onKey(e: KeyboardEvent) {
-    const cur = hoverYear ?? yearTo;
-    if (e.key === 'ArrowLeft') hoverYear = Math.max(from, cur - 1);
-    else if (e.key === 'ArrowRight') hoverYear = Math.min(yearTo, cur + 1);
+    const cur = hoverYear ?? zt;
+    if (e.key === 'ArrowLeft') hoverYear = Math.max(zf, cur - 1);
+    else if (e.key === 'ArrowRight') hoverYear = Math.min(zt, cur + 1);
     else return;
     e.preventDefault();
   }
+  // AI filter on: the year from which the selection is a different group (lines break there)
+  const seam = $derived(aiFilterActive(app.ai) && yearTo >= aiYear ? aiYear : 0);
   const diffPP = $derived(Number.isFinite(observed) && Number.isFinite(expected) ? (observed - expected) * 100 : NaN);
 </script>
 
@@ -113,11 +127,13 @@
       aria-valuemin={from} aria-valuemax={yearTo} aria-valuenow={hoverYear ?? T1}
       aria-valuetext={hp ? `${hp.year}: ${L.f.pct(hp.v, 2)}` : undefined}
       aria-label="{word}: {L.t['words.detail.observed']} {L.f.pct(observed, 2)}, {L.t['words.detail.expected']} {L.f.pct(expected, 2)} ({blockLabel})"
+      onpointerdown={(e) => drag.begin(e, fracYear(e))} onpointerup={() => drag.end()} onpointercancel={() => drag.cancel()} ondblclick={resetZoom}
       onpointermove={onMove} onpointerleave={() => (hoverYear = null)} onkeydown={onKey} onblur={() => (hoverYear = null)}>
       <defs>
         <marker id="arrowhead" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L8,4 L0,8 z" fill="var(--ink)" />
         </marker>
+        <clipPath id="{clipId}-plot"><rect x="0" y="-14" width={iw} height={ih + 14} /></clipPath>
       </defs>
       <g transform="translate({m.left},{m.top})">
         {#each y.ticks(5) as t (t)}
@@ -125,23 +141,40 @@
           <text x="-6" y={y(t)} dy="0.32em" text-anchor="end">{pctTick(t)}</text>
         {/each}
         {#each ticks as t (t)}<text x={x(t)} y={ih + 16} text-anchor="middle">{t}</text>{/each}
+        <g clip-path="url(#{clipId}-plot)">
         {#if result.baseline.length}
           <rect class="base" x={x(result.baseline[0] - 0.5)} width={x(result.baseline[result.baseline.length - 1] + 0.5) - x(result.baseline[0] - 0.5)} y="0" height={ih} />
         {/if}
         <rect class="target" x={x(T0 - 0.5)} width={x(T1 + 0.5) - x(T0 - 0.5)} y="0" height={ih} />
         <!-- drawn over the shaded bands, so the label is not veiled by them -->
-        {#if CHATGPT_X >= from && CHATGPT_X <= yearTo}
+        <!-- the two compared periods, named on the chart itself -->
+        {#if result.baseline.length}
+          {@const b0 = Math.max(result.baseline[0], zf)}
+          {@const b1 = Math.min(result.baseline[result.baseline.length - 1], zt)}
+          {#if b1 >= b0}<text class="band-l" x={(x(b0 - 0.5) + x(b1 + 0.5)) / 2} y={ih - 6} text-anchor="middle">{L.t['words.detail.bandTrend'](`${result.baseline[0]}–${result.baseline[result.baseline.length - 1]}`)}</text>{/if}
+        {/if}
+        {#if Math.min(T1, zt) >= Math.max(T0, zf)}
+          <text class="band-l" x={(x(Math.max(T0, zf) - 0.5) + x(Math.min(T1, zt) + 0.5)) / 2} y={ih - 6} text-anchor="middle">{blockLabel}</text>
+        {/if}
+        {#if CHATGPT_X >= zf && CHATGPT_X <= zt}
           <line class="marker" x1={x(CHATGPT_X)} x2={x(CHATGPT_X)} y1="0" y2={ih} />
-          <text class="mlabel" x={x(CHATGPT_X) + 4} y="10">{L.t['common.chatgpt']}</text>
+          <text class="mlabel" x={x(CHATGPT_X) + 4} y="10">{seam ? L.t['common.chatgptAi'] : L.t['common.chatgpt']}</text>
         {/if}
         {#each app.detailed ? perFac : [] as f (f.f)}
           {#if f.pts.length > 1}<path class="ctx" d={gen(f.pts)} />{/if}
         {/each}
         {#if fitPts.length}<path class="fit" d={gen(fitPts)} />{/if}
-        <path class="own" d={gen(solidPart(total))} />
+        {#if seam}
+          <!-- AI filter: from its first year the line follows a different group of theses, so it is broken there -->
+          <path class="own" d={gen(total.filter((p) => p.year < seam))} />
+          <path class="own" d={gen(solidPart(total.filter((p) => p.year >= seam)))} />
+        {:else}
+          <path class="own" d={gen(solidPart(total))} />
+        {/if}
         {#if tailPart(total).length}<path class="own dotted" d={gen(tailPart(total))} />{/if}
+        </g>
 
-        {#if Number.isFinite(observed) && Number.isFinite(expected)}
+        {#if Number.isFinite(observed) && Number.isFinite(expected) && T1 <= zt && T1 >= zf}
           {@const x0 = x(T1) + (T1 > T0 ? 10 : 0)}
           {@const gap = Math.abs(y(observed) - y(expected))}
           {#if gap > 12}
@@ -158,6 +191,7 @@
           </text>
           <text class="lbl" x={x0 + 22} y={(y(observed) + y(expected)) / 2} dy="1.6em">{L.f.pct(expected, 1)} → {L.f.pct(observed, 1)}</text>
         {/if}
+        {#if drag.active}<rect class="zsel" x={x(drag.lo)} width={Math.max(0, x(drag.hi) - x(drag.lo))} y="0" height={ih} />{/if}
         {#if hoverYear !== null}
           <line class="cursor" x1={x(hoverYear)} x2={x(hoverYear)} y1="0" y2={ih} />
           {#if hp}<circle class="hdot" cx={x(hoverYear)} cy={y(hp.v)} r="3.5" />{/if}
@@ -208,6 +242,7 @@
   .diff.up { fill: var(--rise); }
   .diff.down { fill: var(--fall); }
   .lbl { font-size: 11px; fill: var(--ink-3); }
+  .band-l { font-size: 11px; font-weight: 600; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
   .cursor { stroke: var(--ink-3); shape-rendering: crispEdges; }
   .hdot { fill: var(--ink); }
   .facs { display: flex; flex-wrap: wrap; gap: 2px 14px; margin: 4px 0 0; font-size: var(--fs-xs); color: var(--ink-3); }

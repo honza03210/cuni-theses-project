@@ -62,7 +62,7 @@
 {#if !hasData}
   <p class="empty">{L.t['common.empty']} <button type="button" class="fix" onclick={() => (app.fac = meta.faculties.map((_, i) => i))}>{L.t['common.selectAll']}</button></p>
 {:else}
-  <Lede howto={L.t['grades.howto']}>
+  <Lede howto={`${L.t['grades.howto']} ${L.t['zoom.how']}`}>
     {#if gshift && aiOn}
       <span class="lead-note">{L.t['ai.lede.note']}</span>
       <b>{L.t['ai.lede.grades'](aiWho(), gshift.postSpan, L.f.pct(gshift.pre[0]), L.f.pct(gshift.post[0]), L.f.pct(gshift.pre[1]), L.f.pct(gshift.post[1]))}</b><span class="muted">{L.t['ai.lede.chance'](gshift.clear)}</span>
@@ -119,9 +119,12 @@
         <GradeBars rows={byFac} all={allRow} faculties={meta.faculties} prev={prevFac} prevAll={prevAll} tags={[preLabel, postLabel]} />
       </Plate>
     </div>
-    <div class="par">
-      <ParallelPlot {theses} {mask} />
-    </div>
+    {#if app.detailed}
+      <!-- detailed only: the dot plot below carries the same finding in a simpler form -->
+      <div class="par">
+        <ParallelPlot {theses} {mask} />
+      </div>
+    {/if}
     <div class="par">
       <GradeDots {theses} {mask} keys={['repeated_trigram_ratio', 'mean_sentence_len', 'std_sentence_len', 'mean_word_len', 'long_word_ratio', 'mattr']} />
     </div>

@@ -91,7 +91,7 @@
 
 <div class="trends">
   <div class="main">
-    <Lede howto={L.t['trends.howto']}>
+    <Lede howto={`${L.t['trends.howto']} ${L.t['zoom.how']}`}>
       {#if shift && aiOn}
         <span class="lead-note">{L.t['ai.lede.note']}</span>
         <b>{L.t['ai.lede.trends'](aiWho(), shift.postSpan, L.pick(metric.label), fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit))}</b><span class="muted">{L.t['ai.lede.chance'](shift.clear)}</span>

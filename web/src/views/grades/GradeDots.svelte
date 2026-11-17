@@ -41,7 +41,7 @@
       if (!s1 || !s4) continue;
       const iqr = Math.max(1e-9, (s1.q3 - s1.q1 + s4.q3 - s4.q1) / 2);
       const r = Math.abs(s1.med - s4.med) / iqr;
-      if (!best || r > best.r) best = { label: L.pick(row.m.label), a: L.f.num(s1.med, row.m.decimals), b: L.f.num(s4.med, row.m.decimals), unit: L.pick(row.m.unit), r };
+      if (!best || r > best.r) best = { label: L.pick(row.m.label), a: L.f.num(s1.med, row.m.decimals), b: L.f.num(s4.med, row.m.decimals), unit: L.pick(row.m.unit).replace(/\s*\(.*\)$/, ''), r }; // the sentence already has brackets
     }
     return best;
   });

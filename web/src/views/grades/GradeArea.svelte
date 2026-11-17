@@ -5,6 +5,7 @@
   import { MIN_CELL_N } from '../../lib/data/select';
   import { L } from '../../lib/locale.svelte';
   import Tooltip from '../../lib/ui/Tooltip.svelte';
+  import { YearDrag, resetZoom, zoomed } from '../../lib/state/zoom.svelte';
 
   /** `marked` = draw the selected-year rule (off while the bars compare before/after) */
   interface Props { rows: GradeYear[]; selected: number; yearMax: number; onselect: (y: number) => void; marked?: boolean; aiYear?: number | null; fill?: boolean }
@@ -17,7 +18,10 @@
   const m = { top: 10, right: 92, bottom: 24, left: 40 };
   const iw = $derived(Math.max(10, width - m.left - m.right));
   const ih = $derived(height - m.top - m.bottom);
-  const valid = $derived(rows.filter((r) => r.total > 0));
+  const allValid = $derived(rows.filter((r) => r.total > 0));
+  // the shared zoom narrows the visible years
+  const span = $derived(zoomed(allValid[0]?.year ?? 2006, allValid[allValid.length - 1]?.year ?? 2025));
+  const valid = $derived(allValid.filter((r) => r.year >= span[0] && r.year <= span[1]));
   const from = $derived(valid[0]?.year ?? 2006);
   const to = $derived(valid[valid.length - 1]?.year ?? 2025);
   const x = $derived(scaleLinear().domain([from, Math.max(to, from + 1)]).range([0, iw]));
@@ -66,10 +70,23 @@
   let hover: { year: number; cx: number; cy: number } | null = $state(null);
   const hoverRow = $derived(hover ? rows.find((r) => r.year === hover!.year) : null);
 
-  function yearAt(e: PointerEvent) {
+  const drag = new YearDrag();
+  function fracYear(e: PointerEvent) {
     const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
-    return Math.max(from, Math.min(to, Math.round(x.invert(e.clientX - rect.left - m.left))));
+    return Math.max(from, Math.min(to, x.invert(e.clientX - rect.left - m.left)));
   }
+  const yearAt = (e: PointerEvent) => Math.round(fracYear(e));
+  // a click picks a year, but only once it is clear it is not the first half of a double-click (unzoom)
+  let clickT: ReturnType<typeof setTimeout> | undefined;
+  function onClick(e: MouseEvent) {
+    // the click that ends a zooming drag does not also pick a year
+    if (drag.zoomedNow) { drag.zoomedNow = false; return; }
+    if (e.detail > 1) return;
+    const yr = yearAt(e as PointerEvent);
+    clearTimeout(clickT);
+    clickT = setTimeout(() => onselect(yr), 230);
+  }
+  function onDbl() { clearTimeout(clickT); resetZoom(); }
   function onKey(e: KeyboardEvent) {
     let n = selected;
     if (e.key === 'ArrowLeft') n = Math.max(from, selected - 1);
@@ -87,9 +104,10 @@
 <div class="wrap" bind:clientWidth={width} bind:clientHeight={boxH}>
   <svg {width} {height} role="slider" tabindex="0" aria-valuemin={from} aria-valuemax={to} aria-valuenow={selected}
     aria-label={L.t['grades.area.title']} aria-valuetext={String(selected)}
-    onpointermove={(e) => (hover = { year: yearAt(e), cx: e.clientX, cy: e.clientY })}
+    onpointerdown={(e) => drag.begin(e, fracYear(e))} onpointerup={() => drag.end()} onpointercancel={() => drag.cancel()}
+    onpointermove={(e) => { drag.move(fracYear(e)); hover = drag.active ? null : { year: yearAt(e), cx: e.clientX, cy: e.clientY }; }}
     onpointerleave={() => (hover = null)}
-    onclick={(e) => onselect(yearAt(e as unknown as PointerEvent))}
+    onclick={onClick} ondblclick={onDbl}
     onkeydown={onKey}>
     <defs>
       <pattern id="hatch4" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -111,7 +129,7 @@
         <text x="-6" y={y(t)} dy="0.32em" text-anchor="end">{t * 100} %</text>
       {/each}
       {#each ticks as t (t)}
-        {#if !marked || Math.abs(x(t) - x(selected)) > 42}<text x={x(t)} y={ih + 16} text-anchor="middle">{t}</text>{/if}
+        {#if !marked || selected < from || selected > to || Math.abs(x(t) - x(selected)) > 42}<text x={x(t)} y={ih + 16} text-anchor="middle">{t}</text>{/if}
       {/each}
       {#if failCI}<path class="ci" d={failCI.d} />{/if}
       {#each thin as r (r.year)}
@@ -125,7 +143,8 @@
         <!-- one marker for ChatGPT and, in AI mode, the filter's start a few pixels later -->
         <text class="mlabel" class:ai={aiYear !== null && aiYear >= from} x={x(CHATGPT_X) - 5} y="12" text-anchor="end">{aiYear !== null && aiYear >= from ? L.t['common.chatgptAi'] : L.t['common.chatgpt']}</text>
       {/if}
-      {#if marked}
+      {#if drag.active}<rect class="zsel" x={x(drag.lo)} width={Math.max(0, x(drag.hi) - x(drag.lo))} y="0" height={ih} />{/if}
+      {#if marked && selected >= from && selected <= to}
         <line class="sel" x1={x(selected)} x2={x(selected)} y1="-6" y2={ih + 4} />
         <text class="sel-label" x={x(selected)} y={ih + 16} text-anchor="middle">{selected}</text>
       {/if}

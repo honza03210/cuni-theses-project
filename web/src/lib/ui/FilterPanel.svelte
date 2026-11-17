@@ -6,9 +6,10 @@
   import { domainOf } from '../state/app.svelte';
   import { L } from '../locale.svelte';
   import YearRange from './YearRange.svelte';
+  import { FAC_SHORT } from '../faculties';
 
-  interface Props { theses: Theses; matched: number; aiApplies: boolean; yearsLocked?: boolean }
-  let { theses, matched, aiApplies, yearsLocked = false }: Props = $props();
+  interface Props { theses: Theses; matched: number; aiApplies: boolean; yearsLocked?: boolean; countYears?: [number, number] | null }
+  let { theses, matched, aiApplies, yearsLocked = false, countYears = null }: Props = $props();
 
   const meta = $derived(theses.meta);
 
@@ -58,7 +59,7 @@
 <div class="panel">
   <div class="count" aria-live="polite">
     <strong>{L.f.int(matched)}</strong>
-    <span>{yearsLocked ? L.t['filters.matchYears'](app.yearFrom, app.yearTo) : L.t['filters.match']}</span>
+    <span>{yearsLocked && countYears ? L.t['filters.matchYears'](countYears[0], countYears[1]) : L.t['filters.match']}</span>
   </div>
   {#if split}<p class="note counts-note ai-count">{L.t['filters.countSplit'](L.f.int(split.post), L.f.int(split.pre))}</p>{/if}
   <p class="note counts-note full-only">{L.t['filters.countsNote']}</p>
@@ -77,8 +78,12 @@
         <li>
           <label title={L.pick(fac.name)}>
             <input type="checkbox" checked={app.fac.includes(i)} onchange={() => (app.fac = toggle(app.fac, i))} />
-            <span class="abbr">{fac.abbr}</span>
-            <span class="name full-only">{L.pick(fac.name)}</span>
+            {#if app.detailed}
+              <span class="abbr">{fac.abbr}</span>
+              <span class="name">{L.pick(fac.name)}</span>
+            {:else}
+              <span class="short">{FAC_SHORT[fac.code] ? L.pick(FAC_SHORT[fac.code]) : fac.abbr}</span>
+            {/if}
             <span class="n full-only">{L.f.int(counts.fac[i])}</span>
           </label>
         </li>
@@ -243,9 +248,9 @@
     .quick button { padding: 8px 10px; }
     .reset { padding: 10px 16px; }
   }
-  /* simple version: faculties as a compact grid of abbreviations (full names on hover) */
-  :global(.simple) .fac-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 8px; }
-  :global(.simple) .fac-list label { grid-template-columns: 18px auto; }
+  /* simple version: one compact column of short names (full names on hover) */
+  :global(.simple) .fac-list label { grid-template-columns: 18px minmax(0, 1fr); padding-block: 2px; }
+  .short { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   :global(.simple) .panel { gap: var(--s5); }
   .warn { margin: 6px 0 0; font-size: var(--fs-xs); color: var(--warn); font-weight: 600; }
   .reset {

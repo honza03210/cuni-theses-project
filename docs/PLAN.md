@@ -437,3 +437,11 @@ aggregation code); the other takes phase 1's word cube and 3c.
 - Word cubes gain gender as the outermost cell dimension (×3 cells), so the Words view honours the filter.
   Czech cubes grow to ~4.7 MB (forms) and ~4.0 MB (lemmas) gz; the check budget is 5 MB.
 - Filter panel: "Author gender" (Women / Men / Name does not tell) after Language, with a note that it is inferred. URL key `g`.
+
+## Critique round 9 (Simple version, 25/40) and chart zoom
+
+- Simple: short faculty names; parallel plot detailed-only; screen-reader tables; labelled trend/target bands on the
+  word chart; Words count covers the compared years; AI mode breaks the word line at 2023 and the cloud subtitle uses
+  the same years as the lede; mode switch is a "Show details" text toggle. Caveats stay detailed-only (user's choice).
+- Minor: dot-plot double bracket, "Not clear from name", "Other", equal finding weights, `text-wrap: pretty` on notes.
+- Zoom: drag on any time-series chart zooms all of them; double-click / Esc / zoom bar resets.

@@ -344,7 +344,8 @@
 
 <style>
   .scroll { overflow-x: auto; }
-  .par-note { margin: 0 0 6px; font-size: var(--fs-sm); color: var(--ink); font-weight: 600; }
+  /* the chart's finding: set like the dot plot's, so the two findings carry the same weight */
+  .par-note { margin: 0 0 var(--s3); font-size: var(--fs-md); color: var(--ink); max-width: 75ch; text-wrap: pretty; }
   .scroll-hint { display: none; margin: 0 0 4px; font-size: var(--fs-xs); color: var(--ink-3); }
   @media (max-width: 720px) { .scroll-hint { display: block; } }
   @media (pointer: coarse) {

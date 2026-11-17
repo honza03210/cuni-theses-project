@@ -241,7 +241,7 @@
   {/snippet}
 
 <div class="words">
-  <Lede howto={L.t['words.howto']}>
+  <Lede howto={`${L.t['words.howto']} ${L.t['zoom.how']}`}>
     {#if movers && result && !result.reason && movers.rising.length}
       {#if aiGroup}<span class="lead-note">{L.t['ai.lede.note']}</span>{/if}
       {#if smallSample}<span class="hedge">{L.t['words.lede.small'](result.targetTotal)}</span>{' '}{/if}
@@ -258,7 +258,7 @@
       <span class="muted">{L.t['words.cloud.title']}.</span>
     {/if}
   </Lede>
-  <Plate id="w-cloud" leadLast={narrow} title={L.t['words.cloud.title']} unit={L.t['words.cloud.unit'](blockLabel, baselineLabel)} foot={app.wordRank === 'gap' ? L.t['words.cloud.footGap'] : L.t['words.cloud.foot']} footTable={L.t['words.table.foot']}>
+  <Plate id="w-cloud" srTable={false} leadLast={narrow} title={L.t['words.cloud.title']} unit={L.t['words.cloud.unit'](aiGroup ? aiSpan : blockLabel, baselineLabel)} foot={app.wordRank === 'gap' ? L.t['words.cloud.footGap'] : L.t['words.cloud.foot']} footTable={L.t['words.table.foot']}>
     {#snippet tools()}
       {#if app.langs.length > 1}
         <div class="seg" role="group" aria-label={L.t['words.lang']}>
@@ -360,7 +360,7 @@
     {#if !selected || !cube || !ctx || !result}
       <p class="msg empty">{app.word && cube && !cube.index.has(app.word) ? L.t['words.detail.notInVocab'] : L.t['words.detail.empty']}</p>
     {:else}
-      <WordDetail {cube} {ctx} word={selected} {result} faculties={meta.faculties} yearFrom={meta.yearMin} yearTo={meta.yearMax} yearMax={meta.yearMax} />
+      <WordDetail {cube} {ctx} word={selected} {result} faculties={meta.faculties} yearFrom={meta.yearMin} yearTo={meta.yearMax} yearMax={meta.yearMax} aiYear={meta.aiYear} />
     {/if}
   </Plate>
   </div>

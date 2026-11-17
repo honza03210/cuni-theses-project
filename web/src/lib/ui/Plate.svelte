@@ -20,8 +20,10 @@
     stickyHead?: boolean;
     /** render the lead (controls) after the chart instead of before it */
     leadLast?: boolean;
+    /** simple version: offer the table to screen readers (off when it holds buttons, which would be invisible focus stops) */
+    srTable?: boolean;
   }
-  let { id, title, unit, foot, tools, lead, footTable, table, children, grow = false, stickyHead = false, leadLast = false }: Props = $props();
+  let { id, title, unit, foot, tools, lead, footTable, table, children, grow = false, stickyHead = false, leadLast = false, srTable = true }: Props = $props();
 
   // the simple version always shows the chart: tables, footnotes and sources are detail
   const showTable = $derived(!!table && !!app.table[id] && app.detailed);
@@ -54,6 +56,8 @@
       <div class="table-wrap">{@render table!()}</div>
     {:else}
       {@render children()}
+      <!-- the simple version has no table toggle: screen readers still get every chart as a table -->
+      {#if table && srTable && !app.detailed}<div class="sr-only">{@render table()}</div>{/if}
     {/if}
   </div>
   {#if lead && leadLast}<div class="lead last">{@render lead()}</div>{/if}

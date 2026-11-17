@@ -236,3 +236,16 @@ describe('answer lines', () => {
     expect(metricShift(t, filterMask(t, ALL), 'm', 2025)).toBeNull();
   });
 });
+
+describe('chart zoom', async () => {
+  const { zoom, zoomed, resetZoom } = await import('../state/zoom.svelte');
+  it('narrows a chart to the zoomed years and ignores a zoom outside them', () => {
+    expect(zoomed(2006, 2025)).toEqual([2006, 2025]);
+    zoom.range = [2015, 2020];
+    expect(zoomed(2006, 2025)).toEqual([2015, 2020]);
+    expect(zoomed(2018, 2025)).toEqual([2018, 2020]);
+    expect(zoomed(2021, 2025)).toEqual([2021, 2025]);
+    resetZoom();
+    expect(zoom.range).toBeNull();
+  });
+});
