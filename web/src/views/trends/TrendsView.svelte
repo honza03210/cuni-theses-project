@@ -94,7 +94,7 @@
     <Lede howto={L.t['trends.howto']}>
       {#if shift && aiOn}
         <span class="lead-note">{L.t['ai.lede.note']}</span>
-        <b>{L.t['ai.lede.trends'](aiWho(), shift.postSpan, L.pick(metric.label), fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit))}</b>
+        <b>{L.t['ai.lede.trends'](aiWho(), shift.postSpan, L.pick(metric.label), fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit))}</b><span class="muted">{L.t['ai.lede.chance'](shift.clear)}</span>
       {:else if shift}
         <b>{L.t['trends.lede'](L.pick(metric.label), phrase, fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit), relText(shift), shift.postTo)}</b>
         {#if shift.facCompared > 1}
@@ -185,7 +185,8 @@
   .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; list-style: none; margin: 0; padding: 0; font-size: var(--fs-sm); color: var(--ink-2); }
   .legend li { display: inline-flex; align-items: center; gap: 6px; }
   .others { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
-  .others input { margin: 0; }
+  /* a default legend state, not a choice: ink, not petrol */
+  .others input { margin: 0; accent-color: var(--ink-2); }
   .when { display: block; margin-top: 6px; font-size: var(--fs-md); color: var(--ink-2); }
   .legend-foot { display: none; }
   @media (max-width: 639px) {

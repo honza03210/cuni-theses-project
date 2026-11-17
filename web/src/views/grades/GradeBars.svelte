@@ -27,10 +27,16 @@
     ...shown.filter((r) => !isSmall(r)).sort(byShare),
     ...shown.filter((r) => isSmall(r)).sort(byShare),
   ]);
-  // Before/after: by default only the faculties whose "excellent" share moved most; the rest on request
+  // Before/after: by default only the faculties whose "excellent" share changed most clearly, i.e. furthest
+  // beyond chance (two-proportion z), so small samples do not win by noise; the rest on request
   const TOP = 6;
   let showAll = $state(false);
-  const moved = (r: GradeFac) => { const p = prevShown(r.fac); return p ? Math.abs(r.counts[0] / r.total - p.counts[0] / p.total) : -1; };
+  const moved = (r: GradeFac) => {
+    const p = prevShown(r.fac);
+    if (!p) return -1;
+    const a = p.counts[0] / p.total, b = r.counts[0] / r.total;
+    return Math.abs(b - a) / Math.sqrt(a * (1 - a) / p.total + b * (1 - b) / r.total + 1e-9);
+  };
   const trimmed = $derived(paired && !showAll && sorted.length > TOP + 1);
   const visible = $derived(trimmed ? sorted.filter((r) => [...sorted].sort((a, b) => moved(b) - moved(a)).slice(0, TOP).includes(r)) : sorted);
   // one faculty: the "All" row would only repeat it
@@ -43,7 +49,11 @@
   const iw = $derived(Math.max(10, width - m.left - m.right));
   const y = $derived(scaleBand<number>().domain(bars.map((b) => b.fac)).range([0, ih]).paddingInner(paired ? 0.16 : 0.22).paddingOuter(0.05));
   const x = $derived(scaleLinear().domain([0, 1]).range([0, iw]));
-  const label = (f: number) => (f < 0 ? L.t['filters.all'] : faculties[f].abbr);
+  // A–F faculties are marked: a change there can also come from their grading scale
+  const AF = ['etf', 'fsv'];
+  const isAF = (f: number) => f >= 0 && AF.includes(faculties[f].code);
+  const label = (f: number) => (f < 0 ? L.t['filters.all'] : faculties[f].abbr + (isAF(f) ? '†' : ''));
+  const anyAF = $derived(bars.some((b) => isAF(b.fac)));
   // paired rows: earlier bar 40 % of the band, later bar 60 %, 2px apart
   const parts = $derived.by(() => {
     const bw = y.bandwidth();
@@ -75,6 +85,7 @@
 {/snippet}
 
 <div class="wrap" bind:clientWidth={width}>
+  {#if trimmed}<p class="cut">{L.t['grades.bars.cut'](TOP)}</p>{/if}
   {#if paired}
     <p class="pkey"><span class="pk prev"></span>{tags[0]}<span class="pk cur"></span>{tags[1]}</p>
   {/if}
@@ -103,11 +114,11 @@
       {/if}
     </g>
   </svg>
-  {#if missing.length}<p class="note">{missing.join(', ')}: 0 {L.t['common.theses']}</p>{/if}
   {#if paired && sorted.length > TOP + 1}
     <button type="button" class="more-btn" onclick={() => (showAll = !showAll)}>{showAll ? L.t['grades.bars.fewer'](TOP) : L.t['grades.bars.all'](sorted.length)}</button>
   {/if}
-  {#if hidden.length}<p class="note">{L.t['grades.bars.hidden'](hidden.join(', '))}</p>{/if}
+  {#if anyAF}<p class="note">{L.t['grades.bars.af']}</p>{/if}
+  {#if missing.length || hidden.length}<p class="note">{L.t['grades.bars.notShown'](missing.join(', '), hidden.join(', '))}</p>{/if}
   {#if hover}
     <Tooltip x={hover.cx} y={hover.cy}>
       <div class="tt-title">{hover.r.fac < 0 ? L.t['common.all'] : L.pick(faculties[hover.r.fac].name)}{#if hover.tag}{' '}<span class="tt-tag">{hover.tag}</span>{/if}</div>
@@ -133,6 +144,7 @@
   .yn { font-size: 11px; fill: var(--ink-3); }
   .sep { stroke: var(--rule); stroke-dasharray: 2 2; }
   .note { margin: 4px 0 0; font-size: var(--fs-xs); color: var(--ink-3); }
+  .cut { margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); }
   .pkey { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); }
   /* the period is encoded by thickness, so the key is ink: grade colours stay for grades */
   .pk { display: inline-block; width: 18px; background: var(--ink-2); border-radius: 1px; }

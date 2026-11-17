@@ -134,7 +134,8 @@
   .w.rise { fill: var(--rise); font-weight: 700; }
   .w.fall { fill: var(--fall); font-weight: 400; }
   .w:hover, .w:focus-visible { text-decoration: underline; text-decoration-thickness: 1.5px; outline: none; }
-  .w.sel { fill: var(--petrol); text-decoration: underline; text-decoration-thickness: 2.5px; paint-order: stroke; stroke: var(--petrol-tint); stroke-width: 6px; }
+  /* selected word keeps its rise/fall colour; selection is a thick ink underline, not another blue */
+  .w.sel { text-decoration: underline; text-decoration-thickness: 3px; text-decoration-color: var(--ink); text-underline-offset: 4px; }
   svg:has(.w:hover) .w:not(:hover):not(.sel) { opacity: 0.55; }
   :global(.tt-gloss) { font-weight: 400; color: var(--ink-2); }
   :global(.tt-forms) { font-size: var(--fs-xs); color: var(--ink-3); margin: -1px 0 4px; font-style: italic; }

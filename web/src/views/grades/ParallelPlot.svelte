@@ -117,7 +117,7 @@
   const iw = $derived(Math.max(10, width - m.left - m.right));
   const ih = height - m.top - m.bottom;
   // the grade axis only fans theses out into their grades: give it half a gap
-  const gap0 = $derived((iw / (AXES.length - 1)) * 0.5);
+  const gap0 = $derived(Math.max(84, (iw / (AXES.length - 1)) * 0.5)); // room for 'Grade' + the first axis label
   const ax = (a: number) => (a === 0 ? 0 : gap0 + ((iw - gap0) * (a - 1)) / (AXES.length - 2));
 
   let canvas: HTMLCanvasElement | undefined = $state();
@@ -305,7 +305,7 @@
     <svg width="26" height="12" aria-hidden="true"><rect x="0" y="2" width="26" height="8" fill="var(--ink-3)" opacity="0.3"/><line x1="0" x2="26" y1="6" y2="6" stroke="var(--ink)" stroke-width="2"/></svg>
     <span>{L.t['grades.par.bands']}</span>
   </p>
-  {#if overlap}<p class="par-note">{L.t['grades.par.overlap']}</p>{/if}
+  {#if overlap}<p class="par-note">{L.t['grades.par.overlap'](bands.length)}</p>{/if}
   <p class="scroll-hint">{L.t['grades.par.scroll']}</p>
   <div class="scroll">
   <div class="wrap" bind:clientWidth={width} style:height="{height}px">

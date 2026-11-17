@@ -140,7 +140,8 @@
       <line class="gpt" x1={xl(Math.floor(CHATGPT_X)) + step * (CHATGPT_X % 1)} x2={xl(Math.floor(CHATGPT_X)) + step * (CHATGPT_X % 1)} y1="0" y2={ih} />
     </g>
   </svg>
-  <p class="hint">{L.t['words.tl.hint'](BASE_MIN, BASE_MAX)}</p>
+  <!-- the how-to explains dragging; screen readers still get the hint here -->
+  <p class="hint sr-only">{L.t['words.tl.hint'](BASE_MIN, BASE_MAX)}</p>
   <p id="wtl-keys" class="sr-only">{L.t['words.tl.keys']}</p>
 </div>
 

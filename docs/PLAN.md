@@ -412,3 +412,20 @@ aggregation code); the other takes phase 1's word cube and 3c.
   25 words per side in the cloud.
 - Type: plate titles 17px, year range 15px, chart text ≥ 11px, half sizes removed.
 - Phones: Trends legend moves under the charts.
+
+### Critique round 8 changes (28/40)
+
+- Grades by faculty: the default 6 are the faculties whose "excellent" share changed most clearly
+  (two-proportion z, furthest beyond chance), named in a caption; A–F faculties marked †; the
+  missing-faculty notes merged into one line; the plate no longer stretches to the area chart.
+- AI mode: ledes add "the gap is beyond / within chance"; Trends note says "fewer than 20 theses
+  per year"; the bars toggle reads "2018–2022 vs 2023–2025"; ChatGPT and the AI-filter start are
+  one marker with a two-part label (Trends and the grade area).
+- Words: the comparison sentence (duplicated in the plate unit) and the drag hint (now in the
+  how-to; sr-only in place) are gone; on phones the cloud comes first and the year controls fold
+  behind "2023–2025 vs the trend 2018–2022 · change years" below it (`Plate leadLast`).
+- Petrol: selected cloud/table word marked with a thick ink underline (keeps its rise/fall
+  colour); the Trends "other selected" legend checkbox is ink.
+- Parallel plot: the overlap note names the number of grades shown; wider first gap so "Grade"
+  and the first axis label never collide. Grade-area ChatGPT label is plain ink; no-break spaces
+  keep "3.6 % → 3.6 %" together.

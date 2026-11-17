@@ -20,6 +20,14 @@
   const meta = $derived(theses.meta);
   const MIN_FREQ_STEPS = [0.002, 0.005, 0.01, 0.02, 0.03, 0.05, 0.1];
   const SMALL_TARGET = 100;
+  // phones: cloud first, year controls folded below it
+  let narrow = $state(typeof matchMedia === 'function' && matchMedia('(max-width: 639px)').matches);
+  $effect(() => {
+    const mq = matchMedia('(max-width: 639px)');
+    const on = () => (narrow = mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  });
   const N_EACH = 25;
 
   const wordLang = $derived(app.wordLang !== null && app.langs.includes(app.wordLang) ? app.wordLang : app.langs[0] ?? null);
@@ -177,6 +185,61 @@
   const smallSample = $derived(!!result && !result.reason && result.targetTotal < SMALL_TARGET);
 </script>
 
+{#snippet yearControls()}
+  <WordTimeline yearMin={meta.yearMin} yearMax={meta.yearMax} {totals} {cmp} onchange={setCmp} />
+  <div class="compare">
+    <div class="player" role="group" aria-label={L.t['words.s.player']}>
+      <button type="button" disabled={!canBack} onclick={() => { stepBy(-1); }} title={L.t['words.s.prev']} aria-label={L.t['words.s.prev']}>
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <button type="button" disabled={!canFwd} onclick={() => { stepBy(1); }} title={L.t['words.s.next']} aria-label={L.t['words.s.next']}>
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <details class="more">
+      <summary>{L.t['words.s.precise']}</summary>
+      <div class="sentence">
+      <span>{L.t['words.s.compare']}</span>
+      <select aria-label={L.t['words.s.from']} value={cmp.from} onchange={(e) => { setCmp({ ...cmp, from: +e.currentTarget.value, to: Math.max(+e.currentTarget.value, cmp.to) }); }}>
+        {#each fromYears as y (y)}<option value={y}>{y}</option>{/each}
+      </select>
+      <span>–</span>
+      <select aria-label={L.t['words.s.to']} value={cmp.to} onchange={(e) => { setCmp({ ...cmp, to: +e.currentTarget.value }); }}>
+        {#each toYears as y (y)}<option value={y}>{y === cmp.from ? `${y} (${L.t['words.s.single']})` : y}{y === meta.yearMax ? ` (${L.t['words.incomplete']})` : ''}</option>{/each}
+      </select>
+      <span>{L.t['words.s.with']}</span>
+      <select aria-label={L.t['words.s.base']} value={cmp.base} onchange={(e) => { setCmp({ ...cmp, base: +e.currentTarget.value }); }}>
+        {#each baseOptions as b (b)}<option value={b}>{b}</option>{/each}
+      </select>
+      <span>{L.t['words.s.years'](baselineLabel)}</span>
+    </div>
+    </details>
+    <details class="more">
+      <summary>{L.t['words.opts']}: <span class="opt-sum">{optSummary}</span></summary>
+      <div class="opts">
+      <div class="seg" role="group" aria-label={L.t['words.rank.label']}>
+      <button type="button" aria-pressed={app.wordRank === 'gap'} onclick={() => (app.wordRank = 'gap')} title={L.t['words.rank.gapHint']}>{L.t['words.rank.gap']}</button>
+      <button type="button" aria-pressed={app.wordRank === 'ratio'} onclick={() => (app.wordRank = 'ratio')} title={L.t['words.rank.ratioHint']}>{L.t['words.rank.ratio']}</button>
+    </div>
+    {#if lemmaAvailable}
+      <div class="seg" role="group" aria-label={L.t['words.lemma.label']}>
+        <button type="button" aria-pressed={app.lemma} onclick={() => setLemma(true)} title={L.t['words.lemma.onHint']}>{L.t['words.lemma.on']}</button>
+        <button type="button" aria-pressed={!app.lemma} onclick={() => setLemma(false)} title={L.t['words.lemma.offHint']}>{L.t['words.lemma.off']}</button>
+      </div>
+    {/if}
+    <label class="mf">
+      <span>{L.t['words.minFreq']}</span>
+      <input type="range" min="0" max={MIN_FREQ_STEPS.length - 1} step="1" value={mfIndex}
+        aria-valuetext={L.f.pct(MIN_FREQ_STEPS[mfIndex])}
+        oninput={(e) => (app.minFreq = MIN_FREQ_STEPS[+e.currentTarget.value])} />
+      <output>{L.f.pct(app.minFreq, app.minFreq < 0.01 ? 1 : 0)}</output>
+    </label>
+      </div>
+    </details>
+  </div>
+  {/snippet}
+
 <div class="words">
   <Lede howto={L.t['words.howto']}>
     {#if movers && result && !result.reason && movers.rising.length}
@@ -195,7 +258,7 @@
       <span class="muted">{L.t['words.cloud.title']}.</span>
     {/if}
   </Lede>
-  <Plate id="w-cloud" title={L.t['words.cloud.title']} unit={L.t['words.cloud.unit'](blockLabel, baselineLabel)} foot={app.wordRank === 'gap' ? L.t['words.cloud.footGap'] : L.t['words.cloud.foot']} footTable={L.t['words.table.foot']}>
+  <Plate id="w-cloud" leadLast={narrow} title={L.t['words.cloud.title']} unit={L.t['words.cloud.unit'](blockLabel, baselineLabel)} foot={app.wordRank === 'gap' ? L.t['words.cloud.footGap'] : L.t['words.cloud.foot']} footTable={L.t['words.table.foot']}>
     {#snippet tools()}
       {#if app.langs.length > 1}
         <div class="seg" role="group" aria-label={L.t['words.lang']}>
@@ -223,59 +286,15 @@
     {/snippet}
 
     {#snippet lead()}
-    <WordTimeline yearMin={meta.yearMin} yearMax={meta.yearMax} {totals} {cmp} onchange={setCmp} />
-    <div class="compare">
-      <div class="player" role="group" aria-label={L.t['words.s.player']}>
-        <button type="button" disabled={!canBack} onclick={() => { stepBy(-1); }} title={L.t['words.s.prev']} aria-label={L.t['words.s.prev']}>
-          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-
-        <button type="button" disabled={!canFwd} onclick={() => { stepBy(1); }} title={L.t['words.s.next']} aria-label={L.t['words.s.next']}>
-          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      </div>
-      <p class="cmp-text"><b>{blockLabel}</b> {L.t['words.s.vsTrend'](cmp.base, baselineLabel)}</p>
-      <details class="more">
-        <summary>{L.t['words.s.precise']}</summary>
-        <div class="sentence">
-        <span>{L.t['words.s.compare']}</span>
-        <select aria-label={L.t['words.s.from']} value={cmp.from} onchange={(e) => { setCmp({ ...cmp, from: +e.currentTarget.value, to: Math.max(+e.currentTarget.value, cmp.to) }); }}>
-          {#each fromYears as y (y)}<option value={y}>{y}</option>{/each}
-        </select>
-        <span>–</span>
-        <select aria-label={L.t['words.s.to']} value={cmp.to} onchange={(e) => { setCmp({ ...cmp, to: +e.currentTarget.value }); }}>
-          {#each toYears as y (y)}<option value={y}>{y === cmp.from ? `${y} (${L.t['words.s.single']})` : y}{y === meta.yearMax ? ` (${L.t['words.incomplete']})` : ''}</option>{/each}
-        </select>
-        <span>{L.t['words.s.with']}</span>
-        <select aria-label={L.t['words.s.base']} value={cmp.base} onchange={(e) => { setCmp({ ...cmp, base: +e.currentTarget.value }); }}>
-          {#each baseOptions as b (b)}<option value={b}>{b}</option>{/each}
-        </select>
-        <span>{L.t['words.s.years'](baselineLabel)}</span>
-      </div>
+    {#if narrow}
+      <!-- phones: the cloud comes first; the year controls fold behind a one-line summary below it -->
+      <details class="phone-years">
+        <summary>{blockLabel} {L.t['words.s.vsShort']} {baselineLabel} · <span>{L.t['words.s.change']}</span></summary>
+        {@render yearControls()}
       </details>
-      <details class="more">
-        <summary>{L.t['words.opts']}: <span class="opt-sum">{optSummary}</span></summary>
-        <div class="opts">
-        <div class="seg" role="group" aria-label={L.t['words.rank.label']}>
-        <button type="button" aria-pressed={app.wordRank === 'gap'} onclick={() => (app.wordRank = 'gap')} title={L.t['words.rank.gapHint']}>{L.t['words.rank.gap']}</button>
-        <button type="button" aria-pressed={app.wordRank === 'ratio'} onclick={() => (app.wordRank = 'ratio')} title={L.t['words.rank.ratioHint']}>{L.t['words.rank.ratio']}</button>
-      </div>
-      {#if lemmaAvailable}
-        <div class="seg" role="group" aria-label={L.t['words.lemma.label']}>
-          <button type="button" aria-pressed={app.lemma} onclick={() => setLemma(true)} title={L.t['words.lemma.onHint']}>{L.t['words.lemma.on']}</button>
-          <button type="button" aria-pressed={!app.lemma} onclick={() => setLemma(false)} title={L.t['words.lemma.offHint']}>{L.t['words.lemma.off']}</button>
-        </div>
-      {/if}
-      <label class="mf">
-        <span>{L.t['words.minFreq']}</span>
-        <input type="range" min="0" max={MIN_FREQ_STEPS.length - 1} step="1" value={mfIndex}
-          aria-valuetext={L.f.pct(MIN_FREQ_STEPS[mfIndex])}
-          oninput={(e) => (app.minFreq = MIN_FREQ_STEPS[+e.currentTarget.value])} />
-        <output>{L.f.pct(app.minFreq, app.minFreq < 0.01 ? 1 : 0)}</output>
-      </label>
-        </div>
-      </details>
-    </div>
+    {:else}
+      {@render yearControls()}
+    {/if}
     {/snippet}
 
     <div class="legend">
@@ -369,8 +388,9 @@
   .sugg .via { color: var(--ink-3); }
   .sugg li.act button { background: var(--petrol-tint); }
   .sugg .none { max-width: 300px; line-height: 1.45; }
-  .cmp-text { margin: 0; font-size: var(--fs-md); color: var(--ink-2); flex: 1 1 auto; text-wrap: pretty; }
-  .cmp-text b { color: var(--ink); }
+  .phone-years { margin: var(--s3) 0 0; font-size: var(--fs-sm); color: var(--ink-2); }
+  .phone-years > summary { cursor: pointer; padding: 10px 0; font-weight: 600; color: var(--ink); }
+  .phone-years > summary span { color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
   .more { font-size: var(--fs-sm); color: var(--ink-2); }
   .more summary { cursor: pointer; padding: 4px 0; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
   .more summary:hover { color: var(--ink); text-decoration-color: var(--ink); }
@@ -432,5 +452,5 @@
   .wbtn { border: 0; background: none; padding: 0; cursor: pointer; font-size: inherit; text-align: left; }
   .wbtn.rise { color: var(--rise); font-weight: 700; }
   .wbtn.fall { color: var(--fall); }
-  .wbtn[aria-pressed='true'] { text-decoration: underline; text-decoration-color: var(--petrol); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+  .wbtn[aria-pressed='true'] { text-decoration: underline; text-decoration-color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3px; }
 </style>

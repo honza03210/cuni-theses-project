@@ -117,16 +117,13 @@
       {#each thin as r (r.year)}
         <rect class="thin" x={slot(r.year).x} width={slot(r.year).w} y="0" height={ih} fill="url(#thinveil)" />
       {/each}
-      {#if aiYear !== null && aiYear >= from && aiYear <= to}
-        <line class="marker ai" x1={x(aiYear - 0.5)} x2={x(aiYear - 0.5)} y1="-4" y2={ih} />
-        <text class="mlabel ai" x={x(aiYear - 0.5) - 5} y="28" text-anchor="end">{L.t['common.aiStart']}</text>
-      {/if}
       {#if to >= yearMax}
         <rect x={x(yearMax - 1)} width={x(yearMax) - x(yearMax - 1)} y="0" height={ih} fill="var(--paper)" opacity="0.35" />
       {/if}
       {#if CHATGPT_X >= from && CHATGPT_X <= to}
         <line class="marker" x1={x(CHATGPT_X)} x2={x(CHATGPT_X)} y1="-4" y2={ih} />
-        <text class="mlabel" x={x(CHATGPT_X) - 5} y="12" text-anchor="end">{L.t['common.chatgpt']}</text>
+        <!-- one marker for ChatGPT and, in AI mode, the filter's start a few pixels later -->
+        <text class="mlabel" class:ai={aiYear !== null && aiYear >= from} x={x(CHATGPT_X) - 5} y="12" text-anchor="end">{aiYear !== null && aiYear >= from ? L.t['common.chatgptAi'] : L.t['common.chatgpt']}</text>
       {/if}
       {#if marked}
         <line class="sel" x1={x(selected)} x2={x(selected)} y1="-6" y2={ih + 4} />
@@ -163,12 +160,12 @@
   svg:focus-visible { outline: 2px solid var(--petrol); outline-offset: 4px; }
   .grid { stroke: var(--paper); stroke-opacity: 0.6; stroke-width: 1; shape-rendering: crispEdges; }
   .marker { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 3; }
-  .mlabel { font-size: 12px; fill: #f6f4ee; font-weight: 700; paint-order: stroke; stroke: #163f4f; stroke-width: 3.5px; stroke-linejoin: round; }
+  /* plain ink on the softened area fill: no sticker halo */
+  .mlabel { font-size: 12px; fill: var(--ink); font-weight: 600; }
   .sel { stroke: var(--petrol); stroke-width: 2.5; }
   .sel-label { fill: var(--paper); font-weight: 700; paint-order: stroke; stroke: var(--petrol); stroke-width: 14px; stroke-linejoin: round; }
   .blabel { font-size: 12px; fill: var(--ink-2); }
-  .marker.ai { stroke: var(--warn); stroke-width: 1.5; }
-  .mlabel.ai { fill: var(--warn); stroke: var(--paper); }
+  .mlabel.ai { fill: var(--warn); }
   .thin-note { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: var(--fs-xs); color: var(--ink-2); }
   .thin-note svg { flex: none; }
   .ci { fill: var(--ink); fill-opacity: 0.16; stroke: var(--ink); stroke-width: 0.8; stroke-dasharray: 2 2; }

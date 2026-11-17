@@ -65,7 +65,7 @@
   <Lede howto={L.t['grades.howto']}>
     {#if gshift && aiOn}
       <span class="lead-note">{L.t['ai.lede.note']}</span>
-      <b>{L.t['ai.lede.grades'](aiWho(), gshift.postSpan, L.f.pct(gshift.pre[0]), L.f.pct(gshift.post[0]), L.f.pct(gshift.pre[1]), L.f.pct(gshift.post[1]))}</b>
+      <b>{L.t['ai.lede.grades'](aiWho(), gshift.postSpan, L.f.pct(gshift.pre[0]), L.f.pct(gshift.post[0]), L.f.pct(gshift.pre[1]), L.f.pct(gshift.post[1]))}</b><span class="muted">{L.t['ai.lede.chance'](gshift.clear)}</span>
     {:else if gshift}
       <b>{gshift.same ? L.t['grades.verdict.same'] : gshift.clear ? L.t['grades.verdict.moved'] : L.t['grades.verdict.unclear']}</b>
       {L.t['grades.lede'](L.f.pct(gshift.pre[0]), L.f.pct(gshift.post[0]), L.f.pct(gshift.pre[1]), L.f.pct(gshift.post[1]), gshift.postTo)}
@@ -97,7 +97,7 @@
         {#snippet tools()}
           {#if canCompare}
             <div class="seg" role="group" aria-label={L.t['grades.bars.mode']}>
-              <button type="button" aria-pressed={compare} onclick={() => (app.gradeYear = null)}>{L.t['grades.bars.cmp']}</button>
+              <button type="button" aria-pressed={compare} onclick={() => (app.gradeYear = null)}>{aiOn ? L.t['grades.bars.cmpAi'](preLabel, postLabel) : L.t['grades.bars.cmp']}</button>
               <button type="button" aria-pressed={!compare} onclick={() => (app.gradeYear = barYear)}>{L.t['grades.bars.year'](barYear)}</button>
             </div>
           {/if}
@@ -135,6 +135,8 @@
     gap: var(--s6) var(--s6);
   }
   .area, .bars { display: flex; min-width: 0; }
+  /* the bars plate follows its content (one faculty = short); it does not stretch to the area chart */
+  .bars { align-items: flex-start; }
   .area > :global(.plate), .bars > :global(.plate) { flex: 1 1 auto; }
   .par { grid-column: 1 / -1; min-width: 0; }
   .empty { color: var(--ink-2); padding: var(--s6) 0; }

@@ -18,8 +18,10 @@
     grow?: boolean;
     /** keep the header (title, legend, tools) visible while the body scrolls */
     stickyHead?: boolean;
+    /** render the lead (controls) after the chart instead of before it */
+    leadLast?: boolean;
   }
-  let { id, title, unit, foot, tools, lead, footTable, table, children, grow = false, stickyHead = false }: Props = $props();
+  let { id, title, unit, foot, tools, lead, footTable, table, children, grow = false, stickyHead = false, leadLast = false }: Props = $props();
 
   const showTable = $derived(!!table && !!app.table[id]);
   function setTable(v: boolean) {
@@ -45,7 +47,7 @@
       {/if}
     </div>
   </header>
-  {#if lead}<div class="lead">{@render lead()}</div>{/if}
+  {#if lead && !leadLast}<div class="lead">{@render lead()}</div>{/if}
   <div class="body">
     {#if showTable}
       <div class="table-wrap">{@render table!()}</div>
@@ -53,6 +55,7 @@
       {@render children()}
     {/if}
   </div>
+  {#if lead && leadLast}<div class="lead last">{@render lead()}</div>{/if}
   <footer class="foot">
     {#if showTable && footTable}<span>{footTable}</span>{:else if foot}<span>{foot}</span>{/if}
     <span class="src">{L.t['plate.source']}</span>
