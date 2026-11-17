@@ -18,7 +18,9 @@
   const metric = $derived(meta.metrics.find((m) => m.key === app.metric) ?? meta.metrics[0]);
   let showOthers = $state(true);
   let gridW = $state(900);
-  const cols = $derived(Math.max(1, Math.floor((gridW + 16) / (220 + 16))));
+  // phones get two narrower columns, so 15 faculties are not a 15-screen scroll
+  const colMin = $derived(gridW < 600 ? 150 : 220);
+  const cols = $derived(Math.max(1, Math.floor((gridW + 16) / (colMin + 16))));
   const series = $derived(metricSeries(theses, mask, metric.key, [...app.fac].sort((a, b) => a - b), app.yearFrom, app.yearTo));
   /** change after ChatGPT per faculty: mean of 2023+ points minus mean of 2018–2022 points */
   const change = (f: number) => {
@@ -35,18 +37,21 @@
   }));
 
   // With a single faculty, compare against the whole university under the same other filters
-  const uniRef = $derived.by(() => {
+  const uniAll = $derived.by(() => {
     if (facs.length !== 1) return null;
     const all = meta.faculties.map((_, i) => i);
     const m = filterMask(theses, { fac: all, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai });
-    return metricSeries(theses, m, metric.key, all, app.yearFrom, app.yearTo).overall;
+    return metricSeries(theses, m, metric.key, all, app.yearFrom, app.yearTo);
   });
+  const uniRef = $derived(uniAll?.overall ?? null);
 
   const yDomain = $derived.by((): [number, number] => {
     let lo = Infinity, hi = -Infinity;
     for (const pts of series.byFac.values()) for (const p of pts) { lo = Math.min(lo, p.mean); hi = Math.max(hi, p.mean); }
     for (const p of series.overall) { lo = Math.min(lo, p.mean); hi = Math.max(hi, p.mean); }
     for (const p of uniRef ?? []) { lo = Math.min(lo, p.mean); hi = Math.max(hi, p.mean); }
+    // one faculty: keep the scale of the all-faculty small multiples, so its change is not magnified
+    if (uniAll) for (const pts of uniAll.byFac.values()) for (const p of pts) { lo = Math.min(lo, p.mean); hi = Math.max(hi, p.mean); }
     return padDomain(lo, hi, 0.08);
   });
 
@@ -81,6 +86,7 @@
       {:else if shift}
         <b>{L.t['trends.lede'](L.pick(metric.label), phrase, fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit), relText(shift), shift.postTo)}</b>
         {#if shift.facCompared > 1}<b class="facs"> {L.t['trends.lede.facs'](shift.facUp, shift.facCompared)}</b>{/if}
+        {#if shift.step}<span class="when">{L.t['trends.lede.step'](shift.step.lateYear, shift.step.earlySpan, fmtV(shift.step.early), fmtV(shift.step.late))}</span>{/if}
       {:else}
         <span class="muted">{L.t['trends.lede.na']}</span>
       {/if}
@@ -91,7 +97,7 @@
         {#each meta.metrics as m (m.key)}<option value={m.key}>{L.pick(m.label)}</option>{/each}
       </select>
     </label>
-    <Plate id="trends" stickyHead title={L.t['trends.title'](L.pick(metric.label))} unit={`${L.pick(metric.unit)} · ${app.yearFrom}–${app.yearTo} · ${L.t['trends.sorted']}`} foot={L.t['trends.foot']}>
+    <Plate id="trends" stickyHead title={facs.length === 1 ? L.t['trends.titleOne'](L.pick(metric.label), meta.faculties[facs[0]].abbr) : L.t['trends.title'](L.pick(metric.label))} unit={`${L.pick(metric.unit)} · ${app.yearFrom}–${app.yearTo}${facs.length > 1 ? ` · ${L.t['trends.sorted']}` : ''}`} foot={L.t['trends.foot']}>
       {#snippet tools()}
         <ul class="legend" aria-label="Legend">
           <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--ink)" stroke-width="2.25"/></svg>{L.t['trends.this']}</li>
@@ -127,7 +133,7 @@
       {#if !facs.length || !hasData}
         <p class="empty">{L.t['common.empty']} <button type="button" class="fix" onclick={() => (app.fac = meta.faculties.map((_, i) => i))}>{L.t['common.selectAll']}</button></p>
       {:else}
-        <div class="grid" class:single={facs.length === 1} bind:clientWidth={gridW}>
+        <div class="grid" class:single={facs.length === 1} bind:clientWidth={gridW} style:--col-min="{colMin}px">
           {#each shown as f, fi (f)}
             <TrendPanel first={fi < cols} {showOthers}
               fac={f} faculty={meta.faculties[f]} {series} {facs} {yDomain} {metric} {aiOn}
@@ -161,9 +167,10 @@
     gap: var(--s6);
     align-items: start;
   }
+  @media (max-width: 639px) { .trends .grid { gap: var(--s4) var(--s3); } }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(var(--col-min, 220px), 1fr));
     gap: var(--s5) var(--s4);
   }
   .grid.single { grid-template-columns: minmax(0, 1fr); }
@@ -171,10 +178,12 @@
   .legend li { display: inline-flex; align-items: center; gap: 6px; }
   .others { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
   .others input { margin: 0; }
+  .when { display: block; margin-top: 6px; font-size: var(--fs-md); color: var(--ink-2); }
   .nopost { margin: 0 0 var(--s3); font-size: var(--fs-sm); color: var(--ink-2); }
   .msel { display: none; }
   @media (max-width: 639px) {
-    .msel { display: flex; flex-direction: column; gap: 4px; margin: 0 0 var(--s4); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+    .msel { display: flex; flex-direction: column; gap: 4px; margin: 0 0 var(--s4);
+      position: sticky; top: var(--band-h, 58px); z-index: 6; background: var(--paper); padding: 8px 0; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
     .msel select { font: inherit; text-transform: none; letter-spacing: 0; font-size: var(--fs-md); font-weight: 600; color: var(--ink); background: var(--paper); border: 1px solid var(--ink-3); border-radius: 3px; padding: 9px 10px; min-height: 44px; }
     .picker { display: none; }
   }

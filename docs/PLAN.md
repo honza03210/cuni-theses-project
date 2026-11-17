@@ -362,3 +362,20 @@ aggregation code); the other takes phase 1's word cube and 3c.
 - Mobile/keyboard: the open drawer is a modal dialog (page behind is `inert`); cloud words are
   positioned on their baseline (no `dy` offset, which caused overlaps); Trends uses a measure
   `<select>` under the answer on phones. Lede measure 72ch.
+
+### Critique round 5 changes (28/40)
+
+- Grade distribution over time veils years with < 20 theses (hatched paper veil, note, tooltip)
+  and marks where the AI filter starts; it grows to the height of the faculty bars beside it
+  (`Plate grow` + `GradeArea fill`).
+- Trends lede adds a computed "when" clause (`MetricShift.step`): when the earlier post years stay
+  near the baseline and the last year differs beyond chance, it says most of the change is in that
+  year and that a one-year jump can also come from how that year's theses were collected.
+- Single-faculty Trends keeps the all-faculty y-scale and is titled "<measure>: <faculty> vs the
+  whole university"; the university average line is drawn at full strength.
+- Phones: Trends shows two columns and a sticky measure select (plate header no longer sticky
+  below 640px). Drawer: theme/language after the filters; skip link inert while open; only the
+  count is a live region. Timeline trend-edge grip is wider, with a larger touch zone.
+- Parallel plot bands get a thin grade-coloured edge and fainter fill in dark mode; paired-bar key
+  uses a grade colour; word-detail figures rounded to 1 decimal, ChatGPT label drawn above bands,
+  observed-block mean is a translucent ink bar (petrol stays "selected" only).

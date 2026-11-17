@@ -304,7 +304,7 @@
         <!-- rare grades first, so the common grades' medians stay on top; each grade has its own dash -->
         {#each [...bands].reverse() as b (b.g)}
           {@const xs = AXES.map((_, a) => ax(a))}
-          <path class="band" class:hatched={b.g === 4} fill={GRADE_HEX[b.g - 1]}
+          <path class="band" class:hatched={b.g === 4} fill={GRADE_HEX[b.g - 1]} style:color={GRADE_HEX[b.g - 1]}
             d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.q3[a])}`).join('L') + 'L' + xs.map((x, a) => `${x},${ih * (1 - b.q1[a])}`).reverse().join('L') + 'Z'} />
           <path class="median-halo" d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.med[a])}`).join('L')} />
           <path class="median" stroke={GRADE_HEX[b.g - 1]} stroke-dasharray={['', '9 3', '5 3', '2 3'][b.g - 1]} d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.med[a])}`).join('L')} />
@@ -341,7 +341,8 @@
     .lines input { width: 20px; height: 20px; }
   }
   .wrap { position: relative; width: 100%; min-width: 660px; }
-  .band { fill-opacity: 0.13; stroke: none; }
+  /* bands: faint fill plus a thin edge, so four overlapping bands stay separable (dark mode mixes fills into mud) */
+  .band { fill-opacity: var(--pcp-band-fill, 0.13); stroke: currentColor; stroke-opacity: var(--pcp-band-edge, 0); stroke-width: 0.8; }
   .median { fill: none; stroke-width: 2.4; stroke-linejoin: round; }
   /* a thin ink contour gives the light grade-2 line enough contrast on paper (and on charcoal in dark mode) */
   .median-halo { fill: none; stroke: var(--ink); stroke-width: 4.6; stroke-linejoin: round; opacity: 0.45; }

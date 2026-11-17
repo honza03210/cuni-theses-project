@@ -209,7 +209,7 @@ The ground is warm paper and the text is near-black ink. The single structural c
 **Body Font:** Source Sans 3 (fallback Source Sans Pro, system-ui), self-hosted at 400, 400 italic, 600 and 700
 **Label/Mono Font:** the same family; numerals are set with `tabular-nums lining-nums` on `:root`
 
-**Character:** One workmanlike humanist sans that reads like a statistical office's house face. Hierarchy comes from weight and rules rather than size: the largest text on any screen is the 24px filter count.
+**Character:** One workmanlike humanist sans that reads like a statistical office's house face. Hierarchy comes from weight and rules rather than size. The one deliberate exception is the answer line (Lede, 21px) above each view: the finding is the largest text on the screen; below it, the 24px filter count is the largest.
 
 ### Hierarchy
 - **Headline** (700, 1.5rem, -0.01em): the live count at the top of the filter column. It is the only large number on the page.

@@ -125,7 +125,7 @@
   </div>
 {/snippet}
 
-<a class="skip" href="#view-panel">{L.t['common.skip']}</a>
+<a class="skip" href="#view-panel" inert={drawerOpen}>{L.t['common.skip']}</a>
 <div class="shell" class:drawer-open={drawerOpen} style:--band-h="{bandH}px">
   <header class="band" bind:clientHeight={bandH} inert={drawerOpen}>
     <div class="brand">
@@ -158,11 +158,12 @@
       <span class="drawer-title">{L.t['filters.title']}</span>
       <button type="button" class="drawer-close" onclick={closeDrawer}>{L.t['filters.done']}</button>
     </div>
-    <div class="prefs drawer-prefs">{@render prefsCtl()}</div>
     {#if theses}
       <FilterPanel {theses} {matched} yearsLocked={app.view === 'words'}
         aiApplies={app.view === 'words' || app.yearTo >= theses.meta.aiYear} />
     {/if}
+    <!-- theme and language come after the filters, so Tab reaches the filters first -->
+    <div class="prefs drawer-prefs">{@render prefsCtl()}</div>
   </aside>
   {#if drawerOpen}
     <button type="button" class="scrim" aria-label={L.t['filters.close']} tabindex="-1" onclick={closeDrawer}></button>

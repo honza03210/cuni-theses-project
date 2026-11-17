@@ -2,23 +2,26 @@
   import { area, scaleLinear, stack } from 'd3';
   import type { GradeYear } from '../../lib/data/aggregate';
   import { CHATGPT_X, GRADE_VARS, yearTicks } from '../../lib/chart';
+  import { MIN_CELL_N } from '../../lib/data/select';
   import { L } from '../../lib/locale.svelte';
   import Tooltip from '../../lib/ui/Tooltip.svelte';
 
   /** `marked` = draw the selected-year rule (off while the bars compare before/after) */
-  interface Props { rows: GradeYear[]; selected: number; yearMax: number; onselect: (y: number) => void; marked?: boolean }
-  let { rows, selected, yearMax, onselect, marked = true }: Props = $props();
+  interface Props { rows: GradeYear[]; selected: number; yearMax: number; onselect: (y: number) => void; marked?: boolean; aiYear?: number | null; fill?: boolean }
+  let { rows, selected, yearMax, onselect, marked = true, aiYear = null, fill = false }: Props = $props();
 
   let width = $state(600);
-  const height = 300;
+  // `fill`: grow to the height the layout offers (beside the taller faculty bars), never below 300px
+  let boxH = $state(300);
+  const height = $derived(fill ? Math.max(300, Math.min(620, boxH)) : 300);
   const m = { top: 10, right: 92, bottom: 24, left: 40 };
   const iw = $derived(Math.max(10, width - m.left - m.right));
-  const ih = height - m.top - m.bottom;
+  const ih = $derived(height - m.top - m.bottom);
   const valid = $derived(rows.filter((r) => r.total > 0));
   const from = $derived(valid[0]?.year ?? 2006);
   const to = $derived(valid[valid.length - 1]?.year ?? 2025);
   const x = $derived(scaleLinear().domain([from, Math.max(to, from + 1)]).range([0, iw]));
-  const y = scaleLinear().domain([0, 1]).range([ih, 0]);
+  const y = $derived(scaleLinear().domain([0, 1]).range([ih, 0]));
 
   type Row = { year: number; s: number[] };
   const shares = $derived(valid.map((r): Row => ({ year: r.year, s: r.counts.map((c) => c / r.total) })));
@@ -36,6 +39,13 @@
     for (let i = 1; i < raw.length; i++) if (raw[i].y - raw[i - 1].y < 15) raw[i].y = raw[i - 1].y + 15;
     return raw;
   });
+
+  // Years resting on fewer than MIN_CELL_N theses: veiled, so a handful of theses never reads as a trend
+  const thin = $derived(valid.filter((r) => r.total < MIN_CELL_N));
+  const slot = (yr: number) => {
+    const a = x(Math.max(from, yr - 0.5)), b = x(Math.min(to, yr + 0.5));
+    return { x: a, w: Math.max(2, b - a) };
+  };
 
   let hover: { year: number; cx: number; cy: number } | null = $state(null);
   const hoverRow = $derived(hover ? rows.find((r) => r.year === hover!.year) : null);
@@ -57,7 +67,8 @@
   const ticks = $derived(yearTicks(from, to, iw, 40));
 </script>
 
-<div class="wrap" bind:clientWidth={width}>
+<div class="outer" class:fill>
+<div class="wrap" bind:clientWidth={width} bind:clientHeight={boxH}>
   <svg {width} {height} role="slider" tabindex="0" aria-valuemin={from} aria-valuemax={to} aria-valuenow={selected}
     aria-label={L.t['grades.area.title']} aria-valuetext={String(selected)}
     onpointermove={(e) => (hover = { year: yearAt(e), cx: e.clientX, cy: e.clientY })}
@@ -68,6 +79,10 @@
       <pattern id="hatch4" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
         <rect width="5" height="5" fill="var(--grade-4)" />
         <line x1="0" y1="0" x2="0" y2="5" stroke="rgb(255 255 255 / 0.55)" stroke-width="1.6" />
+      </pattern>
+      <pattern id="thinveil" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="6" height="6" fill="var(--paper)" opacity="0.55" />
+        <line x1="0" y1="0" x2="0" y2="6" stroke="var(--paper)" stroke-width="2.4" />
       </pattern>
     </defs>
     <g transform="translate({m.left},{m.top})">
@@ -81,6 +96,13 @@
       {#each ticks as t (t)}
         {#if !marked || Math.abs(x(t) - x(selected)) > 42}<text x={x(t)} y={ih + 16} text-anchor="middle">{t}</text>{/if}
       {/each}
+      {#each thin as r (r.year)}
+        <rect class="thin" x={slot(r.year).x} width={slot(r.year).w} y="0" height={ih} fill="url(#thinveil)" />
+      {/each}
+      {#if aiYear !== null && aiYear >= from && aiYear <= to}
+        <line class="marker ai" x1={x(aiYear - 0.5)} x2={x(aiYear - 0.5)} y1="-4" y2={ih} />
+        <text class="mlabel ai" x={x(aiYear - 0.5) - 5} y="28" text-anchor="end">{L.t['common.aiStart']}</text>
+      {/if}
       {#if to >= yearMax}
         <rect x={x(yearMax - 1)} width={x(yearMax) - x(yearMax - 1)} y="0" height={ih} fill="var(--paper)" opacity="0.35" />
       {/if}
@@ -97,6 +119,8 @@
       {/each}
     </g>
   </svg>
+</div>
+  {#if thin.length}<p class="thin-note"><svg width="16" height="10" aria-hidden="true"><rect width="16" height="10" fill="var(--grade-1)"/><rect width="16" height="10" fill="url(#thinveil)"/></svg>{L.t['grades.area.thin'](thin.map((r) => r.year).join(', '))}</p>{/if}
   {#if hover && hoverRow}
     <Tooltip x={hover.cx} y={hover.cy}>
       <div class="tt-title">{hoverRow.year}</div>
@@ -104,12 +128,16 @@
         <div class="tt-row"><span><span class="swatch" style:background={GRADE_VARS[g]}></span>{g + 1} {L.t[`grade.${g + 1}` as 'grade.1']}</span><b>{L.f.pct(hoverRow.counts[g] / hoverRow.total)}</b></div>
       {/each}
       <div class="tt-row"><span>{L.t['common.n']}</span><b>{L.f.int(hoverRow.total)}</b></div>
+      {#if hoverRow.total < MIN_CELL_N}<div class="tt-row"><span>{L.t['common.smallSample']}</span></div>{/if}
     </Tooltip>
   {/if}
 </div>
 
 <style>
   .wrap { width: 100%; }
+  .outer.fill { flex: 1 1 auto; display: flex; flex-direction: column; }
+  .outer.fill .wrap { position: relative; flex: 1 1 auto; min-height: 300px; }
+  .outer.fill .wrap > svg { position: absolute; inset: 0 auto auto 0; }
   svg { display: block; overflow: visible; cursor: pointer; }
   svg:focus-visible { outline: 2px solid var(--petrol); outline-offset: 4px; }
   .grid { stroke: var(--paper); stroke-opacity: 0.6; stroke-width: 1; shape-rendering: crispEdges; }
@@ -118,4 +146,8 @@
   .sel { stroke: var(--petrol); stroke-width: 2.5; }
   .sel-label { fill: var(--paper); font-weight: 700; paint-order: stroke; stroke: var(--petrol); stroke-width: 14px; stroke-linejoin: round; }
   .blabel { font-size: 12px; fill: var(--ink-2); }
+  .marker.ai { stroke: var(--warn); stroke-width: 1.5; }
+  .mlabel.ai { fill: var(--warn); stroke: var(--paper); }
+  .thin-note { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: var(--fs-xs); color: var(--ink-2); }
+  .thin-note svg { flex: none; }
 </style>

@@ -181,7 +181,7 @@
   .mlabel { font-size: 10.5px; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
   path { fill: none; stroke-linejoin: round; stroke-linecap: round; }
   .other { stroke: var(--context); stroke-width: 1; stroke-opacity: 0.5; }
-  .other.uni { stroke: var(--avg); stroke-width: 2.1; stroke-dasharray: 5 3; }
+  .other.uni { stroke: var(--avg); stroke-width: 2.1; stroke-dasharray: 5 3; stroke-opacity: 1; }
   .band { fill: var(--ink); fill-opacity: 0.08; stroke: none; }
   .avg { stroke: var(--avg); stroke-width: 2.1; stroke-dasharray: 5 3; }
   .hover { stroke: var(--petrol); stroke-width: 2; }

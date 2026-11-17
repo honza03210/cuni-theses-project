@@ -29,6 +29,7 @@ const cs = {
   'trends.lede': (m: string, phrase: string, pre: string, post: string, unit: string, rel: string, postTo: number) =>
     `Po nástupu ChatGPT: ${m.toLowerCase()} – ${phrase}, ${pre} → ${post} ${unit} (${rel}; 2018–2022 oproti 2023–${postTo}).`,
   'trends.lede.facs': (k: number, n: number) => `Nárůst ve ${k} z ${n} porovnatelných fakult.`,
+  'trends.lede.step': (y: number, e: string, a: string, b: string) => `Většina změny připadá na rok ${y} (${e}: ${a}, ${y}: ${b}). Skok v jediném roce může souviset i s tím, jak byly práce z toho roku sebrány nebo zpracovány, nejen s ChatGPT.`,
   'trends.noPost': (l: string) => `Bez dat od roku 2023 s tímto prohlášením (grafy skryty): ${l}.`,
   'trends.lede.na': 'Pro porovnání před a po nástupu ChatGPT zvolte roky, které zahrnují 2018–2022 i 2023 a později.',
   'mag.none': 'téměř beze změny',
@@ -186,6 +187,7 @@ const cs = {
   'words.diff': (pp: string) => `${pp} p. b.`,
 
   'trends.title': (m: string) => `${m} podle fakult`,
+  'trends.titleOne': (m: string, f: string) => `${m}: ${f} a celá univerzita`,
   'trends.metric': 'Ukazatel',
   'trends.this': 'tato fakulta',
   'trends.other': 'ostatní vybrané',
@@ -197,6 +199,7 @@ const cs = {
 
   'grades.area.title': 'Rozložení známek v čase',
   'grades.area.unit': 'podíl prací, %',
+  'grades.area.thin': (y: string) => `zastřeno: méně než 20 prací (${y}), podíly nejsou spolehlivé`,
   'grades.area.hint': 'Klikněte na rok a sloupcový graf ukáže fakulty v tomto roce.',
   'grades.bars.titleCmp': (a: string, b: string) => `Známky podle fakult, ${a} a ${b}`,
   'grades.bars.mode': 'Co porovnat',
@@ -250,6 +253,7 @@ const en: Dict = {
   'trends.lede': (m: string, phrase: string, pre: string, post: string, unit: string, rel: string, postTo: number) =>
     `After ChatGPT, ${m.toLowerCase()} ${phrase}: ${pre} → ${post} ${unit} (${rel}; 2018–2022 vs 2023–${postTo}).`,
   'trends.lede.facs': (k: number, n: number) => `It rose in ${k} of ${n} comparable faculties.`,
+  'trends.lede.step': (y: number, e: string, a: string, b: string) => `Most of this change is in ${y} alone (${e}: ${a}, ${y}: ${b}). A jump in a single year could also come from how that year’s theses were collected or processed, not only from ChatGPT.`,
   'trends.noPost': (l: string) => `No data from 2023 on with this declaration (panels hidden): ${l}.`,
   'trends.lede.na': 'To compare before and after ChatGPT, choose years that include 2018–2022 and 2023 or later.',
   'mag.none': 'barely changed',
@@ -407,6 +411,7 @@ const en: Dict = {
   'words.diff': (pp: string) => `${pp} pp`,
 
   'trends.title': (m: string) => `${m} by faculty`,
+  'trends.titleOne': (m: string, f: string) => `${m}: ${f} vs the whole university`,
   'trends.metric': 'Measure',
   'trends.this': 'this faculty',
   'trends.other': 'other selected',
@@ -418,6 +423,7 @@ const en: Dict = {
 
   'grades.area.title': 'Grade distribution over time',
   'grades.area.unit': 'share of theses, %',
+  'grades.area.thin': (y: string) => `veiled: fewer than 20 theses (${y}), shares are unreliable`,
   'grades.area.hint': 'Click a year to show the faculties for that year in the bar chart.',
   'grades.bars.titleCmp': (a: string, b: string) => `Grades by faculty, ${a} vs ${b}`,
   'grades.bars.mode': 'What to compare',

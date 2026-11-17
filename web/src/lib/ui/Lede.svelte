@@ -8,7 +8,7 @@
 </script>
 
 <div class="lede">
-  <p class="finding" aria-live="polite">{@render children()}</p>
+  <p class="finding">{@render children()}</p>
   <details>
     <summary>{L.t['lede.howto']}</summary>
     <p>{howto}</p>

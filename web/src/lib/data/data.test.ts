@@ -191,6 +191,20 @@ describe('answer lines', () => {
     expect(magnitude(0.16)).toBe('slight');
     expect(magnitude(-0.7)).toBe('strong');
   });
+  it('flags a change that sits in the last year alone', () => {
+    const rows: { fac: number; year: number; v: number }[] = [];
+    for (let i = 0; i < 40; i++) {
+      rows.push({ fac: 0, year: 2020, v: 1 + (i % 2) * 0.2 });
+      rows.push({ fac: 0, year: 2023, v: 1 + (i % 2) * 0.2 });
+      rows.push({ fac: 0, year: 2025, v: 2 + (i % 2) * 0.2 });
+    }
+    const t = makeTheses(rows);
+    const s = metricShift(t, filterMask(t, ALL), 'm', 2025)!;
+    expect(s.clear).toBe(true);
+    expect(s.step?.lateYear).toBe(2025);
+    expect(s.step?.early).toBeCloseTo(1.1);
+    expect(s.step?.earlySpan).toBe('2023–2024');
+  });
   it('labels only the years that hold enough theses', () => {
     const n: Record<number, number> = { 2023: 3, 2024: 25, 2025: 40 };
     expect(dataSpan((y) => n[y] ?? 0, 2023, 2025)).toBe('2024–2025');

@@ -118,8 +118,9 @@
   .sep { stroke: var(--rule); stroke-dasharray: 2 2; }
   .note { margin: 4px 0 0; font-size: var(--fs-xs); color: var(--ink-3); }
   .pkey { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); }
-  .pk { display: inline-block; width: 18px; background: var(--ink-3); border-radius: 1px; }
+  /* the key shows bar thickness in a grade colour, like the bars themselves */
+  .pk { display: inline-block; width: 18px; background: var(--grade-1); border-radius: 1px; }
   .pk.prev { height: 5px; }
-  .pk.cur { height: 9px; margin-left: 12px; background: var(--ink-2); }
+  .pk.cur { height: 9px; margin-left: 12px; }
   :global(.tt-tag) { font-weight: 400; color: var(--ink-2); }
 </style>

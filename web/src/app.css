@@ -79,6 +79,7 @@
     --rise: #6aaeea; --fall: #e8925a; --avg: #f2724a; --context: #555a61; --warn: #e2b450;
     --shadow: rgb(0 0 0 / 0.5); --swatch-edge: rgb(255 255 255 / 0.2);
     --plate-head: var(--paper-2); --band-edge: #070809;
+    --pcp-band-fill: 0.06; --pcp-band-edge: 0.55;
     color-scheme: dark;
   }
 }
@@ -90,6 +91,7 @@
   --rise: #6aaeea; --fall: #e8925a; --avg: #f2724a; --context: #555a61; --warn: #e2b450;
   --shadow: rgb(0 0 0 / 0.5); --swatch-edge: rgb(255 255 255 / 0.2);
   --plate-head: var(--paper-2); --band-edge: #070809;
+  --pcp-band-fill: 0.06; --pcp-band-edge: 0.55;
   color-scheme: dark;
 }
 

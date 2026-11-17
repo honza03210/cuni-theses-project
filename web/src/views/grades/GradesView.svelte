@@ -66,7 +66,7 @@
   {#if aiOn && gshift}<AiCaveat span={gshift.postSpan} />{/if}
   <div class="grades">
     <div class="area">
-      <Plate id="g-area" title={L.t['grades.area.title']} unit={`${L.t['grades.area.unit']} · ${app.yearFrom}–${app.yearTo}`}
+      <Plate id="g-area" grow title={L.t['grades.area.title']} unit={`${L.t['grades.area.unit']} · ${app.yearFrom}–${app.yearTo}`}
         foot={`${L.t['grades.area.hint']} ${L.t['grades.foot']}`}>
         {#snippet table()}
           <table>
@@ -79,7 +79,7 @@
           </table>
         {/snippet}
         {@render gradeLegend()}
-        <GradeArea rows={byYear} selected={barYear} marked={!compare} yearMax={meta.yearMax} onselect={(y) => (app.gradeYear = y)} />
+        <GradeArea rows={byYear} selected={barYear} marked={!compare} aiYear={aiOn ? meta.aiYear : null} fill yearMax={meta.yearMax} onselect={(y) => (app.gradeYear = y)} />
       </Plate>
     </div>
     <div class="bars">

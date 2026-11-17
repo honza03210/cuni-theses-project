@@ -123,14 +123,15 @@
           <text x="-6" y={y(t)} dy="0.32em" text-anchor="end">{pctTick(t)}</text>
         {/each}
         {#each ticks as t (t)}<text x={x(t)} y={ih + 16} text-anchor="middle">{t}</text>{/each}
-        {#if CHATGPT_X >= from && CHATGPT_X <= yearTo}
-          <line class="marker" x1={x(CHATGPT_X)} x2={x(CHATGPT_X)} y1="0" y2={ih} />
-          <text class="mlabel" x={x(CHATGPT_X) + 4} y="10">{L.t['common.chatgpt']}</text>
-        {/if}
         {#if result.baseline.length}
           <rect class="base" x={x(result.baseline[0] - 0.5)} width={x(result.baseline[result.baseline.length - 1] + 0.5) - x(result.baseline[0] - 0.5)} y="0" height={ih} />
         {/if}
         <rect class="target" x={x(T0 - 0.5)} width={x(T1 + 0.5) - x(T0 - 0.5)} y="0" height={ih} />
+        <!-- drawn over the shaded bands, so the label is not veiled by them -->
+        {#if CHATGPT_X >= from && CHATGPT_X <= yearTo}
+          <line class="marker" x1={x(CHATGPT_X)} x2={x(CHATGPT_X)} y1="0" y2={ih} />
+          <text class="mlabel" x={x(CHATGPT_X) + 4} y="10">{L.t['common.chatgpt']}</text>
+        {/if}
         {#each perFac as f (f.f)}
           {#if f.pts.length > 1}<path class="ctx" d={gen(f.pts)} />{/if}
         {/each}
@@ -151,9 +152,9 @@
           <circle class="exp" cx={x0} cy={y(expected)} r="5" />
           <circle class="obs" cx={x0} cy={y(observed)} r="5" />
           <text class="diff" class:up={diffPP > 0} class:down={diffPP < 0} x={x0 + 22} y={(y(observed) + y(expected)) / 2} dy="0.32em">
-            {L.t['words.diff'](L.f.signed(diffPP, 2))}
+            {L.t['words.diff'](L.f.signed(diffPP, 1))}
           </text>
-          <text class="lbl" x={x0 + 22} y={(y(observed) + y(expected)) / 2} dy="1.6em">{L.f.pct(expected, 2)} → {L.f.pct(observed, 2)}</text>
+          <text class="lbl" x={x0 + 22} y={(y(observed) + y(expected)) / 2} dy="1.6em">{L.f.pct(expected, 1)} → {L.f.pct(observed, 1)}</text>
         {/if}
         {#if hoverYear !== null}
           <line class="cursor" x1={x(hoverYear)} x2={x(hoverYear)} y1="0" y2={ih} />
@@ -186,13 +187,13 @@
   svg:focus-visible { outline: 2px solid var(--petrol); outline-offset: 4px; }
   .grid { stroke: var(--rule-soft); shape-rendering: crispEdges; }
   .marker { stroke: var(--ink-3); stroke-dasharray: 2 3; }
-  .mlabel { font-size: 11.5px; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
+  .mlabel { font-size: 11.5px; font-weight: 600; fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 3.5px; stroke-linejoin: round; }
   .base { fill: var(--paper-2); }
   .target { fill: var(--petrol-tint); opacity: 0.7; }
   .span { stroke-width: 2; }
   .exp-span { stroke: var(--ink-2); stroke-dasharray: 4 3; }
-  /* the block's observed mean: petrol like the target block, so it is not read as the word's own line */
-  .obs-span { stroke: var(--petrol); stroke-width: 3; }
+  /* the block's observed mean: a thick translucent ink bar, so it is not read as the word's own line (petrol stays 'selected' only) */
+  .obs-span { stroke: var(--ink); stroke-width: 5; stroke-opacity: 0.4; stroke-linecap: butt; }
   path { fill: none; stroke-linejoin: round; stroke-linecap: round; }
   .ctx { stroke: var(--context); stroke-width: 1; stroke-opacity: 0.8; }
   .fit { stroke: var(--ink-2); stroke-width: 1.5; stroke-dasharray: 5 4; }

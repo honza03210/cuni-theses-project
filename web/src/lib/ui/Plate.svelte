@@ -66,6 +66,8 @@
     min-width: 0;
   }
   .plate.grow { flex: 1 1 auto; }
+  /* a growing plate hands its spare height to the chart (children may opt in with flex: 1) */
+  .plate.grow > .body { flex: 1 1 auto; display: flex; flex-direction: column; }
   .head {
     display: flex;
     align-items: flex-end;
@@ -78,6 +80,8 @@
     border-radius: 4px 4px 0 0;
   }
   .head.sticky { position: sticky; top: var(--band-h, 58px); z-index: 6; }
+  /* on phones the tall header would eat the screen; the view keeps its own compact sticky control */
+  @media (max-width: 639px) { .head.sticky { position: static; } }
   .titles { min-width: 0; flex: 1 1 340px; }
   h2 {
     margin: 0;

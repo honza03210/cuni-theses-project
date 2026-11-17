@@ -38,7 +38,9 @@
     return { px: e.clientX - r.left - m.left, py: e.clientY - r.top };
   }
   const yearAt = (px: number) => Math.max(yearMin, Math.min(yearMax, yearMin + Math.floor(px / step)));
-  const nearBaseEdge = (px: number) => Math.abs(px - xl(baseFrom)) < Math.max(7, step * 0.3);
+  // touch needs a wider grab zone around the trend band's left edge
+  const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+  const nearBaseEdge = (px: number) => Math.abs(px - xl(baseFrom)) < Math.max(coarse ? 16 : 8, step * 0.35);
   const inBlock = (px: number) => px >= xl(cmp.from) && px <= xl(cmp.to + 1);
 
   function down(e: PointerEvent) {
@@ -117,7 +119,7 @@
       {#if labels.base}<text class="blabel" x={labels.bx} y="-8" text-anchor="middle">{labels.base}</text>{/if}
       <g class="handle" class:active={hover === 'base' || mode?.kind === 'base'} transform="translate({xl(baseFrom)},0)">
         <line y1="-2" y2={ih} />
-        <rect x="-3" y={ih / 2 - 9} width="6" height="18" rx="2" />
+        <rect x="-4.5" y={ih / 2 - 12} width="9" height="24" rx="2.5" />
       </g>
       <!-- target block -->
       <rect class="block" x={xl(cmp.from)} width={xl(cmp.to + 1) - xl(cmp.from)} y="-2" height={ih + 2} />

@@ -30,6 +30,9 @@ export interface MetricShift {
   d: number;           // standardised difference
   /** the 95 % interval of post − pre excludes zero (Welch); false = too few theses / too noisy to tell */
   clear: boolean;
+  /** set when most of the shift sits in the last year alone: earlier post years stayed near `pre`
+   *  while the last year (`lateYear`) differs from them beyond chance */
+  step: { early: number; late: number; earlySpan: string; lateYear: number } | null;
   rel: number;         // relative change
   facUp: number;       // faculties whose mean rose
   facCompared: number; // faculties with enough theses in both windows
@@ -43,6 +46,7 @@ export function metricShift(t: Theses, mask: Uint8Array, metric: string, postTo:
   const s = { pre: 0, preSq: 0, preN: 0, post: 0, postSq: 0, postN: 0 };
   const fPre = new Float64Array(nf), fPreN = new Uint32Array(nf), fPost = new Float64Array(nf), fPostN = new Uint32Array(nf);
   const perYear = new Map<number, number>();
+  const ys = new Map<number, { s: number; q: number; n: number }>();
   for (let i = 0; i < t.n; i++) {
     if (!mask[i]) continue;
     const x = v[i];
@@ -50,7 +54,8 @@ export function metricShift(t: Theses, mask: Uint8Array, metric: string, postTo:
     const y = t.year[i] + t.meta.yearMin;
     const f = t.fac[i];
     if (y >= PRE[0] && y <= PRE[1]) { s.pre += x; s.preSq += x * x; s.preN++; fPre[f] += x; fPreN[f]++; }
-    else if (y >= POST_FROM && y <= postTo) { s.post += x; s.postSq += x * x; s.postN++; fPost[f] += x; fPostN[f]++; perYear.set(y, (perYear.get(y) ?? 0) + 1); }
+    else if (y >= POST_FROM && y <= postTo) { s.post += x; s.postSq += x * x; s.postN++; fPost[f] += x; fPostN[f]++; perYear.set(y, (perYear.get(y) ?? 0) + 1);
+      const a = ys.get(y) ?? { s: 0, q: 0, n: 0 }; a.s += x; a.q += x * x; a.n++; ys.set(y, a); }
   }
   if (s.preN < minN || s.postN < minN) return null;
   const pre = s.pre / s.preN, post = s.post / s.postN;
@@ -66,7 +71,24 @@ export function metricShift(t: Theses, mask: Uint8Array, metric: string, postTo:
     }
   }
   const postSpan = dataSpan((y) => perYear.get(y) ?? 0, POST_FROM, postTo) ?? `${POST_FROM}–${postTo}`;
-  return { pre, post, preN: s.preN, postN: s.postN, postSpan, postTo, clear, d: (post - pre) / sd, rel: post / pre - 1, facUp, facCompared };
+  // Is the change concentrated in the last year? Compare the earlier post years with the last one.
+  let step: MetricShift['step'] = null;
+  if (postTo > POST_FROM) {
+    const pool = (from: number, to: number) => {
+      let sum = 0, sq = 0, n = 0;
+      for (let y = from; y <= to; y++) { const a = ys.get(y); if (a) { sum += a.s; sq += a.q; n += a.n; } }
+      return n >= minN ? { m: sum / n, v: Math.max(1e-12, (sq - n * (sum / n) ** 2) / (n - 1)), n } : null;
+    };
+    const e = pool(POST_FROM, postTo - 1), l = pool(postTo, postTo);
+    if (e && l) {
+      const apart = Math.abs(l.m - e.m) > 1.96 * Math.sqrt(e.v / e.n + l.v / l.n);
+      const mostlyLate = Math.abs(e.m - pre) < Math.abs(l.m - pre) / 2;
+      if (clear && apart && mostlyLate) {
+        step = { early: e.m, late: l.m, earlySpan: postTo - 1 === POST_FROM ? `${POST_FROM}` : `${POST_FROM}–${postTo - 1}`, lateYear: postTo };
+      }
+    }
+  }
+  return { pre, post, preN: s.preN, postN: s.postN, postSpan, postTo, clear, step, d: (post - pre) / sd, rel: post / pre - 1, facUp, facCompared };
 }
 
 // [excellent, fail] shares; `same` = both shares moved by less than 1.5 percentage points
