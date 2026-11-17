@@ -53,3 +53,11 @@ export function yearTicks(from: number, to: number, width: number, minGap = 38):
 
 export const GRADE_VARS = ['var(--grade-1)', 'var(--grade-2)', 'var(--grade-3)', 'var(--grade-4)'];
 export const GRADE_HEX = ['#2c7bb6', '#abd9e9', '#fdae61', '#d7191c'];
+/** Non-colour grade channels, shared by every Grades chart and its one legend */
+export const GRADE_DASH = ['', '9 3', '5 3', '2 3'];
+export const GRADE_SHAPES = [
+  (r: number) => `M${-r},0a${r},${r} 0 1,0 ${2 * r},0a${r},${r} 0 1,0 ${-2 * r},0`,
+  (r: number) => `M${-r * 0.88},${-r * 0.88}h${r * 1.76}v${r * 1.76}h${-r * 1.76}z`,
+  (r: number) => `M0,${-r * 1.2}L${r * 1.2},0L0,${r * 1.2}L${-r * 1.2},0z`,
+  (r: number) => `M0,${-r * 1.15}L${r * 1.15},${r * 0.85}L${-r * 1.15},${r * 0.85}z`,
+];

@@ -12,7 +12,7 @@
   import Lede from '../../lib/ui/Lede.svelte';
   import { tick } from 'svelte';
   import { dataSpan } from '../../lib/data/answers';
-  import AiCaveat, { aiWho } from '../../lib/ui/AiCaveat.svelte';
+  import { aiWho } from '../../lib/ui/AiCaveat.svelte';
 
   interface Props { theses: Theses; filters: Filters }
   let { theses, filters }: Props = $props();
@@ -20,7 +20,7 @@
   const meta = $derived(theses.meta);
   const MIN_FREQ_STEPS = [0.002, 0.005, 0.01, 0.02, 0.03, 0.05, 0.1];
   const SMALL_TARGET = 100;
-  const N_EACH = 40;
+  const N_EACH = 25;
 
   const wordLang = $derived(app.wordLang !== null && app.langs.includes(app.wordLang) ? app.wordLang : app.langs[0] ?? null);
 
@@ -182,10 +182,15 @@
     {#if movers && result && !result.reason && movers.rising.length}
       {#if aiGroup}<span class="lead-note">{L.t['ai.lede.note']}</span>{/if}
       {#if smallSample}<span class="hedge">{L.t['words.lede.small'](result.targetTotal)}</span>{' '}{/if}
+      <!-- one sentence: three words, with English glosses; figures live in the cloud, tooltip and table -->
       <b>{aiGroup ? L.t['ai.lede.words'](aiWho(), aiSpan, baselineLabel) : L.t['words.lede.up'](blockLabel, baselineLabel)}</b>
-      {#each movers.rising.slice(0, 3) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw" class:rise={!aiGroup} onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({#if gloss(s.word)}‘{gloss(s.word)}’{', '}{/if}{figure(s)})</span>{/each}{#if movers.falling.length}; {L.t['words.lede.down']}{#each movers.falling.slice(0, 2) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw" class:fall={!aiGroup} onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({#if gloss(s.word)}‘{gloss(s.word)}’{', '}{/if}{figure(s)})</span>{/each}{/if}.
-      {#if topical.length}<span class="frame">{L.t['words.lede.topical'](topical.join(', '))}</span>{/if}
-      {#if !aiGroup && cmp.to >= 2023 && aiLike.length}<span class="frame">{L.t['words.lede.frame'](aiLike.join(', '))}</span>{/if}
+      {#each movers.rising.slice(0, 3) as s, i (s.word)}{i ? (i === 2 ? L.t['words.and'] : ', ') : ' '}<button type="button" class="lw" onclick={() => pick(s.word, false)}>{s.word}</button>{#if gloss(s.word)}{' '}<span class="muted">‘{gloss(s.word)}’</span>{/if}{/each}.
+      <!-- everything else in one quiet line -->
+      <span class="frame">
+        {#if movers.falling.length}{L.t['words.lede.drops'](movers.falling.slice(0, 2).map((s) => s.word).join(', '))}{' '}{/if}
+        {#if topical.length}{L.t['words.lede.topicalShort']}{' '}{/if}
+        {#if !aiGroup && cmp.to >= 2023 && aiLike.length}{L.t['words.lede.aiShort'](aiLike.join(', '))}{/if}
+      </span>
     {:else}
       <span class="muted">{L.t['words.cloud.title']}.</span>
     {/if}
@@ -278,7 +283,7 @@
       <span class="lk fall">{L.t['words.less']}</span>
       {#if listRows.length}
         <span class="ramp">
-          {#each SIZES as sz, i (i)}<span aria-hidden="true" style:font-size="{sz * 0.75}px">Aa</span>{/each}
+          {#each SIZES as sz, i (i)}<span aria-hidden="true" style:font-size="{Math.max(11, sz * 0.75)}px">Aa</span>{/each}
           <small>{app.wordRank === 'gap'
             ? L.t['words.legend.gap'](L.f.num(ramp[0] * 100, 1), L.f.num(ramp[4] * 100, 1))
             : L.t['words.legend.ratio'](L.f.num(2 ** ramp[0], 1), L.f.num(2 ** ramp[4], 1))}</small>
@@ -301,7 +306,6 @@
     {:else if !movers.rising.length && !movers.falling.length}
       <p class="msg">{L.t['words.none']}</p>
     {:else}
-      {#if aiGroup}<AiCaveat span={aiSpan} />{/if}
       {#if result.targetTotal < SMALL_TARGET}<p class="warn" role="status">{L.t['words.small'](result.targetTotal)}</p>{/if}
       <WordCloud rising={movers.rising} falling={movers.falling} {ramp} sizes={SIZES} {selected} onpick={pick} forms={useLemma ? formsOf : null} mode={app.wordRank} gloss={wantGloss ? gloss : null} />
     {/if}
@@ -346,8 +350,6 @@
   .detail-anchor { scroll-margin-top: calc(var(--band-h, 58px) + 12px); }
   .lw { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: var(--rule); }
   .lw:hover { text-decoration-color: currentColor; }
-  .lw.rise { color: var(--rise); }
-  .lw.fall { color: var(--fall); }
   .fix { margin-left: 6px; border: 1px solid var(--ink-3); background: var(--paper); color: var(--ink); border-radius: 3px; padding: 3px 10px; font-size: var(--fs-sm); cursor: pointer; }
   .fix:hover { border-color: var(--ink); background: var(--paper-2); }
   .search { position: relative; }

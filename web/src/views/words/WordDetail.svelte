@@ -187,7 +187,7 @@
   svg:focus-visible { outline: 2px solid var(--petrol); outline-offset: 4px; }
   .grid { stroke: var(--rule-soft); shape-rendering: crispEdges; }
   .marker { stroke: var(--ink-3); stroke-dasharray: 2 3; }
-  .mlabel { font-size: 11.5px; font-weight: 600; fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 3.5px; stroke-linejoin: round; }
+  .mlabel { font-size: 12px; font-weight: 600; fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 3.5px; stroke-linejoin: round; }
   .base { fill: var(--paper-2); }
   .target { fill: var(--petrol-tint); opacity: 0.7; }
   .span { stroke-width: 2; }

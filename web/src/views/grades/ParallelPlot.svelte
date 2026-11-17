@@ -304,9 +304,6 @@
   <p class="bandkey">
     <svg width="26" height="12" aria-hidden="true"><rect x="0" y="2" width="26" height="8" fill="var(--ink-3)" opacity="0.3"/><line x1="0" x2="26" y1="6" y2="6" stroke="var(--ink)" stroke-width="2"/></svg>
     <span>{L.t['grades.par.bands']}</span>
-    {#each [1, 2, 3, 4] as g (g)}
-      <span class="dk"><svg width="24" height="8" aria-hidden="true"><line x1="0" x2="24" y1="4" y2="4" stroke={GRADE_HEX[g - 1]} stroke-width="2.4" stroke-dasharray={['', '9 3', '5 3', '2 3'][g - 1]}/></svg>{g}</span>
-    {/each}
   </p>
   {#if overlap}<p class="par-note">{L.t['grades.par.overlap']}</p>{/if}
   <p class="scroll-hint">{L.t['grades.par.scroll']}</p>
@@ -364,7 +361,6 @@
   .median-halo { fill: none; stroke: var(--ink); stroke-width: 4.6; stroke-linejoin: round; opacity: 0.45; }
   /* pale-sky grade 2 needs a full-strength casing to stay visible on paper */
   .median-halo.pale { stroke-width: 5.2; opacity: 0.85; }
-  .dk { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; }
   .bandkey { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 4px; font-size: var(--fs-sm); color: var(--ink-2); }
   .lines { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--ink-2); cursor: pointer; }
   .lines input { margin: 0; }
@@ -372,7 +368,7 @@
   .wrap > svg { overflow: visible; }
   .axis-line { stroke: var(--ink); stroke-width: 1; shape-rendering: crispEdges; }
   .tick { stroke: var(--ink); shape-rendering: crispEdges; }
-  .tl { font-size: 10.5px; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
+  .tl { font-size: 11px; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
   .al { font-size: 12px; font-weight: 600; fill: var(--ink); }
   .brush :global(.selection) { fill: var(--petrol); fill-opacity: 0.12; stroke: var(--petrol); stroke-width: 1.5; }
   .brush :global(.overlay) { cursor: crosshair; }

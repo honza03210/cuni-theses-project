@@ -38,10 +38,10 @@
     <div class="tools">
       {@render tools?.()}
       {#if table}
-        <div class="seg" role="group" aria-label="{title}">
-          <button type="button" aria-pressed={!showTable} onclick={() => setTable(false)}>{L.t['plate.chart']}</button>
-          <button type="button" aria-pressed={showTable} onclick={() => setTable(true)}>{L.t['plate.table']}</button>
-        </div>
+        <!-- a viewing preference, not a selection: a quiet text toggle, so petrol stays for real choices -->
+        <button type="button" class="view-toggle" aria-pressed={showTable} onclick={() => setTable(!showTable)}>
+          {showTable ? L.t['plate.showChart'] : L.t['plate.showTable']}
+        </button>
       {/if}
     </div>
   </header>
@@ -85,9 +85,9 @@
   .titles { min-width: 0; flex: 1 1 340px; }
   h2 {
     margin: 0;
-    font-size: var(--fs-xl);
+    font-size: var(--fs-lg);
     font-weight: 700;
-    line-height: 1.2;
+    line-height: 1.25;
     letter-spacing: -0.005em;
     text-wrap: balance;
   }
@@ -117,10 +117,13 @@
     .titles { flex: 0 0 auto; }
     .tools { justify-content: flex-start; }
   }
-  /* touch screens: comfortable targets for the plate's toggles */
-  @media (pointer: coarse) {
-    .seg button { min-height: 40px; padding: 6px 14px; }
+  .view-toggle {
+    border: 0; background: none; padding: 4px 2px; cursor: pointer;
+    font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2);
+    text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px;
   }
+  .view-toggle:hover { color: var(--ink); text-decoration-color: var(--ink); }
+  @media (pointer: coarse) { .view-toggle { min-height: 40px; padding: 8px 4px; } }
   .foot {
     display: flex;
     flex-wrap: wrap;
@@ -134,20 +137,6 @@
   .foot span:first-child:not(.src) { max-width: 110ch; }
   .src { font-style: italic; }
 
-  .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
-  .seg button {
-    border: 0;
-    background: transparent;
-    padding: 3px 10px;
-    font-size: var(--fs-sm);
-    color: var(--ink-2);
-    cursor: pointer;
-    transition: background var(--t) var(--ease), color var(--t) var(--ease);
-  }
-  .seg button + button { border-left: 1px solid var(--rule); }
-  .seg button:hover { background: var(--paper-2); color: var(--ink); }
-  .seg button[aria-pressed='true'] { background: var(--petrol); color: var(--on-petrol); }
-  .seg button:focus-visible { outline-offset: -2px; }
 
   /* ruled yearbook tables */
   .table-wrap :global(table) {

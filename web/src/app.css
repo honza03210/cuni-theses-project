@@ -75,7 +75,7 @@
     --paper: #16191d; --paper-2: #1d2126; --paper-3: #272c32;
     --ink: #e9e6df; --ink-2: #bdbab3; --ink-3: #9a978f;
     --rule: #3b4047; --rule-soft: #2a2f35;
-    --petrol: #6fb3cd; --petrol-deep: #0e2630; --petrol-tint: #1e3a45; --on-petrol: #0c1a20;
+    --petrol: #8fc1bd; --petrol-deep: #173a46; --petrol-tint: #1f3634; --on-petrol: #0f1d1c;
     --rise: #6aaeea; --fall: #e8925a; --avg: #f2724a; --context: #555a61; --warn: #e2b450;
     --shadow: rgb(0 0 0 / 0.5); --swatch-edge: rgb(255 255 255 / 0.2);
     --plate-head: var(--paper-2); --band-edge: #070809;
@@ -86,7 +86,7 @@
   --paper: #16191d; --paper-2: #1d2126; --paper-3: #272c32;
   --ink: #e9e6df; --ink-2: #bdbab3; --ink-3: #9a978f;
   --rule: #3b4047; --rule-soft: #2a2f35;
-  --petrol: #6fb3cd; --petrol-deep: #0e2630; --petrol-tint: #1e3a45; --on-petrol: #0c1a20;
+  --petrol: #8fc1bd; --petrol-deep: #173a46; --petrol-tint: #1f3634; --on-petrol: #0f1d1c;
   --rise: #6aaeea; --fall: #e8925a; --avg: #f2724a; --context: #555a61; --warn: #e2b450;
   --shadow: rgb(0 0 0 / 0.5); --swatch-edge: rgb(255 255 255 / 0.2);
   --plate-head: var(--paper-2); --band-edge: #070809;

@@ -156,7 +156,7 @@
   .bar.b { fill: var(--ink-3); }
   .bar.t { fill: var(--petrol); }
   .bar.partial { opacity: 0.45; }
-  .yl { font-size: 10.5px; fill: var(--ink-3); }
+  .yl { font-size: 11px; fill: var(--ink-3); }
   .yl.t { fill: var(--petrol); font-weight: 700; }
   .gpt { stroke: var(--ink-2); stroke-dasharray: 2 2; }
   .handle line { stroke: var(--ink-2); stroke-width: 1.5; }

@@ -178,7 +178,7 @@
   .marker { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; shape-rendering: crispEdges; }
   .marker.ai { stroke: var(--warn); }
   .mlabel.ai { fill: var(--warn); font-weight: 600; }
-  .mlabel { font-size: 10.5px; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
+  .mlabel { font-size: 11px; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
   path { fill: none; stroke-linejoin: round; stroke-linecap: round; }
   .other { stroke: var(--context); stroke-width: 1; stroke-opacity: 0.5; }
   .other.uni { stroke: var(--avg); stroke-width: 2.1; stroke-dasharray: 5 3; stroke-opacity: 1; }

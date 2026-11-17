@@ -198,14 +198,16 @@
   }
   label:hover { background: var(--paper-3); }
   .checks label:not(:has(.abbr)) { grid-template-columns: 18px 1fr auto; }
-  input[type='checkbox'], input[type='radio'] { margin: 0; width: 15px; height: 15px; cursor: pointer; accent-color: var(--petrol); }
+  /* ink, not petrol: ticked-by-default boxes are not a choice the reader made */
+  input[type='checkbox'], input[type='radio'] { margin: 0; width: 15px; height: 15px; cursor: pointer; accent-color: var(--ink-2); }
   .checks.sub { margin-top: 6px; }
   .abbr { font-weight: 600; min-width: 3.4em; }
   .name { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .checks label:not(:has(.abbr)) .name { color: var(--ink); }
   .n { color: var(--ink-3); font-size: var(--fs-xs); }
   .note { margin: 6px 0 0; font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.45; text-wrap: pretty; }
-  .ai-count { color: var(--warn); font-weight: 600; }
+  /* a count, not a warning: the one ochre caveat lives in the answer line */
+  .ai-count { color: var(--ink-2); }
   .ai-count + .counts-note { margin-top: 0; }
   .counts-note { margin: calc(-1 * var(--s4)) 0 0; }
   .defs { margin-top: 6px; font-size: var(--fs-xs); color: var(--ink-2); }

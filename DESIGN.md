@@ -155,7 +155,7 @@ components:
 
 **Creative North Star: "The Steerable Yearbook"**
 
-The explorer is printed, not rendered. It takes its material from the two-colour Czech Statistical Yearbook: a warm paper ground, near-black ink, and one petrol-blue second colour. Every chart is set as a yearbook plate, with a tinted header band (paper-2, 4px top corners) holding a bold figure title, a grey unit line, the figure itself, and a small footer that ends in an italic source line. Each plate can flip into its ruled table. Below the header band, separation comes from 1px hairline rules, never from boxes or card backgrounds, so the page reads as a ruled sheet rather than a grid of floating widgets.
+The explorer is printed, not rendered. It takes its material from the two-colour Czech Statistical Yearbook: a warm paper ground, near-black ink, and one petrol-blue second colour. Restraint is the rule: petrol is spent only on choices the reader made (never on defaults such as ticked filters), each view carries at most one ochre caveat, and a view shows each grade key once. Every chart is set as a yearbook plate, with a tinted header band (paper-2, 4px top corners) holding a bold figure title, a grey unit line, the figure itself, and a small footer that ends in an italic source line. Each plate can flip into its ruled table. Below the header band, separation comes from 1px hairline rules, never from boxes or card backgrounds, so the page reads as a ruled sheet rather than a grid of floating widgets.
 
 The density is high and deliberate: small faceted multiples, a 13 px control size, tabular numerals in every place a number appears, and a persistent filter column that shows its live count at the top. Colour is spent with care. Petrol marks what the reader has selected or activated, and the darker petrol-deep is used only for the masthead band. All other colour is data colour, and each data colour has one fixed meaning.
 
@@ -261,7 +261,7 @@ Borders are hairlines: 1px rule for controls and tables, and 1px ink under table
 ## Components
 
 ### Yearbook Plate (signature)
-- **Structure:** a tinted header band (`--plate-head`, paper-2, 10px × 16px padding, 4px top radius, hairline below). The band holds the title (Title role) and the unit line (Control role, ink-3) on the left and the tools on the right. Below that come the figure, then a caption footer with an optional note (at most 110ch) and an italic source line.
+- **Structure:** a tinted header band (`--plate-head`, paper-2, 10px × 16px padding, 4px top radius, hairline below). The band holds the title (Title role) and the unit line (Control role, ink-3) on the left and the tools on the right. The chart/table flip is a quiet underlined text toggle ("Show table" / "Show chart"), not a petrol segmented control: it is a viewing preference, not a selection. Below that come the figure, then a caption footer with an optional note (at most 110ch) and an italic source line.
 - **Table mode:** a Chart / Table segmented toggle swaps the figure for a ruled table. Headers are 600 weight in ink-2 with a 1px ink rule underneath and stay fixed while scrolling. Rows are 3px × 10px with soft-rule dividers and a paper-2 hover. Numbers are right-aligned and the first column is left-aligned. The table scrolls inside a 560px maximum height.
 
 ### Buttons

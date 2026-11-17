@@ -397,3 +397,18 @@ aggregation code); the other takes phase 1's word cube and 3c.
   median cased; a note when all medians coincide; haloed tick labels.
 - Words lede notes that covid/pandemic drops are the pandemic years inside the trend. Signed
   numbers use a true minus; the Trends legend label is translated.
+
+### Critique round 7 changes (visual simplicity; 28/40)
+
+- Petrol only for real choices: Chart/Table is a quiet text toggle ("Show table"); faculty and
+  language checkboxes are ink; dark-mode petrol is a teal-grey (#8fc1bd) distinct from rise blue.
+- Grades: grade 1–2 area fills softened (3–4 stay strong), area chart capped at 420px; faculty
+  bars show "All" + the 6 faculties whose excellent share moved most ("Show all N faculties");
+  period key in ink; one shared grade legend (swatch + hatch, dash, marker shape) under the lede
+  replaces the four per-plate keys; small faculties grey instead of italic.
+- AI mode: one ochre caveat per view (the answer-line note); the in-plate caveat is gone and the
+  filter-panel split is plain grey.
+- Words: one-sentence answer (three words, glosses, no colour); drops and notes in one quiet line;
+  25 words per side in the cloud.
+- Type: plate titles 17px, year range 15px, chart text ≥ 11px, half sizes removed.
+- Phones: Trends legend moves under the charts.

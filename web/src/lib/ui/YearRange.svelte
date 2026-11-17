@@ -36,7 +36,7 @@
 <style>
   .yr { padding: 2px 0; }
   .values {
-    font-size: var(--fs-lg);
+    font-size: var(--fs-md);
     font-weight: 600;
     color: var(--ink);
     margin-bottom: 6px;

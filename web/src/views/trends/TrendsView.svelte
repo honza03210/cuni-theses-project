@@ -9,7 +9,7 @@
   import TrendPanel from './TrendPanel.svelte';
   import Lede from '../../lib/ui/Lede.svelte';
   import { magnitude, metricShift } from '../../lib/data/answers';
-  import AiCaveat, { aiWho } from '../../lib/ui/AiCaveat.svelte';
+  import { aiWho } from '../../lib/ui/AiCaveat.svelte';
 
   interface Props { theses: Theses; mask: Uint8Array }
   let { theses, mask }: Props = $props();
@@ -77,6 +77,18 @@
   const byYear = (pts: { year: number; mean: number; n: number }[] | undefined, y: number) => pts?.find((p) => p.year === y);
 </script>
 
+{#snippet legend()}
+        <ul class="legend" aria-label={L.t['common.legend']}>
+          <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--ink)" stroke-width="2.25"/></svg>{L.t['trends.this']}</li>
+          {#if facs.length === 1}
+            <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--avg)" stroke-width="2.25" stroke-dasharray="5 3"/></svg>{L.t['trends.uni']}</li>
+          {:else}
+            <li><label class="others"><input type="checkbox" bind:checked={showOthers} /><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--context)" stroke-width="1.25"/></svg>{L.t['trends.other']}</label></li>
+            <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--avg)" stroke-width="2.25" stroke-dasharray="5 3"/></svg>{L.t['trends.avg']}</li>
+          {/if}
+        </ul>
+{/snippet}
+
 <div class="trends">
   <div class="main">
     <Lede howto={L.t['trends.howto']}>
@@ -102,15 +114,7 @@
     </label>
     <Plate id="trends" stickyHead title={facs.length === 1 ? L.t['trends.titleOne'](L.pick(metric.label), meta.faculties[facs[0]].abbr) : L.t['trends.title'](L.pick(metric.label))} unit={`${L.pick(metric.unit)} · ${app.yearFrom}–${app.yearTo}${facs.length > 1 ? ` · ${L.t['trends.sorted']}` : ''}`} foot={L.t['trends.foot']}>
       {#snippet tools()}
-        <ul class="legend" aria-label={L.t['common.legend']}>
-          <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--ink)" stroke-width="2.25"/></svg>{L.t['trends.this']}</li>
-          {#if facs.length === 1}
-            <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--avg)" stroke-width="2.25" stroke-dasharray="5 3"/></svg>{L.t['trends.uni']}</li>
-          {:else}
-            <li><label class="others"><input type="checkbox" bind:checked={showOthers} /><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--context)" stroke-width="1.25"/></svg>{L.t['trends.other']}</label></li>
-            <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--avg)" stroke-width="2.25" stroke-dasharray="5 3"/></svg>{L.t['trends.avg']}</li>
-          {/if}
-        </ul>
+        <div class="legend-head">{@render legend()}</div>
       {/snippet}
       {#snippet table()}
         <table>
@@ -131,7 +135,6 @@
       {/snippet}
 
       {#if mixedLang}<p class="warn" role="status">{L.t['trends.mixedLang']}</p>{/if}
-      {#if aiOn && shift}<AiCaveat span={shift.postSpan} />{/if}
       {#if noPost.length}<p class="nopost">{L.t['trends.noPost'](noPost.map((f) => meta.faculties[f].abbr).join(', '))}</p>{/if}
       {#if !facs.length || !hasData}
         <p class="empty">{L.t['common.empty']} <button type="button" class="fix" onclick={() => (app.fac = meta.faculties.map((_, i) => i))}>{L.t['common.selectAll']}</button></p>
@@ -145,6 +148,8 @@
             />
           {/each}
         </div>
+        <!-- phones: the legend sits under the charts, so the first chart comes up sooner -->
+        <div class="legend-foot">{@render legend()}</div>
       {/if}
     </Plate>
   </div>
@@ -182,6 +187,11 @@
   .others { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
   .others input { margin: 0; }
   .when { display: block; margin-top: 6px; font-size: var(--fs-md); color: var(--ink-2); }
+  .legend-foot { display: none; }
+  @media (max-width: 639px) {
+    .legend-head { display: none; }
+    .legend-foot { display: block; margin-top: var(--s4); }
+  }
   .nopost { margin: 0 0 var(--s3); font-size: var(--fs-sm); color: var(--ink-2); }
   .msel { display: none; }
   @media (max-width: 639px) {
@@ -204,7 +214,7 @@
     border-radius: 4px 4px 0 0;
     font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2);
   }
-  label {
+  .picker label {
     clear: both;
     display: grid;
     grid-template-columns: 18px 1fr;
@@ -214,19 +224,19 @@
     cursor: pointer;
     transition: background var(--t) var(--ease);
   }
-  label:hover { background: var(--paper-2); }
-  label.active { background: var(--petrol-tint); }
-  input { margin: 3px 0 0; grid-row: span 2; }
+  .picker label:hover { background: var(--paper-2); }
+  .picker label.active { background: var(--petrol-tint); }
+  .picker input { margin: 3px 0 0; grid-row: span 2; }
   .ml { font-size: var(--fs-md); font-weight: 600; line-height: 1.3; }
   .md { font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.4; }
-  label.active .md { color: var(--ink-2); }
+  .picker label.active .md { color: var(--ink-2); }
 
   @media (max-width: 1279px) {
     .trends { grid-template-columns: minmax(0, 1fr); }
     .picker { position: static; order: -1; }
     fieldset { display: flex; flex-wrap: wrap; gap: 0 4px; }
-    label { clear: none; grid-template-columns: 18px auto; border: 1px solid var(--rule-soft); border-radius: 3px; margin: 0 0 4px; padding: 4px 10px 4px 6px; }
+    .picker label { clear: none; grid-template-columns: 18px auto; border: 1px solid var(--rule-soft); border-radius: 3px; margin: 0 0 4px; padding: 4px 10px 4px 6px; }
     .md { display: none; }
-    input { grid-row: auto; }
+    .picker input { grid-row: auto; }
   }
 </style>

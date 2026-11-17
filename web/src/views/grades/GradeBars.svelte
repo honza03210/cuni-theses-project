@@ -27,8 +27,14 @@
     ...shown.filter((r) => !isSmall(r)).sort(byShare),
     ...shown.filter((r) => isSmall(r)).sort(byShare),
   ]);
+  // Before/after: by default only the faculties whose "excellent" share moved most; the rest on request
+  const TOP = 6;
+  let showAll = $state(false);
+  const moved = (r: GradeFac) => { const p = prevShown(r.fac); return p ? Math.abs(r.counts[0] / r.total - p.counts[0] / p.total) : -1; };
+  const trimmed = $derived(paired && !showAll && sorted.length > TOP + 1);
+  const visible = $derived(trimmed ? sorted.filter((r) => [...sorted].sort((a, b) => moved(b) - moved(a)).slice(0, TOP).includes(r)) : sorted);
   // one faculty: the "All" row would only repeat it
-  const bars = $derived(all.total >= MIN_CELL_N && rows.length > 1 ? [all, ...sorted] : sorted);
+  const bars = $derived(all.total >= MIN_CELL_N && rows.length > 1 ? [all, ...visible] : visible);
   const prevShown = (f: number) => { const p = prevOf(f); return p && p.total >= MIN_CELL_N ? p : null; };
   const rowH = $derived(paired ? 26 : 18);
   const m = { top: 4, right: 52, bottom: 22, left: 52 };
@@ -98,6 +104,9 @@
     </g>
   </svg>
   {#if missing.length}<p class="note">{missing.join(', ')}: 0 {L.t['common.theses']}</p>{/if}
+  {#if paired && sorted.length > TOP + 1}
+    <button type="button" class="more-btn" onclick={() => (showAll = !showAll)}>{showAll ? L.t['grades.bars.fewer'](TOP) : L.t['grades.bars.all'](sorted.length)}</button>
+  {/if}
   {#if hidden.length}<p class="note">{L.t['grades.bars.hidden'](hidden.join(', '))}</p>{/if}
   {#if hover}
     <Tooltip x={hover.cx} y={hover.cy}>
@@ -117,7 +126,7 @@
   .bar rect { stroke-width: 0; }
   /* small faculties: hollow bars (outline + faint fill) read as weaker in both themes; label stays readable */
   .bar.small rect { fill-opacity: 0.14; stroke-width: 1; stroke-opacity: 0.8; }
-  .bar.small .yl { font-weight: 400; font-style: italic; }
+  .bar.small .yl { font-weight: 400; fill: var(--ink-3); }
   .seg-row:hover rect { stroke: var(--ink); stroke-width: 1; stroke-opacity: 1; }
   .yl { font-size: 12px; fill: var(--ink); font-weight: 600; }
   .bar.all .yl { font-weight: 700; }
@@ -125,9 +134,11 @@
   .sep { stroke: var(--rule); stroke-dasharray: 2 2; }
   .note { margin: 4px 0 0; font-size: var(--fs-xs); color: var(--ink-3); }
   .pkey { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); }
-  /* the key shows bar thickness in a grade colour, like the bars themselves */
-  .pk { display: inline-block; width: 18px; background: var(--grade-1); border-radius: 1px; }
+  /* the period is encoded by thickness, so the key is ink: grade colours stay for grades */
+  .pk { display: inline-block; width: 18px; background: var(--ink-2); border-radius: 1px; }
   .pk.prev { height: 5px; }
   .pk.cur { height: 9px; margin-left: 12px; }
+  .more-btn { margin: 6px 0 0; border: 0; background: none; padding: 4px 0; cursor: pointer; font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+  .more-btn:hover { color: var(--ink); text-decoration-color: var(--ink); }
   :global(.tt-tag) { font-weight: 400; color: var(--ink-2); }
 </style>

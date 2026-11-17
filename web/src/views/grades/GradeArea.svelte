@@ -13,7 +13,7 @@
   let width = $state(600);
   // `fill`: grow to the height the layout offers (beside the taller faculty bars), never below 300px
   let boxH = $state(300);
-  const height = $derived(fill ? Math.max(300, Math.min(620, boxH)) : 300);
+  const height = $derived(fill ? Math.max(300, Math.min(420, boxH)) : 300);
   const m = { top: 10, right: 92, bottom: 24, left: 40 };
   const iw = $derived(Math.max(10, width - m.left - m.right));
   const ih = $derived(height - m.top - m.bottom);
@@ -103,7 +103,8 @@
     </defs>
     <g transform="translate({m.left},{m.top})">
       {#each layers as layer (layer.key)}
-        <path d={gen(layer as never)} fill={layer.key === 3 ? 'url(#hatch4)' : GRADE_VARS[layer.key]} stroke="var(--paper)" stroke-width="0.6" />
+        <!-- the common grades (1, 2) are drawn softer so the eye goes to 3 and 4, where change would show -->
+        <path d={gen(layer as never)} fill={layer.key === 3 ? 'url(#hatch4)' : GRADE_VARS[layer.key]} fill-opacity={layer.key === 0 ? 0.55 : layer.key === 1 ? 0.7 : 1} stroke="var(--paper)" stroke-width="0.6" />
       {/each}
       {#each [0, 0.25, 0.5, 0.75, 1] as t (t)}
         <line class="grid" x1="0" x2={iw} y1={y(t)} y2={y(t)} />
@@ -162,7 +163,7 @@
   svg:focus-visible { outline: 2px solid var(--petrol); outline-offset: 4px; }
   .grid { stroke: var(--paper); stroke-opacity: 0.6; stroke-width: 1; shape-rendering: crispEdges; }
   .marker { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 3; }
-  .mlabel { font-size: 11.5px; fill: #f6f4ee; font-weight: 700; paint-order: stroke; stroke: #163f4f; stroke-width: 3.5px; stroke-linejoin: round; }
+  .mlabel { font-size: 12px; fill: #f6f4ee; font-weight: 700; paint-order: stroke; stroke: #163f4f; stroke-width: 3.5px; stroke-linejoin: round; }
   .sel { stroke: var(--petrol); stroke-width: 2.5; }
   .sel-label { fill: var(--paper); font-weight: 700; paint-order: stroke; stroke: var(--petrol); stroke-width: 14px; stroke-linejoin: round; }
   .blabel { font-size: 12px; fill: var(--ink-2); }

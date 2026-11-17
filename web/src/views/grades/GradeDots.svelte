@@ -1,7 +1,7 @@
 <script lang="ts">
   import { scaleLinear } from 'd3';
   import type { Theses } from '../../lib/data/types';
-  import { GRADE_VARS } from '../../lib/chart';
+  import { GRADE_SHAPES, GRADE_VARS } from '../../lib/chart';
   import { L } from '../../lib/locale.svelte';
   import Plate from '../../lib/ui/Plate.svelte';
 
@@ -58,12 +58,7 @@
     return scaleLinear().domain([lo - pad, hi + pad]).range([x0, x1]);
   };
   // Grade markers differ in shape as well as colour: circle, square, diamond, triangle.
-  const SHAPES = [
-    (r: number) => `M${-r},0a${r},${r} 0 1,0 ${2 * r},0a${r},${r} 0 1,0 ${-2 * r},0`,
-    (r: number) => `M${-r * 0.88},${-r * 0.88}h${r * 1.76}v${r * 1.76}h${-r * 1.76}z`,
-    (r: number) => `M0,${-r * 1.2}L${r * 1.2},0L0,${r * 1.2}L${-r * 1.2},0z`,
-    (r: number) => `M0,${-r * 1.15}L${r * 1.15},${r * 0.85}L${-r * 1.15},${r * 0.85}z`,
-  ];
+  const SHAPES = GRADE_SHAPES;
 </script>
 
 <Plate id="g-dots" title={L.t['grades.dots.title']} unit={L.t['grades.dots.unit']} foot={L.t['grades.dots.foot']}>
@@ -85,9 +80,6 @@
 
   {#if widest}<p class="lead-line">{L.t['grades.dots.widest'](widest.label, widest.a, widest.b, widest.unit)}</p>{/if}
   <ul class="key" aria-hidden="true">
-    {#each [1, 2, 3, 4] as g (g)}
-      <li><svg width="14" height="14"><path d={SHAPES[g - 1](4.5)} transform="translate(7,7)" fill={GRADE_VARS[g - 1]} stroke="var(--ink)" stroke-width="0.9"/></svg>{g} {L.t[`grade.${g}` as 'grade.1']}</li>
-    {/each}
     <li><svg width="26" height="10"><line x1="1" x2="25" y1="5" y2="5" stroke="var(--ink-2)" stroke-width="1.5"/><path d="M1,2v6M25,2v6" stroke="var(--ink-2)" stroke-width="1.5"/></svg>{L.t['grades.dots.iqr']}</li>
   </ul>
   <div class="wrap" bind:clientWidth={width}>
@@ -129,9 +121,9 @@
   .key li { display: inline-flex; align-items: center; gap: 6px; }
   .sep { stroke: var(--rule-soft); }
   .lab { font-size: 13px; font-weight: 600; fill: var(--ink); }
-  .u, .lab .u { font-size: 12.5px; font-weight: 400; fill: var(--ink-2); }
+  .u, .lab .u { font-size: 12px; font-weight: 400; fill: var(--ink-2); }
   .grid { stroke: var(--rule-soft); }
-  .tick { font-size: 10.5px; fill: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .tick { font-size: 11px; fill: var(--ink-3); font-variant-numeric: tabular-nums; }
   .iqr { stroke: var(--ink-2); stroke-width: 1.5; }
   .cap { stroke: var(--ink-2); stroke-width: 1.5; fill: none; }
   .mk { stroke: var(--ink); stroke-width: 1.1; }

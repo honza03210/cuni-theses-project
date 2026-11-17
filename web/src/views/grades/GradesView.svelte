@@ -3,7 +3,7 @@
   import type { Theses } from '../../lib/data/types';
   import { app } from '../../lib/state/app.svelte';
   import { L } from '../../lib/locale.svelte';
-  import { GRADE_VARS } from '../../lib/chart';
+  import { GRADE_DASH, GRADE_SHAPES, GRADE_VARS } from '../../lib/chart';
   import Plate from '../../lib/ui/Plate.svelte';
   import GradeArea from './GradeArea.svelte';
   import GradeBars from './GradeBars.svelte';
@@ -12,7 +12,7 @@
   import Lede from '../../lib/ui/Lede.svelte';
   import { gradeShift, PRE, POST_FROM } from '../../lib/data/answers';
   import { aiFilterActive, MIN_CELL_N } from '../../lib/data/select';
-  import AiCaveat, { aiWho } from '../../lib/ui/AiCaveat.svelte';
+  import { aiWho } from '../../lib/ui/AiCaveat.svelte';
 
   interface Props { theses: Theses; mask: Uint8Array }
   let { theses, mask }: Props = $props();
@@ -46,9 +46,15 @@
 </script>
 
 {#snippet gradeLegend()}
-  <ul class="glegend">
+  <!-- the one grade key for the whole view: colour + hatch (areas, bars), dash (lines), shape (markers) -->
+  <ul class="glegend" aria-label={L.t['common.legend']}>
     {#each [1, 2, 3, 4] as g (g)}
-      <li><span class="sw" class:hatch={g === 4} style:background={GRADE_VARS[g - 1]}></span>{g} {L.t[`grade.${g}` as 'grade.1']}</li>
+      <li>
+        <span class="sw" class:hatch={g === 4} style:background={GRADE_VARS[g - 1]}></span>
+        <svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke={GRADE_VARS[g - 1]} stroke-width="2.4" stroke-dasharray={GRADE_DASH[g - 1]} /></svg>
+        <svg width="12" height="12" aria-hidden="true"><path d={GRADE_SHAPES[g - 1](4.3)} transform="translate(6,6)" fill={GRADE_VARS[g - 1]} stroke="var(--ink)" stroke-width="1" /></svg>
+        <span>{g} {L.t[`grade.${g}` as 'grade.1']}</span>
+      </li>
     {/each}
   </ul>
 {/snippet}
@@ -68,7 +74,7 @@
       <span class="muted">{L.t['trends.lede.na']}</span>
     {/if}
   </Lede>
-  {#if aiOn && gshift}<AiCaveat span={gshift.postSpan} />{/if}
+  {@render gradeLegend()}
   <div class="grades">
     <div class="area">
       <Plate id="g-area" grow title={L.t['grades.area.title']} unit={`${L.t['grades.area.unit']} · ${app.yearFrom}–${app.yearTo}`}
@@ -83,7 +89,6 @@
             </tbody>
           </table>
         {/snippet}
-        {@render gradeLegend()}
         <GradeArea rows={byYear} selected={barYear} marked={!compare} aiYear={aiOn ? meta.aiYear : null} fill yearMax={meta.yearMax} onselect={(y) => (app.gradeYear = y)} />
       </Plate>
     </div>
@@ -139,8 +144,8 @@
   .seg button + button { border-left: 1px solid var(--rule); }
   .seg button[aria-pressed='true'] { background: var(--petrol); color: var(--on-petrol); }
   @media (pointer: coarse) { .seg button { min-height: 40px; } }
-  .glegend { display: flex; flex-wrap: wrap; gap: 2px 14px; list-style: none; margin: 0 0 var(--s3); padding: 0; font-size: var(--fs-sm); color: var(--ink-2); }
-  .glegend li { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .glegend { display: flex; flex-wrap: wrap; gap: 4px 22px; list-style: none; margin: 0 0 var(--s4); padding: 0; font-size: var(--fs-sm); color: var(--ink-2); }
+  .glegend li { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
   .sw { width: 11px; height: 11px; border-radius: 1px; box-shadow: inset 0 0 0 1px var(--swatch-edge); }
   .sw.hatch { background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.55) 0 1.5px, transparent 1.5px 4px) !important; background-color: var(--grade-4); }
   @media (max-width: 1279px) {
