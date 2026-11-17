@@ -249,7 +249,7 @@
       <b>{aiGroup ? L.t['ai.lede.words'](aiWho(), aiSpan, baselineLabel) : L.t['words.lede.up'](blockLabel, baselineLabel)}</b>
       {#each movers.rising.slice(0, 3) as s, i (s.word)}{i ? (i === 2 ? L.t['words.and'] : ', ') : ' '}<button type="button" class="lw" onclick={() => pick(s.word, false)}>{s.word}</button>{#if gloss(s.word)}{' '}<span class="muted">‘{gloss(s.word)}’</span>{/if}{/each}.
       <!-- everything else in one quiet line -->
-      <span class="frame">
+      <span class="frame full-only">
         {#if movers.falling.length}{L.t['words.lede.drops'](movers.falling.slice(0, 2).map((s) => s.word).join(', '))}{' '}{/if}
         {#if topical.length}{L.t['words.lede.topicalShort']}{' '}{/if}
         {#if !aiGroup && cmp.to >= 2023 && aiLike.length}{L.t['words.lede.aiShort'](aiLike.join(', '))}{/if}
@@ -286,6 +286,8 @@
     {/snippet}
 
     {#snippet lead()}
+    <!-- year and ranking controls belong to the detailed version; the simple one keeps the default comparison -->
+    <div class="full-only">
     {#if narrow}
       <!-- phones: the cloud comes first; the year controls fold behind a one-line summary below it -->
       <details class="phone-years">
@@ -295,13 +297,14 @@
     {:else}
       {@render yearControls()}
     {/if}
+    </div>
     {/snippet}
 
     <div class="legend">
       <span class="lk rise">{L.t['words.more']}</span>
       <span class="lk fall">{L.t['words.less']}</span>
       {#if listRows.length}
-        <span class="ramp">
+        <span class="ramp full-only">
           {#each SIZES as sz, i (i)}<span aria-hidden="true" style:font-size="{Math.max(11, sz * 0.75)}px">Aa</span>{/each}
           <small>{app.wordRank === 'gap'
             ? L.t['words.legend.gap'](L.f.num(ramp[0] * 100, 1), L.f.num(ramp[4] * 100, 1))

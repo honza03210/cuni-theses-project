@@ -109,6 +109,10 @@
 </script>
 
 {#snippet prefsCtl()}
+  <div class="mode" role="group" aria-label={L.t['mode.label']}>
+    <button type="button" aria-pressed={!app.detailed} onclick={() => (app.detailed = false)}>{L.t['mode.simple']}</button>
+    <button type="button" aria-pressed={app.detailed} onclick={() => (app.detailed = true)}>{L.t['mode.detailed']}</button>
+  </div>
       <div class="theme" role="group" aria-label={L.t['theme.label']}>
     <button type="button" aria-pressed={theme === 'light'} title={L.t['theme.light']} onclick={() => setTheme('light')}>
       <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg>
@@ -126,11 +130,11 @@
 {/snippet}
 
 <a class="skip" href="#view-panel" inert={drawerOpen}>{L.t['common.skip']}</a>
-<div class="shell" class:drawer-open={drawerOpen} style:--band-h="{bandH}px">
+<div class="shell" class:simple={!app.detailed} class:drawer-open={drawerOpen} style:--band-h="{bandH}px">
   <header class="band" bind:clientHeight={bandH} inert={drawerOpen}>
     <div class="brand">
       <h1>{L.t.title}</h1>
-      <p>{L.t.subtitle}</p>
+      <p class="full-only">{L.t.subtitle}</p>
     </div>
     <div class="tabs" role="tablist" aria-label={L.t['view.label']} tabindex="-1" onkeydown={onTabKey}>
       {#each views as v (v)}
@@ -234,17 +238,18 @@
   .tabs button[aria-selected='true']:focus-visible { outline-color: var(--petrol); }
 
   .right { display: flex; align-items: center; gap: var(--s3); align-self: center; }
-  .locale, .theme { display: inline-flex; border: 1px solid var(--band-line); border-radius: 3px; overflow: hidden; }
-  .locale button, .theme button {
+  .locale, .theme, .mode { display: inline-flex; border: 1px solid var(--band-line); border-radius: 3px; overflow: hidden; }
+  .locale button, .theme button, .mode button {
     border: 0; background: transparent; color: var(--band-ink-2);
     font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em;
     padding: 4px 9px; cursor: pointer;
   }
-  .locale button[aria-pressed='true'], .theme button[aria-pressed='true'] { background: var(--band-ink); color: var(--petrol-deep); }
-  .locale button:focus-visible, .theme button:focus-visible { outline-color: var(--band-ink); }
-  .locale button:not([aria-pressed='true']):hover, .theme button:not([aria-pressed='true']):hover { color: var(--band-ink); background: var(--band-hover); }
+  .locale button[aria-pressed='true'], .theme button[aria-pressed='true'], .mode button[aria-pressed='true'] { background: var(--band-ink); color: var(--petrol-deep); }
+  .locale button:focus-visible, .theme button:focus-visible, .mode button:focus-visible { outline-color: var(--band-ink); }
+  .locale button:not([aria-pressed='true']):hover, .theme button:not([aria-pressed='true']):hover, .mode button:not([aria-pressed='true']):hover { color: var(--band-ink); background: var(--band-hover); }
   .theme button { display: inline-flex; align-items: center; padding: 4px 8px; }
   .theme svg { display: block; }
+  .mode button { letter-spacing: 0.02em; padding: 4px 10px; }
   .drawer-btn {
     display: none;
     align-items: center; gap: 6px;

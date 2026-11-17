@@ -5,6 +5,8 @@ export type View = 'words' | 'trends' | 'grades';
 export interface AppState {
   view: View;
   locale: Locale;
+  /** false = the simple version (default): answer lines and charts only */
+  detailed: boolean;
   fac: number[];
   yearFrom: number;
   yearTo: number;
@@ -37,6 +39,7 @@ export function defaults(d: Domain): AppState {
   return {
     view: 'words',
     locale: 'en',
+    detailed: false,
     fac: d.facCodes.map((_, i) => i),
     yearFrom: d.yearMin,
     yearTo: d.yearMax - 1,  // current year is incomplete
@@ -73,6 +76,7 @@ export function encode(s: AppState, d: Domain): string {
   const p = new URLSearchParams();
   if (s.view !== def.view) p.set('v', s.view);
   if (s.locale !== def.locale) p.set('l', s.locale);
+  if (s.detailed) p.set('d', '1');
   if (!sameSet(s.fac, def.fac)) p.set('f', s.fac.map((i) => d.facCodes[i]).join(',') || '-');
   if (s.yearFrom !== def.yearFrom || s.yearTo !== def.yearTo) p.set('y', `${s.yearFrom}-${s.yearTo}`);
   if (!sameSet(s.langs, def.langs)) p.set('lg', s.langs.map((i) => d.langs[i]).join(',') || '-');
@@ -108,6 +112,7 @@ export function decode(query: string, d: Domain): AppState {
   if (v && (VIEWS as string[]).includes(v)) s.view = v as View;
   const l = p.get('l');
   if (l === 'cs' || l === 'en') s.locale = l;
+  if (p.get('d') === '1') s.detailed = true;
   const list = (key: string, names: string[]) => {
     const raw = p.get(key);
     if (raw === null) return null;

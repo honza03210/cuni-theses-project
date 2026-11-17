@@ -5,6 +5,7 @@
   import type { Faculty, WordCube } from '../../lib/data/types';
   import { CHATGPT_X, yearTicks } from '../../lib/chart';
   import { L } from '../../lib/locale.svelte';
+  import { app } from '../../lib/state/app.svelte';
 
   interface Props {
     cube: WordCube; ctx: WordContext; word: string; result: ScoreResult;
@@ -65,7 +66,8 @@
   const ih = height - m.top - m.bottom;
   const x = $derived(scaleLinear().domain([from - 0.3, yearTo + 0.3]).range([0, iw]));
   const yMax = $derived(Math.max(
-    ...total.map((p) => p.v), ...perFac.flatMap((f) => f.pts.map((p) => p.v)),
+    // the simple version draws no faculty lines, so the scale follows the whole selection
+    ...total.map((p) => p.v), ...(app.detailed ? perFac.flatMap((f) => f.pts.map((p) => p.v)) : []),
     Number.isFinite(expected) ? expected : 0, 0.001));
   const y = $derived(scaleLinear().domain([0, yMax * 1.08]).range([ih, 0]).nice(5));
   const gen = $derived(line<{ year: number; v: number }>().x((d) => x(d.year)).y((d) => y(d.v)));
@@ -100,7 +102,7 @@
       <span class="muted">{L.f.int(hp.n)} / {L.f.int(hp.d)} {L.t['common.theses']}</span>
     {:else}
       <span><i class="k own"></i>{L.t['common.all']}</span>
-      <span><i class="k ctx"></i>{L.t['words.detail.faculties']}</span>
+      <span class="full-only"><i class="k ctx"></i>{L.t['words.detail.faculties']}</span>
       <span><i class="k fit"></i>{L.t['words.detail.fit']} {result.baseline[0]}–{result.baseline[result.baseline.length - 1]}</span>
       <span><i class="k dot hollow"></i>{L.t['words.detail.expected']}</span>
       <span><i class="k dot"></i>{L.t['words.detail.observed']}</span>
@@ -132,7 +134,7 @@
           <line class="marker" x1={x(CHATGPT_X)} x2={x(CHATGPT_X)} y1="0" y2={ih} />
           <text class="mlabel" x={x(CHATGPT_X) + 4} y="10">{L.t['common.chatgpt']}</text>
         {/if}
-        {#each perFac as f (f.f)}
+        {#each app.detailed ? perFac : [] as f (f.f)}
           {#if f.pts.length > 1}<path class="ctx" d={gen(f.pts)} />{/if}
         {/each}
         {#if fitPts.length}<path class="fit" d={gen(fitPts)} />{/if}
@@ -163,7 +165,7 @@
       </g>
     </svg>
   </div>
-  {#if hoverYear !== null && perFac.length > 1}
+  {#if hoverYear !== null && perFac.length > 1 && app.detailed}
     <p class="facs">
       {#each perFac as f (f.f)}
         {@const p = f.pts.find((q) => q.year === hoverYear)}

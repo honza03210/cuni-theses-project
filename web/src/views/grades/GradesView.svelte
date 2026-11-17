@@ -69,7 +69,7 @@
     {:else if gshift}
       <b>{gshift.same ? L.t['grades.verdict.same'] : gshift.clear ? L.t['grades.verdict.moved'] : L.t['grades.verdict.unclear']}</b>
       {L.t['grades.lede'](L.f.pct(gshift.pre[0]), L.f.pct(gshift.post[0]), L.f.pct(gshift.pre[1]), L.f.pct(gshift.post[1]), gshift.postTo)}
-      {#if !gshift.same && scaleFacs}<span class="muted">{L.t['grades.scaleNote']}</span>{/if}
+      {#if !gshift.same && scaleFacs}<span class="muted full-only">{L.t['grades.scaleNote']}</span>{/if}
     {:else}
       <span class="muted">{L.t['trends.lede.na']}</span>
     {/if}
@@ -93,7 +93,7 @@
       </Plate>
     </div>
     <div class="bars">
-      <Plate id="g-bars" title={compare ? L.t['grades.bars.titleCmp'](preLabel, postLabel) : L.t['grades.bars.title'](barYear)} unit={`${L.t['grades.bars.unit']} · ${L.t['grades.bars.sort']}`} foot={L.t['grades.bars.small']}>
+      <Plate id="g-bars" title={compare ? L.t['grades.bars.titleCmp'](preLabel, postLabel) : L.t['grades.bars.title'](barYear)} unit={app.detailed ? `${L.t['grades.bars.unit']} · ${L.t['grades.bars.sort']}` : L.t['grades.bars.unit']} foot={L.t['grades.bars.small']}>
         {#snippet tools()}
           {#if canCompare}
             <div class="seg" role="group" aria-label={L.t['grades.bars.mode']}>

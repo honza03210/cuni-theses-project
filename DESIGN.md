@@ -323,3 +323,13 @@ A light theme (the paper sheet) and a dark theme (charcoal sheet, light ink) sha
 ## Answer line (Lede)
 
 Each view opens with one computed, plain-language finding in the Lede role (21px, bold clause plus muted context). Below it is a "How to read this view" disclosure (`web/src/lib/ui/Lede.svelte`). The finding comes from `web/src/lib/data/answers.ts` and is never hand-written. Words in it are links that select the word, coloured with `--rise` / `--fall`. Plate titles step up to 20px, so the scale reads: answer line 21 → plate title 20 → body 16 → controls 13.
+
+## Simple and detailed versions
+
+The site opens in the **simple** version; a Simple / Detailed switch in the header (URL `d=1`) shows everything.
+Simple keeps each view's answer line, one legend and the charts, and drops what explains or qualifies them:
+"how to read" panels, secondary lede sentences, plate footnotes and sources, chart/table toggles, tinted plate heads,
+filter counts and notes, faculty full names (a 3-column abbreviation grid instead), the Words year/option controls
+(the default 2023+ vs 2018–2022 comparison stays), and faculty context lines in Trends and the word detail.
+Mark anything detail-only with the class `full-only` (hidden under `.simple` in `app.css`); honesty caveats that
+change how a finding reads (the AI-filter note, small-sample hedges) stay in both versions.

@@ -23,7 +23,8 @@
   }
   let { id, title, unit, foot, tools, lead, footTable, table, children, grow = false, stickyHead = false, leadLast = false }: Props = $props();
 
-  const showTable = $derived(!!table && !!app.table[id]);
+  // the simple version always shows the chart: tables, footnotes and sources are detail
+  const showTable = $derived(!!table && !!app.table[id] && app.detailed);
   function setTable(v: boolean) {
     const next = { ...app.table };
     if (v) next[id] = true; else delete next[id];
@@ -39,7 +40,7 @@
     </div>
     <div class="tools">
       {@render tools?.()}
-      {#if table}
+      {#if table && app.detailed}
         <!-- a viewing preference, not a selection: a quiet text toggle, so petrol stays for real choices -->
         <button type="button" class="view-toggle" aria-pressed={showTable} onclick={() => setTable(!showTable)}>
           {showTable ? L.t['plate.showChart'] : L.t['plate.showTable']}
@@ -56,7 +57,7 @@
     {/if}
   </div>
   {#if lead && leadLast}<div class="lead last">{@render lead()}</div>{/if}
-  <footer class="foot">
+  <footer class="foot full-only">
     {#if showTable && footTable}<span>{footTable}</span>{:else if foot}<span>{foot}</span>{/if}
     <span class="src">{L.t['plate.source']}</span>
   </footer>
@@ -120,6 +121,9 @@
     .titles { flex: 0 0 auto; }
     .tools { justify-content: flex-start; }
   }
+  /* simple version: no tinted head box, just the title on a hairline */
+  :global(.simple) .head { background: none; padding: 0 0 8px; border-radius: 0; }
+  :global(.simple) .unit { color: var(--ink-3); }
   .view-toggle {
     border: 0; background: none; padding: 4px 2px; cursor: pointer;
     font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2);

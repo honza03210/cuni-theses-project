@@ -94,7 +94,7 @@
         <span class="rv"><i class="k avg"></i>{readAvg ? fmtV(readAvg.mean) : '–'}</span>
         {#if readHover && hoverOther !== null}<span class="rv"><i class="k hov"></i>{faculties[hoverOther].abbr} {fmtV(readHover.mean)}</span>{/if}
       {:else}
-        <span class="name">{L.pick(faculty.name)}</span>
+        <span class="name full-only">{L.pick(faculty.name)}</span>
       {/if}
     </span>
   </figcaption>

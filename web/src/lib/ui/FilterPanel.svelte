@@ -61,7 +61,7 @@
     <span>{yearsLocked ? L.t['filters.matchYears'](app.yearFrom, app.yearTo) : L.t['filters.match']}</span>
   </div>
   {#if split}<p class="note counts-note ai-count">{L.t['filters.countSplit'](L.f.int(split.post), L.f.int(split.pre))}</p>{/if}
-  <p class="note counts-note">{L.t['filters.countsNote']}</p>
+  <p class="note counts-note full-only">{L.t['filters.countsNote']}</p>
 
 
   <fieldset>
@@ -72,14 +72,14 @@
         <button type="button" onclick={() => (app.fac = [])}>{L.t['filters.none']}</button>
       </span>
     </legend>
-    <ul class="checks">
+    <ul class="checks fac-list">
       {#each meta.faculties as fac, i (fac.code)}
         <li>
           <label title={L.pick(fac.name)}>
             <input type="checkbox" checked={app.fac.includes(i)} onchange={() => (app.fac = toggle(app.fac, i))} />
             <span class="abbr">{fac.abbr}</span>
-            <span class="name">{L.pick(fac.name)}</span>
-            <span class="n">{L.f.int(counts.fac[i])}</span>
+            <span class="name full-only">{L.pick(fac.name)}</span>
+            <span class="n full-only">{L.f.int(counts.fac[i])}</span>
           </label>
         </li>
       {/each}
@@ -92,10 +92,10 @@
       <legend><span>{L.t['filters.years']}</span></legend>
       <YearRange min={meta.yearMin} max={meta.yearMax} from={app.yearFrom} to={app.yearTo}
         onchange={(a, b) => { app.yearFrom = a; app.yearTo = b; }} />
-      {#if app.yearTo === meta.yearMax}<p class="note">{L.t['filters.incomplete']}</p>{/if}
+      {#if app.yearTo === meta.yearMax}<p class="note full-only">{L.t['filters.incomplete']}</p>{/if}
     </fieldset>
   {:else}
-    <p class="note years-moved">{L.t['filters.yearsOnTimeline']}</p>
+    <p class="note years-moved full-only">{L.t['filters.yearsOnTimeline']}</p>
   {/if}
 
   <fieldset>
@@ -106,7 +106,7 @@
           <label>
             <input type="checkbox" checked={app.langs.includes(i)} onchange={() => (app.langs = toggle(app.langs, i))} />
             <span class="name">{L.t[`lang.${lang}` as 'lang.cs']}</span>
-            <span class="n">{L.f.int(counts.lang[i])}</span>
+            <span class="n full-only">{L.f.int(counts.lang[i])}</span>
           </label>
         </li>
       {/each}
@@ -122,12 +122,12 @@
           <label>
             <input type="checkbox" checked={app.genders.includes(g)} onchange={() => (app.genders = toggle(app.genders, g))} />
             <span class="name">{L.t[`gender.${g}` as 'gender.1']}</span>
-            <span class="n">{L.f.int(counts.gender[g])}</span>
+            <span class="n full-only">{L.f.int(counts.gender[g])}</span>
           </label>
         </li>
       {/each}
     </ul>
-    <p class="note">{L.t['filters.genderNote']}</p>
+    <p class="note full-only">{L.t['filters.genderNote']}</p>
     {#if !app.genders.length}<p class="warn" role="status">{L.t['filters.noGender']}</p>{/if}
   </fieldset>
 
@@ -145,11 +145,11 @@
         <label>
           <input type="radio" name="ai-mode" checked={aiMode === 'declared'} onchange={() => (app.ai = [1])} />
           <span class="name">{L.t['filters.aiDeclared']}</span>
-          <span class="n">{L.f.int(counts.ai[1])}</span>
+          <span class="n full-only">{L.f.int(counts.ai[1])}</span>
         </label>
       </li>
     </ul>
-    <details class="defs" open={aiMode === 'custom'}>
+    <details class="defs full-only" open={aiMode === 'custom'}>
       <summary>{L.t['filters.aiCats']}</summary>
       <ul class="checks sub">
         {#each [1, 2, 3, 4] as a (a)}
@@ -157,7 +157,7 @@
             <label>
               <input type="checkbox" checked={app.ai.includes(a)} onchange={() => (app.ai = toggle(app.ai, a))} />
               <span class="name">{L.t[`ai.${a}` as 'ai.1']}</span>
-              <span class="n">{L.f.int(counts.ai[a])}</span>
+              <span class="n full-only">{L.f.int(counts.ai[a])}</span>
             </label>
           </li>
         {/each}
@@ -166,7 +166,7 @@
         {#each [1, 2, 3, 4] as a (a)}<dt>{L.t[`ai.${a}` as 'ai.1']}</dt><dd>{L.t[`ai.def.${a}` as 'ai.def.1']}</dd>{/each}
       </dl>
     </details>
-    <p class="note">{L.t['filters.aiNote']}</p>
+    <p class="note full-only">{L.t['filters.aiNote']}</p>
     {#if !app.ai.length}<p class="warn" role="status">{L.t['filters.noAi']}</p>{/if}
   </fieldset>
 
@@ -243,6 +243,10 @@
     .quick button { padding: 8px 10px; }
     .reset { padding: 10px 16px; }
   }
+  /* simple version: faculties as a compact grid of abbreviations (full names on hover) */
+  :global(.simple) .fac-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 8px; }
+  :global(.simple) .fac-list label { grid-template-columns: 18px auto; }
+  :global(.simple) .panel { gap: var(--s5); }
   .warn { margin: 6px 0 0; font-size: var(--fs-xs); color: var(--warn); font-weight: 600; }
   .reset {
     align-self: flex-start;

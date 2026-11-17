@@ -130,3 +130,6 @@ svg .axis .domain { stroke: var(--ink-3); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
 }
+
+/* Simple version (the default): elements marked .full-only appear only in the detailed version */
+.simple .full-only { display: none !important; }

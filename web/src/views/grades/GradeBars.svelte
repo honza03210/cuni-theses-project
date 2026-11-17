@@ -6,6 +6,7 @@
   import { L } from '../../lib/locale.svelte';
   import Tooltip from '../../lib/ui/Tooltip.svelte';
   import { MIN_CELL_N } from '../../lib/data/select';
+  import { app } from '../../lib/state/app.svelte';
 
   /** Horizontal 100 % bars, one row per faculty. With `prev`, each row holds two bars:
    *  the earlier period (thin, upper) and the later one (full, lower), labelled by `tags`. */
@@ -51,7 +52,8 @@
   const x = $derived(scaleLinear().domain([0, 1]).range([0, iw]));
   // A–F faculties are marked: a change there can also come from their grading scale
   const AF = ['etf', 'fsv'];
-  const isAF = (f: number) => f >= 0 && AF.includes(faculties[f].code);
+  // the † and its note belong to the detailed version
+  const isAF = (f: number) => app.detailed && f >= 0 && AF.includes(faculties[f].code);
   const label = (f: number) => (f < 0 ? L.t['filters.all'] : faculties[f].abbr + (isAF(f) ? '†' : ''));
   const anyAF = $derived(bars.some((b) => isAF(b.fac)));
   // paired rows: earlier bar 40 % of the band, later bar 60 %, 2px apart
@@ -85,7 +87,7 @@
 {/snippet}
 
 <div class="wrap" bind:clientWidth={width}>
-  {#if trimmed}<p class="cut">{L.t['grades.bars.cut'](TOP)}</p>{/if}
+  {#if trimmed}<p class="cut full-only">{L.t['grades.bars.cut'](TOP)}</p>{/if}
   {#if paired}
     <p class="pkey"><span class="pk prev"></span>{tags[0]}<span class="pk cur"></span>{tags[1]}</p>
   {/if}
@@ -117,8 +119,8 @@
   {#if paired && sorted.length > TOP + 1}
     <button type="button" class="more-btn" onclick={() => (showAll = !showAll)}>{showAll ? L.t['grades.bars.fewer'](TOP) : L.t['grades.bars.all'](sorted.length)}</button>
   {/if}
-  {#if anyAF}<p class="note">{L.t['grades.bars.af']}</p>{/if}
-  {#if missing.length || hidden.length}<p class="note">{L.t['grades.bars.notShown'](missing.join(', '), hidden.join(', '))}</p>{/if}
+  {#if anyAF}<p class="note full-only">{L.t['grades.bars.af']}</p>{/if}
+  {#if missing.length || hidden.length}<p class="note full-only">{L.t['grades.bars.notShown'](missing.join(', '), hidden.join(', '))}</p>{/if}
   {#if hover}
     <Tooltip x={hover.cx} y={hover.cy}>
       <div class="tt-title">{hover.r.fac < 0 ? L.t['common.all'] : L.pick(faculties[hover.r.fac].name)}{#if hover.tag}{' '}<span class="tt-tag">{hover.tag}</span>{/if}</div>

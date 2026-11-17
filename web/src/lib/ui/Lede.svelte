@@ -9,7 +9,7 @@
 
 <div class="lede">
   <p class="finding">{@render children()}</p>
-  <details>
+  <details class="full-only">
     <summary>{L.t['lede.howto']}</summary>
     <p>{howto}</p>
   </details>

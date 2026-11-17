@@ -285,8 +285,8 @@
         </button>
       {/each}
     </div>
-    <label class="lines"><input type="checkbox" bind:checked={showLines} />{L.t['grades.par.lines']}</label>
-    <span class="selcount" aria-live="polite">{L.t['grades.par.selected'](L.f.int(selection.count), L.f.int(data.n))}</span>
+    <label class="lines full-only"><input type="checkbox" bind:checked={showLines} />{L.t['grades.par.lines']}</label>
+    <span class="selcount full-only" aria-live="polite">{L.t['grades.par.selected'](L.f.int(selection.count), L.f.int(data.n))}</span>
     {#if selection.any}<button type="button" class="clear" onclick={clearBrushes}>{L.t['grades.par.clear']}</button>{/if}
   {/snippet}
   {#snippet table()}

@@ -83,7 +83,7 @@
           {#if facs.length === 1}
             <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--avg)" stroke-width="2.25" stroke-dasharray="5 3"/></svg>{L.t['trends.uni']}</li>
           {:else}
-            <li><label class="others"><input type="checkbox" bind:checked={showOthers} /><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--context)" stroke-width="1.25"/></svg>{L.t['trends.other']}</label></li>
+            <li class="full-only"><label class="others"><input type="checkbox" bind:checked={showOthers} /><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--context)" stroke-width="1.25"/></svg>{L.t['trends.other']}</label></li>
             <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--avg)" stroke-width="2.25" stroke-dasharray="5 3"/></svg>{L.t['trends.avg']}</li>
           {/if}
         </ul>
@@ -99,9 +99,9 @@
         <b>{L.t['trends.lede'](L.pick(metric.label), phrase, fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit), relText(shift), shift.postTo)}</b>
         {#if shift.facCompared > 1}
           {@const up = shift.post >= shift.pre}
-          <span class="muted"> {L.t['trends.lede.facsSig'](up ? shift.facSigUp : shift.facSigDown, up ? shift.facSigDown : shift.facSigUp, shift.facCompared, up)}</span>
+          <span class="muted full-only"> {L.t['trends.lede.facsSig'](up ? shift.facSigUp : shift.facSigDown, up ? shift.facSigDown : shift.facSigUp, shift.facCompared, up)}</span>
         {/if}
-        {#if shift.step}<span class="when">{L.t['trends.lede.step'](shift.step.lateYear, shift.step.earlySpan, fmtV(shift.step.early), fmtV(shift.step.late))}</span>{/if}
+        {#if shift.step}<span class="when full-only">{L.t['trends.lede.step'](shift.step.lateYear, shift.step.earlySpan, fmtV(shift.step.early), fmtV(shift.step.late))}</span>{/if}
       {:else}
         <span class="muted">{L.t['trends.lede.na']}</span>
       {/if}
@@ -141,7 +141,7 @@
       {:else}
         <div class="grid" class:single={facs.length === 1} bind:clientWidth={gridW} style:--col-min="{colMin}px">
           {#each shown as f, fi (f)}
-            <TrendPanel first={fi < cols} {showOthers}
+            <TrendPanel first={fi < cols} showOthers={showOthers && app.detailed}
               fac={f} faculty={meta.faculties[f]} {series} {facs} {yDomain} {metric} {aiOn}
               yearFrom={app.yearFrom} yearTo={app.yearTo} yearMax={meta.yearMax} aiYear={meta.aiYear}
               faculties={meta.faculties} uniRef={uniRef} large={facs.length === 1}
@@ -161,7 +161,7 @@
         <label class:active={m.key === metric.key}>
           <input type="radio" name="metric" value={m.key} checked={m.key === metric.key} onchange={() => (app.metric = m.key)} />
           <span class="ml">{L.pick(m.label)}</span>
-          <span class="md">{L.pick(m.desc)}</span>
+          <span class="md full-only">{L.pick(m.desc)}</span>
         </label>
       {/each}
     </fieldset>
@@ -231,6 +231,8 @@
   .ml { font-size: var(--fs-md); font-weight: 600; line-height: 1.3; }
   .md { font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.4; }
   .picker label.active .md { color: var(--ink-2); }
+  /* simple version: a plain list of measures, no tinted header */
+  :global(.simple) .picker legend { background: none; padding: 0 0 8px; border-radius: 0; }
 
   @media (max-width: 1279px) {
     .trends { grid-template-columns: minmax(0, 1fr); }
