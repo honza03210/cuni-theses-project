@@ -1,29 +1,29 @@
 import { describe, expect, it } from 'vitest';
 import { filterMask, countMask } from './select';
 import { gradesByYear, metricSeries } from './aggregate';
-import { buildWordContext, cellIndex, clampComparison, fitLine, isNoise, rampFor, rampStep, scoreWords, topMovers } from './excess';
+import { buildWordContext, cellIndex, clampComparison, wordCounts, fitLine, isNoise, rampFor, rampStep, scoreWords, topMovers } from './excess';
 import { decode, encode, defaults, type Domain } from '../state/url';
 import type { Theses, WordCube } from './types';
 
 // Tiny synthetic table: 2 faculties, years 2006..2026, 1 language.
-function makeTheses(rows: { fac: number; year: number; lang?: number; ai?: number; grade?: number; v?: number }[]): Theses {
+function makeTheses(rows: { fac: number; year: number; lang?: number; ai?: number; gender?: number; grade?: number; v?: number }[]): Theses {
   const n = rows.length;
   const u8 = (f: (r: (typeof rows)[number]) => number) => Uint8Array.from(rows.map(f));
   return {
     meta: {
       rows: n, yearMin: 2006, yearMax: 2026, aiYear: 2023, columns: [],
       faculties: [{ code: 'a', abbr: 'A', name: { cs: 'A', en: 'A' } }, { code: 'b', abbr: 'B', name: { cs: 'B', en: 'B' } }],
-      langs: ['cs', 'en', 'sk', 'other'], aiValues: ['n/a', 'u', 'nu', 't', 'ns'],
+      langs: ['cs', 'en', 'sk', 'other'], aiValues: ['n/a', 'u', 'nu', 't', 'ns'], genders: ['unknown', 'female', 'male'],
       metrics: [{ key: 'm', label: { cs: '', en: '' }, unit: { cs: '', en: '' }, desc: { cs: '', en: '' }, decimals: 2, p01: 0, p99: 10 }],
     },
     n,
     fac: u8((r) => r.fac), year: u8((r) => r.year - 2006), lang: u8((r) => r.lang ?? 0),
-    ai: u8((r) => r.ai ?? 0), grade: u8((r) => r.grade ?? 1), usable: u8(() => 1), clean: u8(() => 1),
+    ai: u8((r) => r.ai ?? 0), gender: u8((r) => r.gender ?? 0), grade: u8((r) => r.grade ?? 1), usable: u8(() => 1), clean: u8(() => 1),
     metrics: { m: Float32Array.from(rows.map((r) => r.v ?? NaN)) },
   };
 }
 
-const ALL = { fac: [0, 1], yearFrom: 2006, yearTo: 2026, langs: [0], ai: [1, 2, 3, 4] };
+const ALL = { fac: [0, 1], yearFrom: 2006, yearTo: 2026, langs: [0], ai: [1, 2, 3, 4], genders: [0, 1, 2] };
 
 describe('filterMask', () => {
   const t = makeTheses([
@@ -40,6 +40,11 @@ describe('filterMask', () => {
   it('AI filter only narrows 2023+ rows', () => {
     const m = filterMask(t, { ...ALL, ai: [1] });
     expect(Array.from(m)).toEqual([1, 1, 1, 0, 0, 0]);
+  });
+  it('gender filter narrows every year', () => {
+    const g = makeTheses([{ fac: 0, year: 2010, gender: 1 }, { fac: 0, year: 2024, gender: 2 }, { fac: 0, year: 2010, gender: 0 }]);
+    expect(Array.from(filterMask(g, { ...ALL, genders: [1] }))).toEqual([1, 0, 0]);
+    expect(Array.from(filterMask(g, { ...ALL, genders: [2, 0] }))).toEqual([0, 1, 1]);
   });
 });
 
@@ -142,13 +147,26 @@ describe('excess vocabulary', () => {
     const ctx = buildWordContext(t, cube, { ...ALL, fac: [0] }, false);
     expect(scoreWords(cube, ctx, { from: 2008, to: 2008, base: 5 }, 0.01).reason).toBe('too-early');
   });
+
+  it('sums only the selected genders in a gendered cube', () => {
+    const t = makeTheses([{ fac: 0, year: 2010 }]);
+    const per = 2 * 17 + 2 * 4 * 5;
+    const meta = { lang: 'cs', words: ['xx'], cells: 3 * per, preYears: 17, postYears: 4, aiValues: 5, faculties: 2, genders: 3 };
+    const cube: WordCube = { meta, langIndex: 0, lemma: false, counts: new Uint16Array(meta.cells), index: new Map([['xx', 0]]) };
+    expect(cellIndex(cube, t, 1, 2024, 3, 2)).toBe(2 * per + 2 * 17 + (1 * 4 + 1) * 5 + 3);
+    cube.counts[cellIndex(cube, t, 0, 2010, 0, 1)] = 7;
+    cube.counts[cellIndex(cube, t, 0, 2010, 0, 2)] = 5;
+    const yi = 2010 - 2006;
+    expect(wordCounts(cube, buildWordContext(t, cube, { ...ALL, fac: [0] }, false), 0)[0][yi]).toBe(12);
+    expect(wordCounts(cube, buildWordContext(t, cube, { ...ALL, fac: [0], genders: [2] }, false), 0)[0][yi]).toBe(5);
+  });
 });
 
 describe('url state', () => {
   const d: Domain = { facCodes: ['a', 'b', 'c'], langs: ['cs', 'en', 'sk', 'other'], yearMin: 2006, yearMax: 2026, metrics: ['m1', 'm2'] };
   it('round-trips', () => {
     const s = { ...defaults(d), view: 'grades' as const, locale: 'cs' as const, fac: [0, 2], yearFrom: 2010, yearTo: 2024,
-      langs: [0, 1], ai: [1], metric: 'm2', word: 'čeština', wordLang: 1, minFreq: 0.02, wordFrom: 2023, wordTo: 2025, wordBase: 4, lemma: false, wordRank: 'ratio' as const, gradeYear: 2020,
+      langs: [0, 1], ai: [1], genders: [1], metric: 'm2', word: 'čeština', wordLang: 1, minFreq: 0.02, wordFrom: 2023, wordTo: 2025, wordBase: 4, lemma: false, wordRank: 'ratio' as const, gradeYear: 2020,
       brushes: { mattr: [0.7, 0.75] as [number, number] }, table: { trends: true } };
     expect(decode(encode(s, d), d)).toEqual(s);
   });

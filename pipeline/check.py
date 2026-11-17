@@ -15,7 +15,8 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "web" / "public" / "data"
 DATA = ROOT / "data"
-BUDGET_MB = {"theses": 3.0, "words-cs": 4.0, "words-en": 4.0, "words-sk": 4.0, "words-other": 4.0}
+# word cubes carry a gender dimension (x3 cells) since the dataset added author_gender
+BUDGET_MB = {"theses": 3.0, "words-cs": 5.0, "words-en": 5.0, "words-sk": 5.0, "words-other": 5.0}
 
 failures: list[str] = []
 
@@ -58,21 +59,25 @@ def main() -> None:
     usable = col("usable").astype(bool)
     fac = col("fac")
     lang = col("lang")
+    gender = col("gender")
+    check(set(np.unique(gender)) <= {0, 1, 2}, "gender in 0..2")
     for li, lg in enumerate(meta["langs"]):
         wm = json.loads((OUT / f"words-{lg}.json").read_text())
         counts = np.frombuffer(gzip.decompress((OUT / f"words-{lg}.bin.gz").read_bytes()), dtype=np.uint16)
         check(counts.size == len(wm["words"]) * wm["cells"], f"words-{lg}: matrix size")
         mat = counts.reshape(len(wm["words"]), wm["cells"])
         # every cell count must be <= the number of usable theses in that cell
-        F, pre, post, A = wm["faculties"], wm["preYears"], wm["postYears"], wm["aiValues"]
+        F, pre, post, A, G = wm["faculties"], wm["preYears"], wm["postYears"], wm["aiValues"], wm["genders"]
+        per_g = wm["cells"] // G
+        check(per_g * G == wm["cells"] and per_g == F * pre + F * post * A, f"words-{lg}: cell layout")
         denom = np.zeros(wm["cells"], dtype=np.int64)
         sel = usable & (lang == li)
-        for f, y, a in zip(fac[sel], year[sel], ai[sel]):
+        for f, y, a, g in zip(fac[sel], year[sel], ai[sel], gender[sel]):
             if y < meta["aiYear"]:
                 c = f * pre + (y - meta["yearMin"])
             else:
                 c = F * pre + (f * post + (y - meta["aiYear"])) * A + a
-            denom[c] += 1
+            denom[int(g) * per_g + int(c)] += 1
         check(bool(np.all(mat.max(axis=0) <= denom)), f"words-{lg}: no cell exceeds its thesis count")
         if lg in ("cs", "sk"):
             for suffix in ("", "-lemma"):

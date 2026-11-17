@@ -10,6 +10,7 @@ export interface AppState {
   yearTo: number;
   langs: number[];
   ai: number[];
+  genders: number[];
   metric: string;
   word: string | null;
   wordLang: number | null;
@@ -41,6 +42,7 @@ export function defaults(d: Domain): AppState {
     yearTo: d.yearMax - 1,  // current year is incomplete
     langs: [0],
     ai: [1, 2, 3, 4],
+    genders: [0, 1, 2],
     // the measure that moved most after ChatGPT (relative to its spread); see docs/PLAN.md
     metric: d.metrics.includes('long_word_ratio') ? 'long_word_ratio' : d.metrics[0],
     word: null,
@@ -59,6 +61,8 @@ export function defaults(d: Domain): AppState {
 }
 
 const VIEWS: View[] = ['words', 'trends', 'grades'];
+/** URL names of the gender codes 0..2 */
+const GENDER_KEYS = ['unknown', 'female', 'male'];
 
 function sameSet(a: number[], b: number[]) {
   return a.length === b.length && a.every((x) => b.includes(x));
@@ -73,6 +77,7 @@ export function encode(s: AppState, d: Domain): string {
   if (s.yearFrom !== def.yearFrom || s.yearTo !== def.yearTo) p.set('y', `${s.yearFrom}-${s.yearTo}`);
   if (!sameSet(s.langs, def.langs)) p.set('lg', s.langs.map((i) => d.langs[i]).join(',') || '-');
   if (!sameSet(s.ai, def.ai)) p.set('ai', s.ai.join(',') || '-');
+  if (!sameSet(s.genders, def.genders)) p.set('g', s.genders.map((i) => GENDER_KEYS[i]).join(',') || '-');
   if (s.metric !== def.metric) p.set('m', s.metric);
   if (s.word) p.set('w', s.word);
   if (s.wordLang !== null) p.set('wl', d.langs[s.wordLang]);
@@ -112,6 +117,7 @@ export function decode(query: string, d: Domain): AppState {
   };
   s.fac = list('f', d.facCodes) ?? s.fac;
   s.langs = list('lg', d.langs) ?? s.langs;
+  s.genders = list('g', GENDER_KEYS) ?? s.genders;
   const ai = p.get('ai');
   if (ai !== null) s.ai = ai === '-' ? [] : ai.split(',').map((x) => intIn(x, 1, 4)).filter((x): x is number => x !== null);
   const y = p.get('y')?.match(/^(\d{4})-(\d{4})$/);

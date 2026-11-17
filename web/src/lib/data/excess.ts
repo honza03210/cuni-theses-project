@@ -18,11 +18,12 @@ export interface WordContext {
 }
 
 /** Cube cell layout, mirrored from pipeline/build.py */
-export function cellIndex(cube: WordCube, t: Theses, fac: number, year: number, ai: number): number {
+export function cellIndex(cube: WordCube, t: Theses, fac: number, year: number, ai: number, gender = 0): number {
   const m = cube.meta;
-  if (year < t.meta.aiYear) return fac * m.preYears + (year - t.meta.yearMin);
   const base = m.faculties * m.preYears;
-  return base + (fac * m.postYears + (year - t.meta.aiYear)) * m.aiValues + ai;
+  const g = gender * (base + m.faculties * m.postYears * m.aiValues);
+  if (year < t.meta.aiYear) return g + fac * m.preYears + (year - t.meta.yearMin);
+  return g + base + (fac * m.postYears + (year - t.meta.aiYear)) * m.aiValues + ai;
 }
 
 export function buildWordContext(t: Theses, cube: WordCube, f: Filters, aiOn: boolean): WordContext {
@@ -38,12 +39,13 @@ export function buildWordContext(t: Theses, cube: WordCube, f: Filters, aiOn: bo
     if (fi !== undefined) denom[fi][t.year[i]]++;
   }
   const aiList = aiOn ? f.ai : [0, 1, 2, 3, 4];
+  const gList = (cube.meta.genders ?? 1) > 1 ? f.genders : [0];
   const cells = f.fac.map((fac) => {
     const perYear: number[][] = [];
     for (let yi = 0; yi < ny; yi++) {
       const year = yearMin + yi;
-      perYear.push(year < aiYear ? [cellIndex(cube, t, fac, year, 0)]
-                                 : aiList.map((a) => cellIndex(cube, t, fac, year, a)));
+      perYear.push(gList.flatMap((g) => year < aiYear ? [cellIndex(cube, t, fac, year, 0, g)]
+                                                     : aiList.map((a) => cellIndex(cube, t, fac, year, a, g))));
     }
     return perYear;
   });

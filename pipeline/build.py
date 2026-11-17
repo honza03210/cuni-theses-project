@@ -28,6 +28,9 @@ POST_YEARS = YEAR_MAX - AI_YEAR + 1  # 4 years with the AI split
 LANGS = ["cs", "en", "sk", "other"]
 # index 0 = not available (pre-2023, restricted text, ...)
 AI_VALUES = [None, "declared use", "declared no use", "template only", "no statement found"]
+# author_gender is inferred from the name in the dataset; index 0 = the name does not tell
+GENDERS = [None, "female", "male"]
+GENDER_CASE = "CASE author_gender WHEN 'female' THEN 1 WHEN 'male' THEN 2 ELSE 0 END"
 
 FACULTIES = [
     # code, abbreviation, Czech name, English name
@@ -100,6 +103,7 @@ def build_theses(con: duckdb.DuckDBPyConnection) -> dict:
     df = con.sql(f"""
         SELECT {fac_case} AS fac, year - {YEAR_MIN} AS year, {lang_case} AS lang,
                CASE WHEN year >= {AI_YEAR} THEN {ai_case} ELSE 0 END AS ai,
+               {GENDER_CASE} AS gender,
                COALESCE(CAST(grade_points AS INTEGER), 0) AS grade,
                CAST(COALESCE(usable, false) AS INTEGER) AS usable,
                CAST(COALESCE(usable, false) AND body_method = 'intro-back' AS INTEGER) AS clean,
@@ -111,7 +115,7 @@ def build_theses(con: duckdb.DuckDBPyConnection) -> dict:
     assert df["fac"].notna().all(), "unknown faculty code"
     n = len(df)
 
-    u8_cols = ["fac", "year", "lang", "ai", "grade", "usable", "clean"]
+    u8_cols = ["fac", "year", "lang", "ai", "gender", "grade", "usable", "clean"]
     parts: list[bytes] = []
     columns = []
     offset = 0
@@ -150,6 +154,7 @@ def build_theses(con: duckdb.DuckDBPyConnection) -> dict:
         "faculties": [{"code": f[0], "abbr": f[1], "name": {"cs": f[2], "en": f[3]}} for f in FACULTIES],
         "langs": LANGS,
         "aiValues": [v or "n/a" for v in AI_VALUES],
+        "genders": [v or "unknown" for v in GENDERS],
         "metrics": metrics_meta,
     }
     (OUT / "theses.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1))
@@ -166,11 +171,14 @@ def build_words(con: duckdb.DuckDBPyConnection) -> None:
         f"WHEN '{v}' THEN {i}" for i, v in enumerate(AI_VALUES) if v) + " ELSE 0 END"
     # cell index: years < AI_YEAR -> fac*PRE + (year-YEAR_MIN);
     #             years >= AI_YEAR -> base + (fac*POST + (year-AI_YEAR))*5 + ai
+    #             plus gender * per_gender (gender is the outermost dimension)
     base = len(FACULTIES) * PRE_YEARS
-    n_cells = base + len(FACULTIES) * POST_YEARS * len(AI_VALUES)
+    per_gender = base + len(FACULTIES) * POST_YEARS * len(AI_VALUES)
+    n_cells = per_gender * len(GENDERS)
     con.sql(f"""
         CREATE OR REPLACE TEMP TABLE t AS
         SELECT item_id, {lang_group_sql()} AS lg, year,
+               ({GENDER_CASE}) * {per_gender} +
                CASE WHEN year < {AI_YEAR}
                     THEN ({fac_case}) * {PRE_YEARS} + (year - {YEAR_MIN})
                     ELSE {base} + (({fac_case}) * {POST_YEARS} + (year - {AI_YEAR})) * {len(AI_VALUES)} + ({ai_case})
@@ -284,7 +292,7 @@ def write_cube(lang: str, suffix: str, vocab: list[str], counts, n_cells: int, f
     meta = {
         "lang": lang, "words": vocab, "cells": n_cells,
         "preYears": PRE_YEARS, "postYears": POST_YEARS, "aiValues": len(AI_VALUES),
-        "faculties": len(FACULTIES),
+        "faculties": len(FACULTIES), "genders": len(GENDERS),
     }
     if forms is not None:
         meta["forms"] = forms

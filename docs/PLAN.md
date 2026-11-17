@@ -429,3 +429,11 @@ aggregation code); the other takes phase 1's word cube and 3c.
 - Parallel plot: the overlap note names the number of grades shown; wider first gap so "Grade"
   and the first axis label never collide. Grade-area ChatGPT label is plain ink; no-break spaces
   keep "3.6 % → 3.6 %" together.
+
+## Author gender filter (dataset update, 2026-11-17)
+
+- The dataset added `author_gender` (female / male inferred from the name, null when the name does not tell; ~7 %).
+- `theses.bin.gz` gains a u8 `gender` column (0 unknown, 1 female, 2 male).
+- Word cubes gain gender as the outermost cell dimension (×3 cells), so the Words view honours the filter.
+  Czech cubes grow to ~4.7 MB (forms) and ~4.0 MB (lemmas) gz; the check budget is 5 MB.
+- Filter panel: "Author gender" (Women / Men / Name does not tell) after Language, with a note that it is inferred. URL key `g`.

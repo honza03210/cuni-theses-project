@@ -88,7 +88,7 @@
   });
   $effect(() => { document.documentElement.lang = app.locale; document.title = L.t.title; });
 
-  const filters = $derived({ fac: app.fac, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai });
+  const filters = $derived({ fac: app.fac, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai, genders: app.genders });
   const mask = $derived(theses ? filterMask(theses, filters) : null);
   const matched = $derived(mask ? countMask(mask) : 0);
 

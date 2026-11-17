@@ -26,6 +26,8 @@ export interface ThesesMeta {
   faculties: Faculty[];
   langs: string[];
   aiValues: string[];
+  /** author gender inferred from the name: 0 = unknown, 1 = female, 2 = male */
+  genders: string[];
   metrics: MetricMeta[];
 }
 
@@ -37,6 +39,7 @@ export interface Theses {
   year: Uint8Array;
   lang: Uint8Array;
   ai: Uint8Array;
+  gender: Uint8Array;
   grade: Uint8Array;
   usable: Uint8Array;
   clean: Uint8Array;
@@ -51,6 +54,8 @@ export interface WordsMeta {
   postYears: number;
   aiValues: number;
   faculties: number;
+  /** gender is the outermost cell dimension (1 in cubes built before the gender column) */
+  genders?: number;
   /** lemma cubes only: the most used word forms behind each lemma */
   forms?: string[][];
 }
@@ -70,4 +75,5 @@ export interface Filters {
   yearTo: number;
   langs: number[];    // selected language indices
   ai: number[];       // selected AI declaration indices (1..4); all four = no filter
+  genders: number[];  // selected author genders (0 unknown, 1 female, 2 male); all three = no filter
 }

@@ -25,64 +25,69 @@
    "offset": 197871
   },
   {
-   "name": "grade",
+   "name": "gender",
    "type": "u8",
    "offset": 263828
   },
   {
-   "name": "usable",
+   "name": "grade",
    "type": "u8",
    "offset": 329785
   },
   {
-   "name": "clean",
+   "name": "usable",
    "type": "u8",
    "offset": 395742
   },
   {
+   "name": "clean",
+   "type": "u8",
+   "offset": 461699
+  },
+  {
    "name": "mean_word_len",
    "type": "f32",
-   "offset": 461700
+   "offset": 527656
   },
   {
    "name": "mean_sentence_len",
    "type": "f32",
-   "offset": 725528
+   "offset": 791484
   },
   {
    "name": "std_sentence_len",
    "type": "f32",
-   "offset": 989356
+   "offset": 1055312
   },
   {
    "name": "mattr",
    "type": "f32",
-   "offset": 1253184
+   "offset": 1319140
   },
   {
    "name": "repeated_trigram_ratio",
    "type": "f32",
-   "offset": 1517012
+   "offset": 1582968
   },
   {
    "name": "long_word_ratio",
    "type": "f32",
-   "offset": 1780840
+   "offset": 1846796
   },
   {
    "name": "em_dash_per_1000w",
    "type": "f32",
-   "offset": 2044668
+   "offset": 2110624
   },
   {
    "name": "comma_per_1000w",
    "type": "f32",
-   "offset": 2308496
+   "offset": 2374452
   },
   {
    "name": "first_person_sg_per_1000w",
    "type": "f32",
-   "offset": 2572324
+   "offset": 2638280
   }
  ],
  "faculties": [
@@ -219,6 +224,11 @@
   "declared no use",
   "template only",
   "no statement found"
+ ],
+ "genders": [
+  "unknown",
+  "female",
+  "male"
  ],
  "metrics": [
   {

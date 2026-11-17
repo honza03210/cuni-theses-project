@@ -34,7 +34,7 @@ export async function loadTheses(): Promise<Theses> {
   for (const m of meta.metrics) metrics[m.key] = new Float32Array(buf, col(m.key).offset, n);
   return {
     meta, n,
-    fac: u8('fac'), year: u8('year'), lang: u8('lang'), ai: u8('ai'),
+    fac: u8('fac'), year: u8('year'), lang: u8('lang'), ai: u8('ai'), gender: u8('gender'),
     grade: u8('grade'), usable: u8('usable'), clean: u8('clean'),
     metrics,
   };

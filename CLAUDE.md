@@ -19,12 +19,13 @@ built by a team of two; see `PRODUCT.md` (product context), `docs/PLAN.md`
 
 - `pipeline/build.py` → `web/public/data/` (committed, about 5 MB gz):
   - `theses.bin.gz`: columnar per-thesis table. u8 columns (fac, year offset,
-    lang, ai, grade, usable, clean), then f32 metric columns. Metrics are NaN
+    lang, ai, gender, grade, usable, clean), then f32 metric columns. Metrics are NaN
     unless `clean` (`body_method == "intro-back"`). The layout is described in
     `theses.json`.
   - `words-<lang>.bin.gz`: dense Uint16 word × cell matrix of "theses using the
     word ≥ 2×". The cell layout is defined in `build.py` and mirrored in
-    `web/src/lib/data/excess.ts` (`cellIndex`); keep the two in sync.
+    `web/src/lib/data/excess.ts` (`cellIndex`); keep the two in sync. Gender
+    (0 unknown, 1 female, 2 male) is the outermost cell dimension.
 - `web/src/lib/state/app.svelte.ts` holds the one `$state` object for every
   filter/view setting. `url.ts` encodes and decodes it to the query string, and
   `App.svelte` syncs it with `replaceState`. New persistent UI state goes
@@ -40,6 +41,8 @@ built by a team of two; see `PRODUCT.md` (product context), `docs/PLAN.md`
 - Style trends: only `clean` rows; don't mix languages (the UI warns).
   Faculty × year cells with n < 20 are hidden (`MIN_CELL_N`).
 - The AI-declaration filter only narrows years ≥ 2023 (`filterMask`).
+- Author gender is inferred from the name in the dataset, not self-reported;
+  say so wherever it is shown.
 - 2026 is incomplete: drawn dotted and excluded from the default range.
 - Grades: common 1–4 scale (`grade_points`). A–F only exists at ETF/FSV.
 - Word data counts words used ≥ 2× per thesis. Lemma cubes (`words-<lang>-lemma`)
