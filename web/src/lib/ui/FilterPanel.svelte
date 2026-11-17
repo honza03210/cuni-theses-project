@@ -29,6 +29,16 @@
     return { fac, lang, ai };
   });
 
+  // With the AI filter on, the count mixes two groups: declared theses from 2023 on + all earlier ones.
+  const split = $derived.by(() => {
+    if (!aiFilterActive(app.ai) || !aiApplies) return null;
+    const m = filterMask(theses, { fac: app.fac, yearFrom: app.yearFrom, yearTo: app.yearTo, langs: app.langs, ai: app.ai });
+    const aiY = meta.aiYear - meta.yearMin;
+    let post = 0, pre = 0;
+    for (let i = 0; i < theses.n; i++) if (m[i]) { if (theses.year[i] >= aiY) post++; else pre++; }
+    return { post, pre };
+  });
+
   function toggle(list: number[], v: number): number[] {
     return list.includes(v) ? list.filter((x) => x !== v) : [...list, v].sort((a, b) => a - b);
   }
@@ -45,7 +55,7 @@
     <strong>{L.f.int(matched)}</strong>
     <span>{L.t['filters.match']}</span>
   </div>
-  {#if aiFilterActive(app.ai) && aiApplies}<p class="note counts-note ai-count">{L.t['filters.countAi']}</p>{/if}
+  {#if split}<p class="note counts-note ai-count">{L.t['filters.countSplit'](L.f.int(split.post), L.f.int(split.pre))}</p>{/if}
   <p class="note counts-note">{L.t['filters.countsNote']}</p>
 
   <fieldset disabled={!aiApplies}>
@@ -101,6 +111,8 @@
         onchange={(a, b) => { app.yearFrom = a; app.yearTo = b; }} />
       {#if app.yearTo === meta.yearMax}<p class="note">{L.t['filters.incomplete']}</p>{/if}
     </fieldset>
+  {:else}
+    <p class="note years-moved">{L.t['filters.yearsOnTimeline']}</p>
   {/if}
 
   <fieldset>

@@ -91,6 +91,7 @@
     margin: 2px 0 0;
     font-size: var(--fs-sm);
     color: var(--ink-3);
+    text-wrap: pretty;
   }
   .tools {
     display: flex;

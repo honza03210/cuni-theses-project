@@ -36,7 +36,7 @@
       const layout = cloud<(typeof input)[number]>()
         .size([w, h])
         .words(input.map((d) => ({ ...d })))
-        .padding(3)
+        .padding(4)
         .rotate(0)
         .font(`"${FONT}"`)
         .fontWeight((d) => ((d as { rise: boolean }).rise ? 700 : 400))
@@ -64,7 +64,8 @@
   const bounds = $derived.by(() => {
     if (!placed.length) return { top: -height / 2, h: height };
     let lo = Infinity, hi = -Infinity;
-    for (const p of placed) { lo = Math.min(lo, p.y - p.size * 0.65); hi = Math.max(hi, p.y + p.size * 0.65); }
+    // d3-cloud places the baseline at y: ascenders/diacritics reach ~0.95em above, descenders ~0.3em below
+    for (const p of placed) { lo = Math.min(lo, p.y - p.size * 0.95); hi = Math.max(hi, p.y + p.size * 0.3); }
     return { top: lo - 6, h: hi - lo + 12 };
   });
 
@@ -94,7 +95,7 @@
         <text
           role="button"
           class="w" class:rise={p.rise} class:fall={!p.rise} class:sel={selected === p.text}
-          style:transform="translate({p.x}px, {p.y}px)" style:font-size="{p.size}px" text-anchor="middle" dy="0.35em"
+          style:transform="translate({p.x}px, {p.y}px)" style:font-size="{p.size}px" text-anchor="middle"
           tabindex={order[active] === p.text || (!order.includes(order[active]) && order[0] === p.text) ? 0 : -1}
           data-w={p.text}
           aria-label="{p.text}{gloss?.(p.text) ? ` (${gloss(p.text)})` : ''}: {p.rise ? L.t['words.more'] : L.t['words.less']}, {L.f.pct(p.s.observed, 1)} / {L.f.pct(p.s.expected, 1)}"

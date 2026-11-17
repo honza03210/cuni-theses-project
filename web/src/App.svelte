@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { onMount } from 'svelte';
   import { loadTheses } from './lib/data/load';
   import { countMask, filterMask } from './lib/data/select';
@@ -16,7 +17,8 @@
   let drawerOpen = $state(false);
   let bandH = $state(58);
   let drawerBtn: HTMLButtonElement | undefined = $state();
-  function closeDrawer() { drawerOpen = false; drawerBtn?.focus(); }
+  // focus returns to the Filters button once the page behind is no longer inert
+  function closeDrawer() { drawerOpen = false; tick().then(() => drawerBtn?.focus()); }
   $effect(() => {
     if (!drawerOpen) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeDrawer(); };
@@ -24,6 +26,14 @@
     // move focus into the drawer
     queueMicrotask(() => document.querySelector<HTMLElement>('.drawer-close')?.focus());
     return () => removeEventListener('keydown', onKey);
+  });
+
+  // a drawer left open while the window widens past the breakpoint would leave the page inert
+  $effect(() => {
+    const wide = matchMedia('(min-width: 1024px)');
+    const on = () => { if (wide.matches) drawerOpen = false; };
+    wide.addEventListener('change', on);
+    return () => wide.removeEventListener('change', on);
   });
 
   // Theme: follows the OS until the viewer picks one; the pick is remembered per browser.
@@ -117,7 +127,7 @@
 
 <a class="skip" href="#view-panel">{L.t['common.skip']}</a>
 <div class="shell" class:drawer-open={drawerOpen} style:--band-h="{bandH}px">
-  <header class="band" bind:clientHeight={bandH}>
+  <header class="band" bind:clientHeight={bandH} inert={drawerOpen}>
     <div class="brand">
       <h1>{L.t.title}</h1>
       <p>{L.t.subtitle}</p>
@@ -142,7 +152,8 @@
     </div>
   </header>
 
-  <aside id="filters" class="filters" aria-label={L.t['filters.title']}>
+  <aside id="filters" class="filters" aria-label={L.t['filters.title']}
+    role={drawerOpen ? 'dialog' : undefined} aria-modal={drawerOpen ? 'true' : undefined}>
     <div class="drawer-head">
       <span class="drawer-title">{L.t['filters.title']}</span>
       <button type="button" class="drawer-close" onclick={closeDrawer}>{L.t['filters.done']}</button>
@@ -157,7 +168,7 @@
     <button type="button" class="scrim" aria-label={L.t['filters.close']} tabindex="-1" onclick={closeDrawer}></button>
   {/if}
 
-  <main>
+  <main inert={drawerOpen}>
   <div id="view-panel" role="tabpanel" tabindex="-1" aria-labelledby={tabIds[app.view]}>
     {#if error}
       <div class="state">

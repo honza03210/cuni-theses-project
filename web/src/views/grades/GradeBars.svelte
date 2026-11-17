@@ -6,40 +6,67 @@
   import { L } from '../../lib/locale.svelte';
   import Tooltip from '../../lib/ui/Tooltip.svelte';
 
-  interface Props { rows: GradeFac[]; all: GradeFac; faculties: Faculty[] }
-  let { rows, all, faculties }: Props = $props();
+  /** Horizontal 100 % bars, one row per faculty. With `prev`, each row holds two bars:
+   *  the earlier period (thin, upper) and the later one (full, lower), labelled by `tags`. */
+  interface Props { rows: GradeFac[]; all: GradeFac; faculties: Faculty[]; prev?: GradeFac[] | null; prevAll?: GradeFac | null; tags?: [string, string] }
+  let { rows, all, faculties, prev = null, prevAll = null, tags = ['', ''] }: Props = $props();
 
-  // Horizontal 100 % bars: one row per faculty, so every label stays readable.
   let width = $state(420);
-  // Faculties with fewer than SMALL theses are unreliable: faded and listed after the others,
+  // Faculties with fewer than SMALL theses are unreliable: outlined and listed after the others,
   // so a tiny faculty never tops what reads like a ranking.
   const SMALL = 50;
+  const paired = $derived(!!prev);
+  const prevOf = (f: number) => (f < 0 ? prevAll : prev?.find((r) => r.fac === f)) ?? null;
+  const isSmall = (r: GradeFac) => r.total < SMALL || (paired && (prevOf(r.fac)?.total ?? 0) < SMALL);
   const byShare = (a: GradeFac, b: GradeFac) => b.counts[0] / b.total - a.counts[0] / a.total;
   const sorted = $derived([
-    ...rows.filter((r) => r.total >= SMALL).sort(byShare),
-    ...rows.filter((r) => r.total > 0 && r.total < SMALL).sort(byShare),
+    ...rows.filter((r) => r.total > 0 && !isSmall(r)).sort(byShare),
+    ...rows.filter((r) => r.total > 0 && isSmall(r)).sort(byShare),
   ]);
   const bars = $derived(all.total > 0 ? [all, ...sorted] : sorted);
-  const rowH = 18;
+  const rowH = $derived(paired ? 26 : 18);
   const m = { top: 4, right: 52, bottom: 22, left: 52 };
   const ih = $derived(bars.length * rowH + 8);
   const height = $derived(ih + m.top + m.bottom);
   const iw = $derived(Math.max(10, width - m.left - m.right));
-  const y = $derived(scaleBand<number>().domain(bars.map((b) => b.fac)).range([0, ih]).paddingInner(0.22).paddingOuter(0.05));
+  const y = $derived(scaleBand<number>().domain(bars.map((b) => b.fac)).range([0, ih]).paddingInner(paired ? 0.16 : 0.22).paddingOuter(0.05));
   const x = $derived(scaleLinear().domain([0, 1]).range([0, iw]));
   const label = (f: number) => (f < 0 ? L.t['filters.all'] : faculties[f].abbr);
+  // paired rows: earlier bar 40 % of the band, later bar 60 %, 2px apart
+  const parts = $derived.by(() => {
+    const bw = y.bandwidth();
+    return paired ? { prevY: 0, prevH: bw * 0.4 - 1, curY: bw * 0.4 + 1, curH: bw * 0.6 - 1 } : { prevY: 0, prevH: 0, curY: 0, curH: bw };
+  });
 
   function segs(r: GradeFac) {
     let acc = 0;
-    return [0, 1, 2, 3].map((g) => { const s = r.counts[g] / r.total; const seg = { g, x0: acc, x1: acc + s }; acc += s; return seg; });
+    return [0, 1, 2, 3].map((g) => { const s = r.total ? r.counts[g] / r.total : 0; const seg = { g, x0: acc, x1: acc + s }; acc += s; return seg; });
   }
 
-  let hover: { r: GradeFac; cx: number; cy: number } | null = $state(null);
+  let hover: { r: GradeFac; tag: string; cx: number; cy: number } | null = $state(null);
   const missing = $derived(rows.filter((r) => r.total === 0).map((r) => faculties[r.fac].abbr));
+  const ariaText = $derived(bars.map((b) => {
+    const p = prevOf(b.fac);
+    return paired && p?.total
+      ? `${label(b.fac)}: 1 ${L.f.pct(p.counts[0] / p.total)} → ${L.f.pct(b.counts[0] / b.total)}`
+      : `${label(b.fac)}: 1 ${L.f.pct(b.counts[0] / b.total)}`;
+  }).join(', '));
 </script>
 
+{#snippet bar(r: GradeFac, yy: number, h: number, tag: string)}
+  <g class="seg-row" role="presentation" onpointermove={(e) => (hover = { r, tag, cx: e.clientX, cy: e.clientY })} onpointerleave={() => (hover = null)}>
+    {#each segs(r) as s (s.g)}
+      <rect x={x(s.x0)} y={yy} width={Math.max(0, x(s.x1) - x(s.x0))} height={h}
+        fill={s.g === 3 ? 'url(#hatch4b)' : GRADE_VARS[s.g]} stroke={GRADE_VARS[s.g]} />
+    {/each}
+  </g>
+{/snippet}
+
 <div class="wrap" bind:clientWidth={width}>
-  <svg {width} {height} role="img" aria-label={bars.map((b) => `${label(b.fac)}: ${L.f.pct(b.counts[0] / b.total)} 1`).join(', ')}>
+  {#if paired}
+    <p class="pkey"><span class="pk prev"></span>{tags[0]}<span class="pk cur"></span>{tags[1]}</p>
+  {/if}
+  <svg {width} {height} role="img" aria-label={ariaText}>
     <defs>
       <pattern id="hatch4b" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
         <rect width="5" height="5" fill="var(--grade-4)" />
@@ -51,16 +78,12 @@
         <text x={x(t)} y={ih + 15} text-anchor="middle">{t * 100} %</text>
       {/each}
       {#each bars as b (b.fac)}
-        {@const small = b.total < SMALL}
-        <g class="bar" class:small class:all={b.fac < 0} transform="translate(0,{y(b.fac)})"
-          onpointermove={(e) => (hover = { r: b, cx: e.clientX, cy: e.clientY })}
-          onpointerleave={() => (hover = null)} role="presentation">
-          <text class="yl" x="-8" y={y.bandwidth() / 2} dy="0.32em" text-anchor="end">{label(b.fac)}</text>
-          {#each segs(b) as s (s.g)}
-            <rect x={x(s.x0)} width={Math.max(0, x(s.x1) - x(s.x0))} height={y.bandwidth()}
-              fill={s.g === 3 ? 'url(#hatch4b)' : GRADE_VARS[s.g]} stroke={GRADE_VARS[s.g]} />
-          {/each}
-          <text class="yn" x={iw + 6} y={y.bandwidth() / 2} dy="0.32em">{L.f.int(b.total)}</text>
+        {@const p = prevOf(b.fac)}
+        <g class="bar" class:small={isSmall(b)} class:all={b.fac < 0} transform="translate(0,{y(b.fac)})">
+          <text class="yl" x="-8" y={paired ? parts.curY + parts.curH / 2 - 3 : y.bandwidth() / 2} dy="0.32em" text-anchor="end">{label(b.fac)}</text>
+          {#if paired && p && p.total}{@render bar(p, parts.prevY, parts.prevH, tags[0])}{/if}
+          {@render bar(b, parts.curY, parts.curH, paired ? tags[1] : '')}
+          <text class="yn" x={iw + 6} y={paired ? parts.curY + parts.curH / 2 : y.bandwidth() / 2} dy="0.32em">{L.f.int(b.total)}</text>
         </g>
       {/each}
       {#if bars.length > 1}
@@ -71,7 +94,7 @@
   {#if missing.length}<p class="note">{missing.join(', ')}: 0 {L.t['common.theses']}</p>{/if}
   {#if hover}
     <Tooltip x={hover.cx} y={hover.cy}>
-      <div class="tt-title">{hover.r.fac < 0 ? L.t['common.all'] : L.pick(faculties[hover.r.fac].name)}</div>
+      <div class="tt-title">{hover.r.fac < 0 ? L.t['common.all'] : L.pick(faculties[hover.r.fac].name)}{#if hover.tag}{' '}<span class="tt-tag">{hover.tag}</span>{/if}</div>
       {#each [0, 1, 2, 3] as g (g)}
         <div class="tt-row"><span><span class="swatch" style:background={GRADE_VARS[g]}></span>{g + 1} {L.t[`grade.${g + 1}` as 'grade.1']}</span><b>{L.f.pct(hover.r.counts[g] / hover.r.total)}</b></div>
       {/each}
@@ -84,15 +107,19 @@
 <style>
   .wrap { width: 100%; }
   svg { display: block; overflow: visible; }
-  .bar rect { stroke: var(--paper); stroke-width: 0.6; }
-  /* small faculties: hollow bars (outline + faint fill) read as weaker in both themes; label stays readable */
   .bar rect { stroke-width: 0; }
+  /* small faculties: hollow bars (outline + faint fill) read as weaker in both themes; label stays readable */
   .bar.small rect { fill-opacity: 0.14; stroke-width: 1; stroke-opacity: 0.8; }
   .bar.small .yl { font-weight: 400; font-style: italic; }
-  .bar:hover rect { stroke: var(--ink); stroke-width: 1; }
+  .seg-row:hover rect { stroke: var(--ink); stroke-width: 1; stroke-opacity: 1; }
   .yl { font-size: 12px; fill: var(--ink); font-weight: 600; }
   .bar.all .yl { font-weight: 700; }
   .yn { font-size: 11px; fill: var(--ink-3); }
   .sep { stroke: var(--rule); stroke-dasharray: 2 2; }
   .note { margin: 4px 0 0; font-size: var(--fs-xs); color: var(--ink-3); }
+  .pkey { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); }
+  .pk { display: inline-block; width: 18px; background: var(--ink-3); border-radius: 1px; }
+  .pk.prev { height: 5px; }
+  .pk.cur { height: 9px; margin-left: 12px; background: var(--ink-2); }
+  :global(.tt-tag) { font-weight: 400; color: var(--ink-2); }
 </style>

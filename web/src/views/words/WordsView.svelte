@@ -99,11 +99,18 @@
 
   const mfIndex = $derived(Math.max(0, MIN_FREQ_STEPS.findIndex((v) => v >= app.minFreq - 1e-9)));
 
-  const selected = $derived(app.word && cube && cube.index.has(app.word) ? app.word : null);
+  const chosen = $derived(app.word && cube && cube.index.has(app.word) ? app.word : null);
+  // Until the reader picks (or clears) a word, show the top rising word so the detail chart
+  // opens filled. It is not written to app.word, so the URL stays clean.
+  let cleared = $state(false);
+  const autoWord = $derived(!app.word && !cleared && movers?.rising.length && !(result?.reason) ? movers.rising[0].word : null);
+  const selected = $derived(chosen ?? autoWord);
   let detailEl: HTMLDivElement | undefined = $state();
   /** Select a word; bring its chart into view when it is below the fold. */
   async function pick(w: string, toggle = true) {
-    app.word = toggle && app.word === w ? null : w;
+    const off = toggle && selected === w;
+    app.word = off ? null : w;
+    cleared = off;
     if (!app.word || !detailEl) return;
     await tick();
     const r = detailEl.getBoundingClientRect();
@@ -157,15 +164,24 @@
   /** the number shown next to a word: the active measure first */
   const figure = (s: { gap: number; score: number }) => app.wordRank === 'gap' ? pp(s.gap) : L.t['words.ratio'](times(s.score));
   const SIZES = [13, 16, 21, 28, 38];
+  // Words often linked to AI-assisted academic writing (base forms; cs, sk and en).
+  const AI_VOCAB = new Set(['klíčový', 'komplexní', 'zdůrazňovat', 'zásadní', 'podtrhovat', 'umožňovat', 'přispívat', 'přispět',
+    'efektivní', 'nezbytný', 'významný', 'výrazně', 'inovativní', 'flexibilní', 'transparentní', 'multidisciplinární', 'posilovat',
+    'odrážet', 'zahrnovat', 'poskytovat', 'kľúčový', 'komplexný', 'zdôrazňovať', 'zásadný',
+    'key', 'crucial', 'comprehensive', 'delve', 'enhance', 'emphasise', 'emphasize', 'highlight', 'robust', 'foster', 'pivotal',
+    'nuanced', 'notably', 'underscore', 'leverage', 'multifaceted', 'innovative', 'facilitate', 'significant']);
+  const aiLike = $derived(movers ? movers.rising.slice(0, 12).map((s) => s.word).filter((w) => AI_VOCAB.has(w)).slice(0, 3) : []);
+  const smallSample = $derived(!!result && !result.reason && result.targetTotal < SMALL_TARGET);
 </script>
 
 <div class="words">
   <Lede howto={L.t['words.howto']}>
     {#if movers && result && !result.reason && movers.rising.length}
+      {#if aiGroup}<span class="lead-note">{L.t['ai.lede.note']}</span>{/if}
+      {#if smallSample}<span class="hedge">{L.t['words.lede.small'](result.targetTotal)}</span>{' '}{/if}
       <b>{aiGroup ? L.t['ai.lede.words'](aiWho(), aiSpan, baselineLabel) : L.t['words.lede.up'](blockLabel, baselineLabel)}</b>
-      {#each movers.rising.slice(0, 3) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw rise" onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({#if gloss(s.word)}‘{gloss(s.word)}’{', '}{/if}{figure(s)})</span>{/each}{#if movers.falling.length}; {L.t['words.lede.down']}{#each movers.falling.slice(0, 2) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw fall" onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({#if gloss(s.word)}‘{gloss(s.word)}’{', '}{/if}{figure(s)})</span>{/each}{/if}.
-      {#if aiGroup}<span class="frame">{L.t['ai.lede.note']}</span>
-      {:else if cmp.to >= 2023}<span class="frame">{L.t['words.lede.frame']}</span>{/if}
+      {#each movers.rising.slice(0, 3) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw" class:rise={!aiGroup} onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({#if gloss(s.word)}‘{gloss(s.word)}’{', '}{/if}{figure(s)})</span>{/each}{#if movers.falling.length}; {L.t['words.lede.down']}{#each movers.falling.slice(0, 2) as s, i (s.word)}{i ? ', ' : ' '}<button type="button" class="lw" class:fall={!aiGroup} onclick={() => pick(s.word, false)}>{s.word}</button> <span class="muted">({#if gloss(s.word)}‘{gloss(s.word)}’{', '}{/if}{figure(s)})</span>{/each}{/if}.
+      {#if !aiGroup && cmp.to >= 2023 && aiLike.length}<span class="frame">{L.t['words.lede.frame'](aiLike.join(', '))}</span>{/if}
     {:else}
       <span class="muted">{L.t['words.cloud.title']}.</span>
     {/if}
@@ -347,7 +363,7 @@
   .sugg .via { color: var(--ink-3); }
   .sugg li.act button { background: var(--petrol-tint); }
   .sugg .none { max-width: 300px; line-height: 1.45; }
-  .cmp-text { margin: 0; font-size: var(--fs-md); color: var(--ink-2); flex: 1 1 auto; }
+  .cmp-text { margin: 0; font-size: var(--fs-md); color: var(--ink-2); flex: 1 1 auto; text-wrap: pretty; }
   .cmp-text b { color: var(--ink); }
   .more { font-size: var(--fs-sm); color: var(--ink-2); }
   .more summary { cursor: pointer; padding: 4px 0; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
@@ -357,6 +373,7 @@
   .opt-sum { color: var(--ink); font-weight: 600; }
   .opts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s4); padding: var(--s2) 0; }
   .frame { display: block; margin-top: 6px; font-size: var(--fs-md); color: var(--ink-2); font-weight: 400; }
+  .hedge { color: var(--warn); font-weight: 600; }
   .sugg .none { padding: 5px 10px; font-size: var(--fs-sm); color: var(--ink-3); }
   .legend { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; font-size: var(--fs-sm); margin-bottom: var(--s2); }
   .lk::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 1px; vertical-align: -1px; }

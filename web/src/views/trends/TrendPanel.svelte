@@ -118,7 +118,7 @@
         {/if}
         {#if aiOn && aiYear >= yearFrom}
           <line class="marker ai" x1={x(aiYear - 0.5)} x2={x(aiYear - 0.5)} y1="0" y2={ih} />
-          {#if large || first}<text class="mlabel ai" x={x(aiYear - 0.5) - 4} y="22" text-anchor="end">{L.t['common.aiStart']}</text>{/if}
+          {#if large || first}<text class="mlabel ai" x={x(aiYear - 0.5) - 4} y="24" text-anchor="end">{L.t['common.aiStart']}</text>{/if}
         {/if}
 
         {#if showOthers}

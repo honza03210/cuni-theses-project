@@ -16,7 +16,7 @@
 </div>
 
 <style>
-  .lede { margin: 0 0 var(--s5); max-width: 92ch; }
+  .lede { margin: 0 0 var(--s5); max-width: 72ch; }
   .finding {
     margin: 0;
     font-size: 1.3125rem;
@@ -28,6 +28,8 @@
   .finding :global(.rise) { color: var(--rise); }
   .finding :global(.fall) { color: var(--fall); }
   .finding :global(.muted) { color: var(--ink-2); }
+  /* a caveat that must be read before the finding (e.g. AI-declaration filter) */
+  .finding :global(.lead-note) { display: block; margin: 0 0 6px; font-size: var(--fs-md); line-height: 1.45; color: var(--warn); font-weight: 600; }
   details { margin-top: 6px; font-size: var(--fs-sm); color: var(--ink-2); }
   summary {
     display: inline-flex; align-items: center; gap: 6px;

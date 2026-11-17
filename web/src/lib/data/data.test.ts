@@ -180,6 +180,10 @@ describe('answer lines', () => {
     expect(g.pre[0]).toBeCloseTo(60 / 80);
     expect(g.post[1]).toBeCloseTo(10 / 80);
     expect(g.same).toBe(false);
+    // a 0.1 shift against a spread of ~0.45 with 80 + 80 theses is within chance
+    expect(s.clear).toBe(false);
+    // excellent share 75 % -> 87.5 % with 80 + 80 theses is beyond its 95 % interval
+    expect(g.clear).toBe(true);
     // only 2024 holds post-window data, so the label names 2024, not 2023–2025
     expect(s.postSpan).toBe('2024');
     expect(g.postSpan).toBe('2024');

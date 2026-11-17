@@ -129,10 +129,10 @@
   .key li { display: inline-flex; align-items: center; gap: 6px; }
   .sep { stroke: var(--rule-soft); }
   .lab { font-size: 13px; font-weight: 600; fill: var(--ink); }
-  .u, .lab .u { font-size: 11.5px; font-weight: 400; fill: var(--ink-3); }
+  .u, .lab .u { font-size: 12.5px; font-weight: 400; fill: var(--ink-2); }
   .grid { stroke: var(--rule-soft); }
   .tick { font-size: 10.5px; fill: var(--ink-3); font-variant-numeric: tabular-nums; }
   .iqr { stroke: var(--ink-2); stroke-width: 1.5; }
   .cap { stroke: var(--ink-2); stroke-width: 1.5; fill: none; }
-  .mk { stroke: var(--ink); stroke-width: 0.9; }
+  .mk { stroke: var(--ink); stroke-width: 1.1; }
 </style>

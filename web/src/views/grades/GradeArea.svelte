@@ -5,8 +5,9 @@
   import { L } from '../../lib/locale.svelte';
   import Tooltip from '../../lib/ui/Tooltip.svelte';
 
-  interface Props { rows: GradeYear[]; selected: number; yearMax: number; onselect: (y: number) => void }
-  let { rows, selected, yearMax, onselect }: Props = $props();
+  /** `marked` = draw the selected-year rule (off while the bars compare before/after) */
+  interface Props { rows: GradeYear[]; selected: number; yearMax: number; onselect: (y: number) => void; marked?: boolean }
+  let { rows, selected, yearMax, onselect, marked = true }: Props = $props();
 
   let width = $state(600);
   const height = 300;
@@ -78,7 +79,7 @@
         <text x="-6" y={y(t)} dy="0.32em" text-anchor="end">{t * 100} %</text>
       {/each}
       {#each ticks as t (t)}
-        {#if Math.abs(x(t) - x(selected)) > 42}<text x={x(t)} y={ih + 16} text-anchor="middle">{t}</text>{/if}
+        {#if !marked || Math.abs(x(t) - x(selected)) > 42}<text x={x(t)} y={ih + 16} text-anchor="middle">{t}</text>{/if}
       {/each}
       {#if to >= yearMax}
         <rect x={x(yearMax - 1)} width={x(yearMax) - x(yearMax - 1)} y="0" height={ih} fill="var(--paper)" opacity="0.35" />
@@ -87,8 +88,10 @@
         <line class="marker" x1={x(CHATGPT_X)} x2={x(CHATGPT_X)} y1="-4" y2={ih} />
         <text class="mlabel" x={x(CHATGPT_X) - 5} y="12" text-anchor="end">{L.t['common.chatgpt']}</text>
       {/if}
-      <line class="sel" x1={x(selected)} x2={x(selected)} y1="-6" y2={ih + 4} />
-      <text class="sel-label" x={x(selected)} y={ih + 16} text-anchor="middle">{selected}</text>
+      {#if marked}
+        <line class="sel" x1={x(selected)} x2={x(selected)} y1="-6" y2={ih + 4} />
+        <text class="sel-label" x={x(selected)} y={ih + 16} text-anchor="middle">{selected}</text>
+      {/if}
       {#each labelYs as l (l.k)}
         <text class="blabel" x={iw + 8} y={l.y} dy="0.32em">{l.k + 1} · {L.t[`grade.${l.k + 1}` as 'grade.1']}</text>
       {/each}

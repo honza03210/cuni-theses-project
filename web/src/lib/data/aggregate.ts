@@ -89,11 +89,16 @@ export function gradesByYear(t: Theses, mask: Uint8Array, yearFrom: number, year
 export interface GradeFac { fac: number; counts: GradeCounts; total: number }
 
 export function gradesByFaculty(t: Theses, mask: Uint8Array, year: number, facs: number[]): GradeFac[] {
+  return gradesByFacultyRange(t, mask, year, year, facs);
+}
+
+/** Grade counts per faculty, pooled over the years [from, to]. */
+export function gradesByFacultyRange(t: Theses, mask: Uint8Array, from: number, to: number, facs: number[]): GradeFac[] {
   const nf = t.meta.faculties.length;
   const c = new Uint32Array(nf * 4);
-  const y = year - t.meta.yearMin;
+  const y0 = from - t.meta.yearMin, y1 = to - t.meta.yearMin;
   for (let i = 0; i < t.n; i++) {
-    if (!mask[i] || t.year[i] !== y) continue;
+    if (!mask[i] || t.year[i] < y0 || t.year[i] > y1) continue;
     const g = t.grade[i];
     if (g < 1 || g > 4) continue;
     c[t.fac[i] * 4 + g - 1]++;

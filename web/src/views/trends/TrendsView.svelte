@@ -51,6 +51,9 @@
   });
 
   const aiOn = $derived(aiFilterActive(app.ai) && app.yearTo >= meta.aiYear);
+  // In AI mode, faculties without any drawable point from 2023 on are listed in one line instead of an empty panel.
+  const noPost = $derived(aiOn ? facs.filter((f) => !(series.byFac.get(f) ?? []).some((p) => p.year >= meta.aiYear)) : []);
+  const shown = $derived(noPost.length ? facs.filter((f) => !noPost.includes(f)) : facs);
   const mixedLang = $derived(app.langs.length > 1);
   const hasData = $derived(series.overall.length > 0);
   const fmtV = (v: number) => L.f.num(v, metric.decimals);
@@ -58,8 +61,13 @@
   const phrase = $derived.by(() => {
     if (!shift) return '';
     const m = magnitude(shift.d);
+    if (m !== 'none' && !shift.clear) return L.t['mag.unclear'];
     return m === 'none' ? L.t['mag.none'] : L.t[`mag.${m}.${shift.post >= shift.pre ? 'up' : 'down'}` as 'mag.slight.up'];
   });
+  /** change as text: percentage points for share measures (already in %), relative % otherwise */
+  const relText = (sh: { pre: number; post: number; rel: number }) => L.pick(metric.unit).startsWith('%')
+    ? L.t['words.pp'](L.f.signed(sh.post - sh.pre, 1))
+    : L.f.pct(sh.rel, 1).replace(/^(?=\d)/, '+');
   const tableYears = $derived(Array.from({ length: app.yearTo - app.yearFrom + 1 }, (_, i) => app.yearFrom + i));
   const byYear = (pts: { year: number; mean: number; n: number }[] | undefined, y: number) => pts?.find((p) => p.year === y);
 </script>
@@ -68,15 +76,21 @@
   <div class="main">
     <Lede howto={L.t['trends.howto']}>
       {#if shift && aiOn}
+        <span class="lead-note">{L.t['ai.lede.note']}</span>
         <b>{L.t['ai.lede.trends'](aiWho(), shift.postSpan, L.pick(metric.label), fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit))}</b>
-        <span class="muted"> {L.t['ai.lede.note']}</span>
       {:else if shift}
-        <b>{L.t['trends.lede'](L.pick(metric.label), phrase, fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit), L.f.pct(shift.rel, 1).replace(/^(?=\d)/, '+'), shift.postTo)}</b>
-        {#if shift.facCompared > 1}<span class="muted"> {L.t['trends.lede.facs'](shift.facUp, shift.facCompared)}</span>{/if}
+        <b>{L.t['trends.lede'](L.pick(metric.label), phrase, fmtV(shift.pre), fmtV(shift.post), L.pick(metric.unit), relText(shift), shift.postTo)}</b>
+        {#if shift.facCompared > 1}<b class="facs"> {L.t['trends.lede.facs'](shift.facUp, shift.facCompared)}</b>{/if}
       {:else}
         <span class="muted">{L.t['trends.lede.na']}</span>
       {/if}
     </Lede>
+    <label class="msel">
+      <span>{L.t['trends.metric']}</span>
+      <select value={metric.key} onchange={(e) => (app.metric = e.currentTarget.value)}>
+        {#each meta.metrics as m (m.key)}<option value={m.key}>{L.pick(m.label)}</option>{/each}
+      </select>
+    </label>
     <Plate id="trends" stickyHead title={L.t['trends.title'](L.pick(metric.label))} unit={`${L.pick(metric.unit)} · ${app.yearFrom}–${app.yearTo} · ${L.t['trends.sorted']}`} foot={L.t['trends.foot']}>
       {#snippet tools()}
         <ul class="legend" aria-label="Legend">
@@ -109,11 +123,12 @@
 
       {#if mixedLang}<p class="warn" role="status">{L.t['trends.mixedLang']}</p>{/if}
       {#if aiOn && shift}<AiCaveat span={shift.postSpan} />{/if}
+      {#if noPost.length}<p class="nopost">{L.t['trends.noPost'](noPost.map((f) => meta.faculties[f].abbr).join(', '))}</p>{/if}
       {#if !facs.length || !hasData}
         <p class="empty">{L.t['common.empty']} <button type="button" class="fix" onclick={() => (app.fac = meta.faculties.map((_, i) => i))}>{L.t['common.selectAll']}</button></p>
       {:else}
         <div class="grid" class:single={facs.length === 1} bind:clientWidth={gridW}>
-          {#each facs as f, fi (f)}
+          {#each shown as f, fi (f)}
             <TrendPanel first={fi < cols} {showOthers}
               fac={f} faculty={meta.faculties[f]} {series} {facs} {yDomain} {metric} {aiOn}
               yearFrom={app.yearFrom} yearTo={app.yearTo} yearMax={meta.yearMax} aiYear={meta.aiYear}
@@ -156,6 +171,13 @@
   .legend li { display: inline-flex; align-items: center; gap: 6px; }
   .others { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
   .others input { margin: 0; }
+  .nopost { margin: 0 0 var(--s3); font-size: var(--fs-sm); color: var(--ink-2); }
+  .msel { display: none; }
+  @media (max-width: 639px) {
+    .msel { display: flex; flex-direction: column; gap: 4px; margin: 0 0 var(--s4); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+    .msel select { font: inherit; text-transform: none; letter-spacing: 0; font-size: var(--fs-md); font-weight: 600; color: var(--ink); background: var(--paper); border: 1px solid var(--ink-3); border-radius: 3px; padding: 9px 10px; min-height: 44px; }
+    .picker { display: none; }
+  }
   .warn { margin: 0 0 var(--s3); font-size: var(--fs-sm); color: var(--warn); font-weight: 600; }
   .empty { color: var(--ink-2); padding: var(--s6) 0; }
   .fix { margin-left: 6px; border: 1px solid var(--ink-3); background: var(--paper); color: var(--ink); border-radius: 3px; padding: 3px 10px; font-size: var(--fs-sm); cursor: pointer; }

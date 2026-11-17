@@ -343,3 +343,22 @@ aggregation code); the other takes phase 1's word cube and 3c.
   count explained; timeline labels no longer collide on phones.
 - Mobile drawer is `visibility: hidden` when closed (out of tab order) and only casts a shadow
   when open. Dark mode: small-sample grade bars are outlined, selected tab has a petrol rule.
+
+### Critique round 4 changes (29/40)
+
+- Words opens with the answer line's top rising word shown in "A word over time" (not written
+  to the URL; clearing it keeps the placeholder). The AI-vocabulary sentence appears only when
+  the top rising words include curated AI-associated words, and names them; the lede is hedged
+  when the compared years hold < 100 theses.
+- Answer lines are uncertainty-aware: `metricShift.clear` (Welch 95 % interval) and
+  `gradeShift.clear` (two-proportion test). Unclear changes read "no clear change / too few
+  theses to tell". Share measures report the change in pp, not relative %.
+- AI mode: the "different group" note leads each lede; Words drops rise/fall colour; the filter
+  count is split (declared from 2023 + earlier, all kept); Trends hides faculties without data
+  from 2023 and lists them in one line.
+- Grades by faculty defaults to before vs after ChatGPT (paired bars: thin = 2018–2022,
+  full = 2023+); clicking a year or "<year> only" switches to a single year. The parallel plot
+  ("Grade and writing style") now comes before the dot plot, whose rows follow its axis order.
+- Mobile/keyboard: the open drawer is a modal dialog (page behind is `inert`); cloud words are
+  positioned on their baseline (no `dy` offset, which caused overlaps); Trends uses a measure
+  `<select>` under the answer on phones. Lede measure 72ch.

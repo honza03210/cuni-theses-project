@@ -28,6 +28,8 @@ export interface MetricShift {
   post: number;
   postTo: number;      // last year in the post window
   d: number;           // standardised difference
+  /** the 95 % interval of post − pre excludes zero (Welch); false = too few theses / too noisy to tell */
+  clear: boolean;
   rel: number;         // relative change
   facUp: number;       // faculties whose mean rose
   facCompared: number; // faculties with enough theses in both windows
@@ -38,7 +40,7 @@ export interface MetricShift {
 export function metricShift(t: Theses, mask: Uint8Array, metric: string, postTo: number, minN = 20): MetricShift | null {
   const v = t.metrics[metric];
   const nf = t.meta.faculties.length;
-  const s = { pre: 0, preSq: 0, preN: 0, post: 0, postN: 0 };
+  const s = { pre: 0, preSq: 0, preN: 0, post: 0, postSq: 0, postN: 0 };
   const fPre = new Float64Array(nf), fPreN = new Uint32Array(nf), fPost = new Float64Array(nf), fPostN = new Uint32Array(nf);
   const perYear = new Map<number, number>();
   for (let i = 0; i < t.n; i++) {
@@ -48,11 +50,14 @@ export function metricShift(t: Theses, mask: Uint8Array, metric: string, postTo:
     const y = t.year[i] + t.meta.yearMin;
     const f = t.fac[i];
     if (y >= PRE[0] && y <= PRE[1]) { s.pre += x; s.preSq += x * x; s.preN++; fPre[f] += x; fPreN[f]++; }
-    else if (y >= POST_FROM && y <= postTo) { s.post += x; s.postN++; fPost[f] += x; fPostN[f]++; perYear.set(y, (perYear.get(y) ?? 0) + 1); }
+    else if (y >= POST_FROM && y <= postTo) { s.post += x; s.postSq += x * x; s.postN++; fPost[f] += x; fPostN[f]++; perYear.set(y, (perYear.get(y) ?? 0) + 1); }
   }
   if (s.preN < minN || s.postN < minN) return null;
   const pre = s.pre / s.preN, post = s.post / s.postN;
-  const sd = Math.sqrt(Math.max(1e-12, (s.preSq - s.preN * pre * pre) / (s.preN - 1)));
+  const preVar = Math.max(1e-12, (s.preSq - s.preN * pre * pre) / (s.preN - 1));
+  const postVar = Math.max(1e-12, (s.postSq - s.postN * post * post) / (s.postN - 1));
+  const sd = Math.sqrt(preVar);
+  const clear = Math.abs(post - pre) > 1.96 * Math.sqrt(preVar / s.preN + postVar / s.postN);
   let facUp = 0, facCompared = 0;
   for (let f = 0; f < nf; f++) {
     if (fPreN[f] >= minN && fPostN[f] >= minN) {
@@ -61,11 +66,12 @@ export function metricShift(t: Theses, mask: Uint8Array, metric: string, postTo:
     }
   }
   const postSpan = dataSpan((y) => perYear.get(y) ?? 0, POST_FROM, postTo) ?? `${POST_FROM}–${postTo}`;
-  return { pre, post, preN: s.preN, postN: s.postN, postSpan, postTo, d: (post - pre) / sd, rel: post / pre - 1, facUp, facCompared };
+  return { pre, post, preN: s.preN, postN: s.postN, postSpan, postTo, clear, d: (post - pre) / sd, rel: post / pre - 1, facUp, facCompared };
 }
 
 // [excellent, fail] shares; `same` = both shares moved by less than 1.5 percentage points
-export interface GradeShift { pre: [number, number]; post: [number, number]; postTo: number; postN: number; postSpan: string; same: boolean }
+// `clear` = at least one share moved beyond its 95 % interval (two-proportion test)
+export interface GradeShift { pre: [number, number]; post: [number, number]; postTo: number; postN: number; postSpan: string; same: boolean; clear: boolean }
 
 export function gradeShift(t: Theses, mask: Uint8Array, postTo: number, minN = 20): GradeShift | null {
   const c = { pre: [0, 0, 0], post: [0, 0, 0] }; // [excellent, fail, total]
@@ -86,6 +92,8 @@ export function gradeShift(t: Theses, mask: Uint8Array, postTo: number, minN = 2
   const pre: [number, number] = [c.pre[0] / c.pre[2], c.pre[1] / c.pre[2]];
   const post: [number, number] = [c.post[0] / c.post[2], c.post[1] / c.post[2]];
   const same = Math.abs(post[0] - pre[0]) < 0.015 && Math.abs(post[1] - pre[1]) < 0.015;
+  const moved = (k: 0 | 1) => Math.abs(post[k] - pre[k]) > 1.96 * Math.sqrt(pre[k] * (1 - pre[k]) / c.pre[2] + post[k] * (1 - post[k]) / c.post[2]);
+  const clear = moved(0) || moved(1);
   const postSpan = dataSpan((y) => perYear.get(y) ?? 0, POST_FROM, postTo) ?? `${POST_FROM}–${postTo}`;
-  return { pre, post, postTo, postN: c.post[2], postSpan, same };
+  return { pre, post, postTo, postN: c.post[2], postSpan, same, clear };
 }
