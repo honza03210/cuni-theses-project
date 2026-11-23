@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { filterMask, countMask } from './select';
-import { gradesByYear, metricSeries } from './aggregate';
+import { density01, gradesByYear, metricSeries } from './aggregate';
 import { buildWordContext, cellIndex, clampComparison, wordCounts, fitLine, isNoise, rampFor, rampStep, scoreWords, topMovers } from './excess';
 import { decode, encode, defaults, type Domain } from '../state/url';
 import type { Theses, WordCube } from './types';
@@ -260,5 +260,20 @@ describe('chart zoom', async () => {
     applyZoom();
     expect([app.yearFrom, app.yearTo]).toEqual([2012, 2019]);
     expect(zoom.range).toBeNull();
+  });
+});
+
+describe('density01', () => {
+  it('integrates to the share of values inside the axis and peaks where the values are', () => {
+    const vals = [...Array.from({ length: 900 }, (_, i) => 0.3 + ((i % 30) - 15) * 0.004), 0, 1, ...Array(98).fill(1)];
+    const d = density01(vals, 50);
+    const area = d.reduce((a, b) => a + b, 0) / 50;
+    expect(area).toBeGreaterThan(0.88);
+    expect(area).toBeLessThan(0.91);
+    expect(d.indexOf(Math.max(...d))).toBeGreaterThanOrEqual(13);
+    expect(d.indexOf(Math.max(...d))).toBeLessThanOrEqual(16);
+  });
+  it('is flat zero without data', () => {
+    expect(density01([], 10)).toEqual(Array(10).fill(0));
   });
 });

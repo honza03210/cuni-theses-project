@@ -114,3 +114,37 @@ export function sumCounts(rows: { counts: GradeCounts }[]): GradeCounts {
   for (const r of rows) for (let g = 0; g < 4; g++) s[g] += r.counts[g];
   return s;
 }
+
+/**
+ * Smoothed density of values on the unit interval (Gaussian kernel over a fine histogram).
+ * Values outside (0, 1), i.e. clipped to an axis end, are left out of the curve but still
+ * count in the total, so a curve's area is the share of values inside the axis.
+ * Returns `bins` densities at the bin centres (per unit of the interval).
+ */
+export function density01(values: ArrayLike<number>, bins = 48): number[] {
+  const hist = new Float64Array(bins);
+  let n = 0, sum = 0, sq = 0;
+  for (let i = 0; i < values.length; i++) {
+    const v = values[i];
+    if (!Number.isFinite(v)) continue;
+    n++;
+    if (v <= 0 || v >= 1) continue;
+    hist[Math.min(bins - 1, Math.floor(v * bins))]++;
+    sum += v; sq += v * v;
+  }
+  if (!n) return Array(bins).fill(0);
+  const m = sum / n;
+  const sd = Math.sqrt(Math.max(0, sq / n - m * m));
+  // Silverman's rule, at least one bin wide
+  const bw = Math.max(1 / bins, 1.06 * sd * n ** -0.2) * bins;
+  const r = Math.ceil(bw * 3);
+  const k = Array.from({ length: 2 * r + 1 }, (_, j) => Math.exp(-(((j - r) / bw) ** 2) / 2));
+  const ks = k.reduce((a, b) => a + b, 0);
+  const out: number[] = [];
+  for (let i = 0; i < bins; i++) {
+    let s = 0;
+    for (let j = -r; j <= r; j++) if (i + j >= 0 && i + j < bins) s += hist[i + j] * k[j + r];
+    out.push((s / ks / n) * bins);
+  }
+  return out;
+}

@@ -1,7 +1,8 @@
 <script lang="ts">
   import { brushY, scaleLinear, select, type BrushBehavior } from 'd3';
   import type { Theses } from '../../lib/data/types';
-  import { GRADE_HEX, GRADE_VARS } from '../../lib/chart';
+  import { GRADE_DASH, GRADE_HEX, GRADE_VARS } from '../../lib/chart';
+  import { density01 } from '../../lib/data/aggregate';
   const CONTEXT_HEX = '#8f897b';
   import { app } from '../../lib/state/app.svelte';
   import { L } from '../../lib/locale.svelte';
@@ -58,26 +59,28 @@
   });
 
   let hidden = $state<number[]>([]);
+  const DBINS = 48;
   let showLines = $state(false);
 
   /** Median and quartiles per grade per axis (normalised 0..1), over the selected theses. */
   const bands = $derived.by(() => {
     const A = AXES.length;
-    const out: { g: number; n: number; q1: number[]; med: number[]; q3: number[] }[] = [];
+    const out: { g: number; n: number; q1: number[]; med: number[]; q3: number[]; dens: number[][] }[] = [];
     for (let g = 1; g <= 4; g++) {
       if (hidden.includes(g)) continue;
       const rows: number[] = [];
       for (let r = 0; r < data.n; r++) if (data.grade[r] === g && selection.sel[r]) rows.push(r);
       if (rows.length < 20) continue;
-      const q1: number[] = [], med: number[] = [], q3: number[] = [];
+      const q1: number[] = [], med: number[] = [], q3: number[] = [], dens: number[][] = [[]];
       const centre = 1 - (g - 0.5) / 4;
       for (let a = 0; a < A; a++) {
         if (a === 0) { q1.push(centre); med.push(centre); q3.push(centre); continue; }
         const vals = Float32Array.from(rows, (r) => data.norm[r * A + a]).sort();
         const q = (p: number) => vals[Math.min(vals.length - 1, Math.floor(p * vals.length))];
         q1.push(q(0.25)); med.push(q(0.5)); q3.push(q(0.75));
+        dens.push(density01(vals, DBINS));
       }
-      out.push({ g, n: rows.length, q1, med, q3 });
+      out.push({ g, n: rows.length, q1, med, q3, dens });
     }
     return out;
   });
@@ -113,12 +116,27 @@
 
   let width = $state(900);
   const height = 380;
-  const m = { top: 46, right: 56, bottom: 26, left: 56 };
+  const m = { top: 46, right: 76, bottom: 26, left: 56 };
   const iw = $derived(Math.max(10, width - m.left - m.right));
   const ih = height - m.top - m.bottom;
   // the grade axis only fans theses out into their grades: give it half a gap
   const gap0 = $derived(Math.max(84, (iw / (AXES.length - 1)) * 0.5)); // room for 'Grade' + the first axis label
   const ax = (a: number) => (a === 0 ? 0 : gap0 + ((iw - gap0) * (a - 1)) / (AXES.length - 2));
+
+  /** Each grade's distribution, drawn as a curve to the right of every measure axis. Each grade's
+   *  curve has area 1 (shape, not head count), scaled per axis so the tallest peak spans `dw`. */
+  const dw = $derived(Math.min(64, ((iw - gap0) / (AXES.length - 2)) * 0.42));
+  const curves = $derived.by(() => {
+    const out: { g: number; a: number; d: string }[] = [];
+    for (let a = 1; a < AXES.length; a++) {
+      const peak = Math.max(1e-9, ...bands.flatMap((b) => b.dens[a]));
+      for (const b of bands) {
+        const pts = b.dens[a].map((v, i) => `${ax(a) + (v / peak) * dw},${ih * (1 - (i + 0.5) / DBINS)}`);
+        out.push({ g: b.g, a, d: `M${ax(a)},${ih}L${pts.join('L')}L${ax(a)},0` });
+      }
+    }
+    return out;
+  });
 
   let canvas: HTMLCanvasElement | undefined = $state();
   let raf = 0;
@@ -304,6 +322,8 @@
   <p class="bandkey">
     <svg width="26" height="12" aria-hidden="true"><rect x="0" y="2" width="26" height="8" fill="var(--ink-3)" opacity="0.3"/><line x1="0" x2="26" y1="6" y2="6" stroke="var(--ink)" stroke-width="2"/></svg>
     <span>{L.t['grades.par.bands']}</span>
+    <svg width="16" height="16" aria-hidden="true"><line x1="1" x2="1" y1="0" y2="16" stroke="var(--ink)"/><path d="M1,16C3,14 4,12 9,9S14,4 1,0" fill="var(--ink-3)" fill-opacity="0.15" stroke="var(--ink-2)" stroke-width="1.4"/></svg>
+    <span>{L.t['grades.par.dist']}</span>
   </p>
   {#if overlap}<p class="par-note">{L.t['grades.par.overlap'](bands.length)}</p>{/if}
   <p class="scroll-hint">{L.t['grades.par.scroll']}</p>
@@ -319,6 +339,10 @@
             d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.q3[a])}`).join('L') + 'L' + xs.map((x, a) => `${x},${ih * (1 - b.q1[a])}`).reverse().join('L') + 'Z'} />
           <path class="median-halo" class:pale={b.g === 2} d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.med[a])}`).join('L')} />
           <path class="median" stroke={GRADE_HEX[b.g - 1]} stroke-dasharray={['', '9 3', '5 3', '2 3'][b.g - 1]} d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.med[a])}`).join('L')} />
+        {/each}
+        <!-- distributions beside each axis, rare grades first like the bands -->
+        {#each [...curves].reverse() as c (c.g * 100 + c.a)}
+          <path class="dist" class:pale={c.g === 2} fill={GRADE_HEX[c.g - 1]} stroke={GRADE_HEX[c.g - 1]} stroke-dasharray={GRADE_DASH[c.g - 1]} d={c.d} />
         {/each}
         {#each AXES as k, a (k)}
           {@const lines = splitLabel(axisLabel(k), iw / (AXES.length - 1))}
@@ -357,6 +381,10 @@
   /* bands: faint fill plus a thin edge, so four overlapping bands stay separable (dark mode mixes fills into mud) */
   /* bands are neutral (they overlap almost completely); grade colour lives on the median lines only */
   .band { fill: var(--ink-3); fill-opacity: 0.09; stroke: none; }
+  /* distributions: a faint wash with a grade-coloured, grade-dashed edge */
+  .dist { fill-opacity: 0.07; stroke-width: 1.5; stroke-linejoin: round; }
+  /* pale-sky grade 2 needs more weight against the paper */
+  .dist.pale { fill-opacity: 0.12; stroke-width: 2; }
   .median { fill: none; stroke-width: 2.4; stroke-linejoin: round; }
   /* a thin ink contour gives the light grade-2 line enough contrast on paper (and on charcoal in dark mode) */
   .median-halo { fill: none; stroke: var(--ink); stroke-width: 4.6; stroke-linejoin: round; opacity: 0.45; }
