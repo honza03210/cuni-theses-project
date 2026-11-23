@@ -18,7 +18,9 @@
   let { theses, mask }: Props = $props();
 
   const meta = $derived(theses.meta);
-  const metric = $derived(meta.metrics.find((m) => m.key === app.metric) ?? meta.metrics[0]);
+  // measures exported for the Grades view only are not offered here
+  const trendMetrics = $derived(meta.metrics.filter((m) => m.trend !== false));
+  const metric = $derived(trendMetrics.find((m) => m.key === app.metric) ?? trendMetrics[0]);
   let showOthers = $state(true);
   let gridW = $state(900);
   let grid: HTMLElement | undefined = $state();
@@ -125,7 +127,7 @@
     <label class="msel">
       <span>{L.t['trends.metric']}</span>
       <select value={metric.key} onchange={(e) => (app.metric = e.currentTarget.value)}>
-        {#each meta.metrics as m (m.key)}<option value={m.key}>{L.pick(m.label)}</option>{/each}
+        {#each trendMetrics as m (m.key)}<option value={m.key}>{L.pick(m.label)}</option>{/each}
       </select>
     </label>
     <Plate id="trends" stickyHead title={facs.length === 1 ? L.t['trends.titleOne'](L.pick(metric.label), meta.faculties[facs[0]].abbr) : L.t['trends.title'](L.pick(metric.label))} unit={`${L.pick(metric.unit)} · ${yearsLabel(app.yearFrom, app.yearTo)}${facs.length > 1 ? ` · ${app.yearTo >= 2023 ? L.t['trends.sorted'] : L.t['trends.sortedNone']}` : ''}`} foot={L.t['trends.foot']}>
@@ -169,7 +171,7 @@
   <nav class="picker" aria-labelledby="metric-legend">
     <fieldset>
       <legend id="metric-legend">{L.t['trends.metric']}</legend>
-      {#each meta.metrics as m (m.key)}
+      {#each trendMetrics as m (m.key)}
         <label class:active={m.key === metric.key}>
           <input type="radio" name="metric" value={m.key} checked={m.key === metric.key} onchange={() => (app.metric = m.key)} />
           <span class="ml">{L.pick(m.label)}</span>

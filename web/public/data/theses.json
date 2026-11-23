@@ -88,6 +88,16 @@
    "name": "first_person_sg_per_1000w",
    "type": "f32",
    "offset": 2638280
+  },
+  {
+   "name": "body_n_words",
+   "type": "f32",
+   "offset": 2902108
+  },
+  {
+   "name": "semicolon_per_1000w",
+   "type": "f32",
+   "offset": 3165936
   }
  ],
  "faculties": [
@@ -247,7 +257,8 @@
    },
    "decimals": 2,
    "p01": 4.175915718078613,
-   "p99": 6.25252628326416
+   "p99": 6.25252628326416,
+   "trend": true
   },
   {
    "key": "mean_sentence_len",
@@ -265,7 +276,8 @@
    },
    "decimals": 1,
    "p01": 12.670074462890625,
-   "p99": 33.82674789428711
+   "p99": 33.82674789428711,
+   "trend": true
   },
   {
    "key": "std_sentence_len",
@@ -283,7 +295,8 @@
    },
    "decimals": 1,
    "p01": 7.014369010925293,
-   "p99": 25.227397918701172
+   "p99": 25.227397918701172,
+   "trend": true
   },
   {
    "key": "mattr",
@@ -301,7 +314,8 @@
    },
    "decimals": 1,
    "p01": 38.99363327026367,
-   "p99": 71.8184585571289
+   "p99": 71.8184585571289,
+   "trend": true
   },
   {
    "key": "repeated_trigram_ratio",
@@ -319,7 +333,8 @@
    },
    "decimals": 1,
    "p01": 1.4794158935546875,
-   "p99": 29.035701751708984
+   "p99": 29.035701751708984,
+   "trend": true
   },
   {
    "key": "long_word_ratio",
@@ -337,7 +352,8 @@
    },
    "decimals": 1,
    "p01": 21.895641326904297,
-   "p99": 48.230682373046875
+   "p99": 48.230682373046875,
+   "trend": true
   },
   {
    "key": "em_dash_per_1000w",
@@ -355,7 +371,8 @@
    },
    "decimals": 2,
    "p01": 0.0,
-   "p99": 1.3853925466537476
+   "p99": 1.3853925466537476,
+   "trend": true
   },
   {
    "key": "comma_per_1000w",
@@ -373,7 +390,8 @@
    },
    "decimals": 1,
    "p01": 35.791847229003906,
-   "p99": 122.72981262207031
+   "p99": 122.72981262207031,
+   "trend": true
   },
   {
    "key": "first_person_sg_per_1000w",
@@ -391,7 +409,46 @@
    },
    "decimals": 2,
    "p01": 0.0,
-   "p99": 19.30838394165039
+   "p99": 19.30838394165039,
+   "trend": true
+  },
+  {
+   "key": "body_n_words",
+   "label": {
+    "cs": "Délka práce",
+    "en": "Thesis length"
+   },
+   "unit": {
+    "cs": "slov",
+    "en": "words"
+   },
+   "desc": {
+    "cs": "Počet slov hlavního textu (bez úvodních stran a příloh).",
+    "en": "Words in the main text (without front matter and appendices)."
+   },
+   "decimals": 0,
+   "p01": 4202.5400390625,
+   "p99": 31604.19921875,
+   "trend": false
+  },
+  {
+   "key": "semicolon_per_1000w",
+   "label": {
+    "cs": "Středníky",
+    "en": "Semicolons"
+   },
+   "unit": {
+    "cs": "na 1 000 slov",
+    "en": "per 1,000 words"
+   },
+   "desc": {
+    "cs": "Počet středníků na 1 000 slov.",
+    "en": "Semicolons per 1,000 words."
+   },
+   "decimals": 2,
+   "p01": 0.0,
+   "p99": 13.447470664978027,
+   "trend": false
   }
  ]
 }

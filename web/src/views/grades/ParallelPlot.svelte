@@ -11,9 +11,11 @@
   interface Props { theses: Theses; mask: Uint8Array }
   let { theses, mask }: Props = $props();
 
-  // measures ordered by how far the median excellent and failed thesis sit apart across all theses
-  // (largest gap next to the grade axis), so the eye meets the strongest difference first
-  const AXES = ['grade', 'repeated_trigram_ratio', 'mean_sentence_len', 'std_sentence_len', 'mean_word_len', 'long_word_ratio', 'mattr'];
+  // measures most linked to grade (rank correlation within a faculty, Czech theses), strongest next
+  // to the grade axis: length −0.19, sentence length −0.08, semicolons −0.07, sentence-length spread
+  // −0.05, first person +0.05; phrase repetition (−0.04) leads for English theses (−0.14).
+  // Word length, long-word share and lexical diversity (|ρ| ≤ 0.01) were left out.
+  const AXES = ['grade', 'body_n_words', 'mean_sentence_len', 'semicolon_per_1000w', 'std_sentence_len', 'first_person_sg_per_1000w', 'repeated_trigram_ratio'];
   const meta = $derived(theses.meta);
   const metricOf = (k: string) => meta.metrics.find((m) => m.key === k)!;
 

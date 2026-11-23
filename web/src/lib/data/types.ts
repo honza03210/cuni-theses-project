@@ -15,6 +15,8 @@ export interface MetricMeta {
   decimals: number;
   p01: number;
   p99: number;
+  /** offered as a Trends measure (false: exported for the Grades view only) */
+  trend?: boolean;
 }
 
 export interface ThesesMeta {

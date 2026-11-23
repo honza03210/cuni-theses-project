@@ -15,7 +15,7 @@ export function domainOf(t: Theses): Domain {
     langs: t.meta.langs,
     yearMin: t.meta.yearMin,
     yearMax: t.meta.yearMax,
-    metrics: t.meta.metrics.map((m) => m.key),
+    metrics: t.meta.metrics.filter((m) => m.trend !== false).map((m) => m.key),
   };
 }
 

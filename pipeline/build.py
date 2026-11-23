@@ -78,6 +78,16 @@ METRICS = [
      "First-person singular pronouns and forms (I, my, …) per 1,000 words.", 2),
 ]
 
+# Exported for the Grades view's parallel plot only (not offered as a Trends measure):
+# the attributes most linked to grade within a faculty.
+GRADE_METRICS = [
+    ("body_n_words", "Délka práce", "Thesis length", "slov", "words",
+     "Počet slov hlavního textu (bez úvodních stran a příloh).",
+     "Words in the main text (without front matter and appendices).", 0),
+    ("semicolon_per_1000w", "Středníky", "Semicolons", "na 1 000 slov", "per 1,000 words",
+     "Počet středníků na 1 000 slov.", "Semicolons per 1,000 words.", 2),
+]
+
 PCT_METRICS = {"mattr", "repeated_trigram_ratio", "long_word_ratio"}
 
 # Word vocabulary per language: (max words, min theses overall)
@@ -99,7 +109,7 @@ def build_theses(con: duckdb.DuckDBPyConnection) -> dict:
     lang_case = "CASE " + lang_group_sql() + " " + " ".join(f"WHEN '{l}' THEN {i}" for i, l in enumerate(LANGS)) + " END"
     ai_case = "CASE ai_declaration " + " ".join(
         f"WHEN '{v}' THEN {i}" for i, v in enumerate(AI_VALUES) if v) + " ELSE 0 END"
-    metric_cols = ", ".join(m[0] for m in METRICS)
+    metric_cols = ", ".join(m[0] for m in METRICS + GRADE_METRICS)
     df = con.sql(f"""
         SELECT {fac_case} AS fac, year - {YEAR_MIN} AS year, {lang_case} AS lang,
                CASE WHEN year >= {AI_YEAR} THEN {ai_case} ELSE 0 END AS ai,
@@ -128,7 +138,7 @@ def build_theses(con: duckdb.DuckDBPyConnection) -> dict:
     parts.append(b"\0" * pad)
     offset += pad
     metrics_meta = []
-    for m in METRICS:
+    for m in METRICS + GRADE_METRICS:
         col, lcs, len_, ucs, uen, dcs, den, dec = m
         arr = df[col].to_numpy(np.float32)
         if col in PCT_METRICS:
@@ -144,6 +154,7 @@ def build_theses(con: duckdb.DuckDBPyConnection) -> dict:
             "key": col, "label": {"cs": lcs, "en": len_}, "unit": {"cs": ucs, "en": uen},
             "desc": {"cs": dcs, "en": den}, "decimals": dec,
             "p01": float(np.percentile(finite, 1)), "p99": float(np.percentile(finite, 99)),
+            "trend": m not in GRADE_METRICS,
         })
     size = write_gz(OUT / "theses.bin.gz", b"".join(parts))
 
