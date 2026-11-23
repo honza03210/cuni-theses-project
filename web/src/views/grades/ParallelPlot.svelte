@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { brushY, scaleLinear, select, type BrushBehavior } from 'd3';
+  import { brushY, scaleLinear, scaleSymlog, select, type BrushBehavior } from 'd3';
   import type { Theses } from '../../lib/data/types';
   import { GRADE_DASH, GRADE_HEX, GRADE_VARS } from '../../lib/chart';
   import { density01 } from '../../lib/data/aggregate';
@@ -18,6 +18,13 @@
   const AXES = ['grade', 'body_n_words', 'mean_sentence_len', 'semicolon_per_1000w', 'std_sentence_len', 'first_person_sg_per_1000w', 'repeated_trigram_ratio'];
   const meta = $derived(theses.meta);
   const metricOf = (k: string) => meta.metrics.find((m) => m.key === k)!;
+  // most theses use few semicolons or first-person forms: a log-like axis spreads the crowd near 0
+  const LOG_AXES = new Set(['semicolon_per_1000w', 'first_person_sg_per_1000w']);
+  /** measure value -> 0 (bottom) .. 1 (top) of its axis, clipped to the 1st–99th percentile */
+  const unit = (k: string) => {
+    const mm = metricOf(k);
+    return (LOG_AXES.has(k) ? scaleSymlog().constant(1) : scaleLinear()).domain([mm.p01, mm.p99]).range([0, 1]).clamp(true);
+  };
 
   /** Rows: masked, clean body, graded, every metric finite. Values normalised to 0 (bottom) .. 1 (top). */
   const data = $derived.by(() => {
@@ -39,6 +46,7 @@
       [idx[i], idx[j]] = [idx[j], idx[i]];
     }
     const n = idx.length, A = AXES.length;
+    const units = AXES.map((k, a) => (a === 0 ? () => 0 : unit(k)));
     const norm = new Float32Array(n * A);
     const raw = new Float32Array(n * A);
     const grade = new Uint8Array(n);
@@ -51,10 +59,9 @@
       raw[r * A] = g;
       norm[r * A] = 1 - (g - 1 + 0.5 + jitter) / 4;
       for (let a = 1; a < A; a++) {
-        const m = metricOf(AXES[a]);
         const v = cols[a - 1][i];
         raw[r * A + a] = v;
-        norm[r * A + a] = Math.max(0, Math.min(1, (v - m.p01) / (m.p99 - m.p01)));
+        norm[r * A + a] = units[a](v);
       }
     }
     return { n, norm, raw, grade };
@@ -221,8 +228,8 @@
   // ---- brushes (SVG overlay) ----
   function scaleFor(k: string) {
     if (k === 'grade') return scaleLinear().domain([4.5, 0.5]).range([ih, 0]); // value -> px
-    const mm = metricOf(k);
-    return scaleLinear().domain([mm.p01, mm.p99]).range([ih, 0]);
+    const u = unit(k);
+    return u.copy().range([ih, 0]);
   }
   function brushAxis(node: SVGGElement, k: string) {
     const sc = scaleFor(k);
@@ -277,8 +284,11 @@
   const axisTicks = (k: string) => {
     if (k === 'grade') return [1, 2, 3, 4].map((g) => ({ y: ih * ((g - 0.5) / 4), t: String(g) }));
     const mm = metricOf(k);
-    const sc = scaleLinear().domain([mm.p01, mm.p99]).range([ih, 0]);
-    return sc.ticks(4).map((v) => ({ y: sc(v), t: L.f.num(v, Math.max(0, mm.decimals - 1)) }));
+    const sc = scaleFor(k);
+    const vals = LOG_AXES.has(k)
+      ? [0, 1, 2, 5, 10, 20, 50, 100].filter((v) => v >= mm.p01 && v <= mm.p99)
+      : (sc as ReturnType<typeof scaleLinear<number>>).ticks(4);
+    return vals.map((v) => ({ y: sc(v), t: L.f.num(v, LOG_AXES.has(k) ? 0 : Math.max(0, mm.decimals - 1)) }));
   };
 
   // summary table per grade

@@ -331,8 +331,11 @@ Simple keeps each view's answer line, one legend and the charts, and drops what 
 "how to read" panels, secondary lede sentences, plate footnotes and sources, chart/table toggles, tinted plate heads,
 filter counts and notes, faculty full names (a 3-column abbreviation grid instead), the Words year/option controls
 (the default 2023+ vs 2018–2022 comparison stays), and faculty context lines in Trends and the word detail.
-Mark anything detail-only with the class `full-only` (hidden under `.simple` in `app.css`); honesty caveats that
-change how a finding reads (the AI-filter note, small-sample hedges) stay in both versions.
+Mark anything detail-only with the class `full-only` (hidden under `.simple` in `app.css`).
+Only two caveats stay in both versions, because they say the numbers on screen describe a different or thin group:
+the AI-filter note and small-sample hedges. Interpretive qualifiers are Detailed-only by decision, so Simple stays
+clean: the Words "AI-like vocabulary, but the cloud does not prove it" line, the Trends "most of the change is in one
+year" note, and the dot plot's "compare positions within a row only". Detailed is where the full honesty layer lives.
 
 In Simple, faculties carry short names (`web/src/lib/faculties.ts`) instead of abbreviations, the Grades view drops
 the parallel plot (the dot plot carries the same finding), and every plate whose table holds no buttons keeps it as a

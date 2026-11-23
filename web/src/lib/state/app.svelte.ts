@@ -1,8 +1,21 @@
 import type { Theses } from '../data/types';
-import { defaults, type AppState, type Domain } from './url';
+import { decode, defaults, type AppState, type Domain } from './url';
+
+const bootDomain: Domain = { facCodes: [], langs: ['cs'], yearMin: 2006, yearMax: 2026, metrics: [''] };
+
+/** Before the data arrives: the view, version and language come straight from the link, so the
+ *  loading screen already shows the right tab (filters are decoded once the data's domain is known). */
+function boot(): AppState {
+  const s = defaults(bootDomain);
+  if (typeof location === 'undefined') return s;
+  const p = decode(location.search, bootDomain);
+  s.view = p.view; s.detailed = p.detailed; s.locale = p.locale;
+  if (!new URLSearchParams(location.search).has('l') && /^(cs|sk)\b/i.test(navigator.language ?? '')) s.locale = 'cs';
+  return s;
+}
 
 /** The single source of truth for filters and view state. */
-export const app: AppState = $state(defaults({ facCodes: [], langs: ['cs'], yearMin: 2006, yearMax: 2026, metrics: [''] }));
+export const app: AppState = $state(boot());
 
 /** Transient UI state that is not shared through the URL. */
 export const ui = $state({

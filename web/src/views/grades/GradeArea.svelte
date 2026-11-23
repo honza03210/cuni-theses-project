@@ -121,8 +121,8 @@
     </defs>
     <g transform="translate({m.left},{m.top})">
       {#each layers as layer (layer.key)}
-        <!-- the common grades (1, 2) are drawn softer so the eye goes to 3 and 4, where change would show -->
-        <path d={gen(layer as never)} fill={layer.key === 3 ? 'url(#hatch4)' : GRADE_VARS[layer.key]} fill-opacity={layer.key === 0 ? 0.55 : layer.key === 1 ? 0.7 : 1} stroke="var(--paper)" stroke-width="0.6" />
+        <!-- exact grade colours, so the bands match the legend in both themes; paper rules part the bands -->
+        <path d={gen(layer as never)} fill={layer.key === 3 ? 'url(#hatch4)' : GRADE_VARS[layer.key]} stroke="var(--paper)" stroke-width="1.5" stroke-linejoin="round" />
       {/each}
       {#each [0, 0.25, 0.5, 0.75, 1] as t (t)}
         <line class="grid" x1="0" x2={iw} y1={y(t)} y2={y(t)} />
@@ -179,8 +179,8 @@
   svg:focus-visible { outline: 2px solid var(--petrol); outline-offset: 4px; }
   .grid { stroke: var(--paper); stroke-opacity: 0.6; stroke-width: 1; shape-rendering: crispEdges; }
   .marker { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 3; }
-  /* plain ink on the softened area fill: no sticker halo */
-  .mlabel { font-size: 12px; fill: var(--ink); font-weight: 600; }
+  /* the label sits on the saturated grade-1 band: a paper halo keeps it legible in both themes */
+  .mlabel { font-size: 12px; fill: var(--ink); font-weight: 600; paint-order: stroke; stroke: var(--paper); stroke-width: 3.5px; stroke-linejoin: round; }
   .sel { stroke: var(--petrol); stroke-width: 2.5; }
   .sel-label { fill: var(--paper); font-weight: 700; paint-order: stroke; stroke: var(--petrol); stroke-width: 14px; stroke-linejoin: round; }
   .blabel { font-size: 12px; fill: var(--ink-2); }

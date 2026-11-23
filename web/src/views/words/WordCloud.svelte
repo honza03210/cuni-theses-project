@@ -31,7 +31,10 @@
       ...falling.map((s) => ({ text: s.word, size: sizes[rampStep(rankValue(s, mode), ramp)], rise: false, s })),
     ].sort((a, b) => b.size - a.size || a.text.localeCompare(b.text));
     let cancelled = false;
-    Promise.all([document.fonts.load(`700 20px "${FONT}"`), document.fonts.load(`400 20px "${FONT}"`)]).then(() => {
+    // Load the font for the actual words: the Czech letters (č, ř, ů…) live in a separate latin-ext
+    // subset, and measuring before it arrives lays words out with fallback widths, so they overlap.
+    const sample = input.map((d) => d.text).join(' ');
+    Promise.all([document.fonts.load(`700 20px "${FONT}"`, sample), document.fonts.load(`400 20px "${FONT}"`, sample)]).then(() => {
       if (cancelled) return;
       const layout = cloud<(typeof input)[number]>()
         .size([w, h])
@@ -112,6 +115,7 @@
       {/each}
     </g>
   </svg>
+  {#if !ready}<p class="arranging" role="status">{L.t['words.cloud.arranging']}</p>{/if}
   <p id="cloud-keys" class="sr-only">{L.t['words.cloudKeys']}</p>
   {#if ready && dropped > 0}<p class="note">{L.t['words.cloud.dropped'](dropped)}</p>{/if}
   {#if hover}
@@ -141,5 +145,7 @@
   svg:has(.w:hover) .w:not(:hover):not(.sel) { opacity: 0.55; }
   :global(.tt-gloss) { font-weight: 400; color: var(--ink-2); }
   :global(.tt-forms) { font-size: var(--fs-xs); color: var(--ink-3); margin: -1px 0 4px; font-style: italic; }
+  /* first layout only: a quiet line in place of an empty sheet (later re-layouts keep the old cloud) */
+  .arranging { position: absolute; inset: 0 0 auto; margin: 0; padding: var(--s6) 0; text-align: center; font-size: var(--fs-sm); color: var(--ink-3); }
   .note { margin: var(--s2) 0 0; text-align: right; font-size: var(--fs-xs); color: var(--ink-3); }
 </style>

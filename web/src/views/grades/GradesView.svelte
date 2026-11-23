@@ -44,6 +44,8 @@
   const aiOn = $derived(aiFilterActive(app.ai) && app.yearTo >= meta.aiYear);
   // faculties on the A–F scale in a small selection: their grading rules can drive a change
   const scaleFacs = $derived(facs.length <= 3 && facs.some((f) => ['etf', 'fsv'].includes(meta.faculties[f].code)));
+  // the parallel plot opens on request; brushes in the link open it
+  let parOpen = $state(Object.keys(app.brushes).length > 0);
   const gshift = $derived(gradeShift(theses, mask, Math.min(app.yearTo, meta.yearMax - 1)));
 </script>
 
@@ -121,15 +123,17 @@
         <GradeBars rows={byFac} all={allRow} faculties={meta.faculties} prev={prevFac} prevAll={prevAll} tags={[preLabel, postLabel]} />
       </Plate>
     </div>
-    {#if app.detailed}
-      <!-- detailed only: the dot plot below carries the same finding in a simpler form -->
-      <div class="par">
-        <ParallelPlot {theses} {mask} />
-      </div>
-    {/if}
     <div class="par">
       <GradeDots {theses} {mask} keys={['repeated_trigram_ratio', 'mean_sentence_len', 'std_sentence_len', 'mean_word_len', 'long_word_ratio', 'mattr']} />
     </div>
+    {#if app.detailed}
+      <!-- detailed only, and last: the dot plot above carries the same finding in a simpler form;
+           the per-thesis plot is for readers who want to dig, so it opens on request -->
+      <details class="par more" bind:open={parOpen}>
+        <summary>{L.t['grades.par.more']}</summary>
+        {#if parOpen}<ParallelPlot {theses} {mask} />{/if}
+      </details>
+    {/if}
   </div>
 {/if}
 
@@ -144,6 +148,21 @@
   .bars { align-items: flex-start; }
   .area > :global(.plate), .bars > :global(.plate) { flex: 1 1 auto; }
   .par { grid-column: 1 / -1; min-width: 0; }
+  /* a ruled disclosure line, like a yearbook's "see also" */
+  .more { border-top: 1px solid var(--rule); padding-top: var(--s3); }
+  .more > summary {
+    cursor: pointer; width: fit-content; min-height: 32px; display: flex; align-items: center; gap: 8px;
+    font-size: var(--fs-md); font-weight: 600; color: var(--ink-2);
+    text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px;
+  }
+  .more > summary { list-style: none; }
+  .more > summary::-webkit-details-marker { display: none; }
+  /* the same drawn caret as "How to read this view" */
+  .more > summary::before { content: ''; flex: none; width: 0; height: 0; border-left: 5px solid currentColor; border-top: 4px solid transparent; border-bottom: 4px solid transparent; transition: transform var(--t) var(--ease); }
+  .more[open] > summary::before { transform: rotate(90deg); }
+  .more > summary:hover { color: var(--ink); text-decoration-color: var(--ink); }
+  .more[open] > summary { margin-bottom: var(--s4); }
+  @media (pointer: coarse) { .more > summary { min-height: 44px; } }
   .empty { color: var(--ink-2); padding: var(--s6) 0; }
   .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
   .seg button { border: 0; background: transparent; padding: 3px 10px; font-size: var(--fs-sm); cursor: pointer; color: var(--ink-2); }
