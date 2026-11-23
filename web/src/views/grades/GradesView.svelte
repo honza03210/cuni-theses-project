@@ -55,7 +55,8 @@
     {#each [1, 2, 3, 4] as g (g)}
       <li>
         <span class="sw" class:hatch={g === 4} style:background={GRADE_VARS[g - 1]}></span>
-        <svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke={GRADE_VARS[g - 1]} stroke-width="2.4" stroke-dasharray={GRADE_DASH[g - 1]} /></svg>
+        <!-- dash keys only while the parallel plot (the one chart that draws grade dashes) is open -->
+        {#if app.detailed && parOpen}<svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke={GRADE_VARS[g - 1]} stroke-width="2.4" stroke-dasharray={GRADE_DASH[g - 1]} /></svg>{/if}
         <svg width="12" height="12" aria-hidden="true"><path d={GRADE_SHAPES[g - 1](4.3)} transform="translate(6,6)" fill={GRADE_VARS[g - 1]} stroke="var(--ink)" stroke-width="1" /></svg>
         <span>{g} {L.t[`grade.${g}` as 'grade.1']}</span>
       </li>
@@ -97,7 +98,7 @@
       </Plate>
     </div>
     <div class="bars">
-      <Plate id="g-bars" title={compare ? L.t['grades.bars.titleCmp'](preLabel, postLabel) : L.t['grades.bars.title'](barYear)} unit={app.detailed ? `${L.t['grades.bars.unit']} · ${L.t['grades.bars.sort']}` : L.t['grades.bars.unitSimple']} foot={L.t['grades.bars.small']}>
+      <Plate id="g-bars" title={compare ? L.t['grades.bars.titleCmp'](preLabel, postLabel) : L.t['grades.bars.title'](barYear)} unit={app.detailed ? `${L.t['grades.bars.unit']} · ${compare ? L.t['grades.bars.sortCmp'] : L.t['grades.bars.sort']}` : compare ? L.t['grades.bars.unitSimpleCmp'] : L.t['grades.bars.unitSimple']} foot={L.t['grades.bars.small']}>
         {#snippet tools()}
           {#if canCompare}
             <div class="seg" role="group" aria-label={L.t['grades.bars.mode']}>

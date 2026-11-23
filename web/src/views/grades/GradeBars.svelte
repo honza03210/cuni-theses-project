@@ -25,10 +25,20 @@
   // Fewer than MIN_CELL_N theses: never drawn (a handful of theses can point to one student); listed by name instead.
   const shown = $derived(rows.filter((r) => r.total >= MIN_CELL_N));
   const hidden = $derived(rows.filter((r) => r.total > 0 && r.total < MIN_CELL_N).map((r) => faculties[r.fac].abbr));
-  const sorted = $derived([
-    ...shown.filter((r) => !isSmall(r)).sort(byShare),
-    ...shown.filter((r) => isSmall(r)).sort(byShare),
-  ]);
+  /** change in the "excellent" share, later minus earlier period (NaN without a usable earlier bar) */
+  const change = (r: GradeFac) => {
+    const p = prevOf(r.fac);
+    return p && p.total >= MIN_CELL_N ? r.counts[0] / r.total - p.counts[0] / p.total : NaN;
+  };
+  // before/after: rows rank by that change (largest rise first), so the order says what the caption says
+  const byChange = (a: GradeFac, b: GradeFac) => {
+    const ca = change(a), cb = change(b);
+    return (Number.isNaN(cb) ? -Infinity : cb) - (Number.isNaN(ca) ? -Infinity : ca);
+  };
+  const sorted = $derived.by(() => {
+    const by = paired ? byChange : byShare;
+    return [...shown.filter((r) => !isSmall(r)).sort(by), ...shown.filter((r) => isSmall(r)).sort(by)];
+  });
   // Before/after: by default only the faculties whose "excellent" share changed most clearly, i.e. furthest
   // beyond chance (two-proportion z), so small samples do not win by noise; the rest on request
   const TOP = 6;
@@ -46,7 +56,7 @@
   const prevShown = (f: number) => { const p = prevOf(f); return p && p.total >= MIN_CELL_N ? p : null; };
   const rowH = $derived(paired ? 26 : 18);
   // simple version: the short names the filter uses (codes only in the detailed version)
-  const m = $derived({ top: 4, right: paired ? 62 : 52, bottom: 22, left: app.detailed ? 52 : 132 });
+  const m = $derived({ top: 4, right: paired ? 70 : 52, bottom: 22, left: app.detailed ? 52 : 132 });
   const ih = $derived(bars.length * rowH + 8);
   const height = $derived(ih + m.top + m.bottom);
   const iw = $derived(Math.max(10, width - m.left - m.right));
@@ -116,7 +126,13 @@
             <text class="ytag" x={iw + 6} y={parts.prevY + parts.prevH / 2} dy="0.32em">{tags[0]}</text>
             <text class="ytag cur" x={iw + 6} y={parts.curY + parts.curH / 2} dy="0.32em">{tags[1]}</text>
           {:else}
-            <text class="yn" x={iw + 6} y={paired ? parts.curY + parts.curH / 2 : y.bandwidth() / 2} dy="0.32em">{L.f.int(b.total)}</text>
+            {#if paired}
+              <!-- before/after: the pair's change in the "excellent" share (thesis counts are in the tooltip and table) -->
+              {@const d = change(b)}
+              <text class="yn delta" x={iw + 6} y={parts.curY + parts.curH / 2} dy="0.32em">{Number.isNaN(d) ? '' : L.t['words.pp'](L.f.signed(d * 100, 0))}</text>
+            {:else}
+              <text class="yn" x={iw + 6} y={y.bandwidth() / 2} dy="0.32em">{L.f.int(b.total)}</text>
+            {/if}
           {/if}
         </g>
       {/each}
@@ -155,7 +171,8 @@
   .yl { font-size: 12px; fill: var(--ink); font-weight: 600; }
   .bar.all .yl { font-weight: 700; }
   .yn { font-size: 11px; fill: var(--ink-3); }
-  .ytag { font-size: 10px; fill: var(--ink-3); }
+  .ytag { font-size: 11px; fill: var(--ink-3); }
+  .yn.delta { fill: var(--ink-2); font-weight: 600; }
   .ytag.cur { fill: var(--ink); font-weight: 600; }
   /* the earlier period is the thinner, lighter bar */
   .bar:not(.small) .seg-row.prev rect { fill-opacity: 0.6; }

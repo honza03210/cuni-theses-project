@@ -94,7 +94,8 @@
 {#snippet legend()}
         <ul class="legend" aria-label={L.t['common.legend']}>
           <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--ink)" stroke-width="2.25"/></svg>{L.t['trends.this']}</li>
-          <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--ink)" stroke-width="5" stroke-opacity="0.32"/></svg>{L.t['trends.levels']}</li>
+          <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--ink)" stroke-width="5" stroke-opacity="0.55"/></svg>{L.t['trends.levels']}</li>
+          <li><svg width="22" height="10" aria-hidden="true"><rect x="0" y="0" width="22" height="10" fill="var(--ink)" fill-opacity="0.08"/></svg>{L.t['trends.band']}</li>
           {#if facs.length === 1}
             <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--avg)" stroke-width="2.25" stroke-dasharray="5 3"/></svg>{L.t['trends.uni']}</li>
           {:else}

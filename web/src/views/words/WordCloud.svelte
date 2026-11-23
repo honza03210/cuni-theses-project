@@ -24,8 +24,18 @@
     };
   }
 
+  // Safety net: a font that finishes loading after the layout (slow phones) triggers one fresh layout,
+  // so words measured with fallback metrics never stay overlapped.
+  let fontEpoch = $state(0);
+  $effect(() => {
+    const bump = () => fontEpoch++;
+    document.fonts.addEventListener('loadingdone', bump);
+    return () => document.fonts.removeEventListener('loadingdone', bump);
+  });
+
   $effect(() => {
     const w = width, h = height;
+    void fontEpoch;
     const input = [
       ...rising.map((s) => ({ text: s.word, size: sizes[rampStep(rankValue(s, mode), ramp)], rise: true, s })),
       ...falling.map((s) => ({ text: s.word, size: sizes[rampStep(rankValue(s, mode), ramp)], rise: false, s })),
