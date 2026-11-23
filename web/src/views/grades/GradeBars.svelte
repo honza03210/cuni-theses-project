@@ -175,7 +175,7 @@
   .yn.delta { fill: var(--ink-2); font-weight: 600; }
   .ytag.cur { fill: var(--ink); font-weight: 600; }
   /* the earlier period is the thinner, lighter bar */
-  .bar:not(.small) .seg-row.prev rect { fill-opacity: 0.8; }
+  .bar:not(.small) .seg-row.prev rect { fill-opacity: 0.8; stroke: var(--prev-edge); stroke-width: 0.75; }
   .sep { stroke: var(--rule); stroke-dasharray: 2 2; }
   .note { margin: 4px 0 0; font-size: var(--fs-xs); color: var(--ink-3); text-wrap: pretty; }
   .cut { margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); text-wrap: pretty; }

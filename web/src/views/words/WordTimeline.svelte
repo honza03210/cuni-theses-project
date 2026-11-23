@@ -150,18 +150,18 @@
   svg { display: block; overflow: visible; touch-action: none; user-select: none; }
   svg:focus-visible { outline: 2px solid var(--petrol); outline-offset: 3px; }
   .base { fill: var(--paper-3); stroke: var(--rule); stroke-dasharray: 3 2; }
-  .block { fill: var(--petrol-tint); stroke: var(--petrol); stroke-width: 1.5; }
+  .block { fill: var(--petrol-tint); stroke: var(--sel-mark); stroke-width: 1.5; }
   .blabel { font-size: 11px; fill: var(--ink-2); }
-  .tlabel { font-size: 12px; font-weight: 700; fill: var(--petrol); }
+  .tlabel { font-size: 12px; font-weight: 700; fill: var(--sel-mark); }
   .bar { fill: var(--context); }
   .bar.b { fill: var(--ink-3); }
-  .bar.t { fill: var(--petrol); }
+  .bar.t { fill: var(--sel-mark); }
   .bar.partial { opacity: 0.45; }
   .yl { font-size: 11px; fill: var(--ink-3); }
-  .yl.t { fill: var(--petrol); font-weight: 700; }
+  .yl.t { fill: var(--sel-mark); font-weight: 700; }
   .gpt { stroke: var(--ink-2); stroke-dasharray: 2 2; }
   .handle line { stroke: var(--ink-2); stroke-width: 1.5; }
   .handle rect { fill: var(--paper); stroke: var(--ink-2); stroke-width: 1.2; }
-  .handle.active line, .handle.active rect { stroke: var(--petrol); }
+  .handle.active line, .handle.active rect { stroke: var(--sel-mark); }
   .hint { margin: 2px 0 0; font-size: var(--fs-xs); color: var(--ink-3); }
 </style>

@@ -59,6 +59,7 @@
   const band = $derived(bandPath(own.filter(inZ), x, y));
   // The comparison the answer line states: this faculty's thesis-weighted mean before (2018–22) and
   // after ChatGPT (2023 to the last complete year), as two level bars over their years.
+  const narrowP = $derived(width < 220);
   const levels = $derived.by(() => {
     const lv = (a: number, b: number) => {
       const pts = own.filter((p) => p.year >= a && p.year <= b);
@@ -187,10 +188,12 @@
           <path class="hover dotted" d={hoverPaths.dotted} />
           {#if hoverEnd && hoverOther !== null}<text class="hlabel" x={x(hoverEnd.year) - 2} y={y(hoverEnd.mean) - 6} text-anchor="end">{faculties[hoverOther].abbr}</text>{/if}
         {/if}
+        <!-- narrow panels: thin bars under the line, so the rise they summarise stays visible -->
+        {#if narrowP}{#each levels as l, i (i)}<line class="level thin" x1={l.x0} x2={l.x1} y1={y(l.v)} y2={y(l.v)} />{/each}{/if}
         <path class="own" d={ownPaths.solid} />
         <path class="own dotted" d={ownPaths.dotted} />
         <!-- above the line: these two bars are the comparison the answer line states -->
-        {#each levels as l, i (i)}<line class="level" x1={l.x0} x2={l.x1} y1={y(l.v)} y2={y(l.v)} />{/each}
+        {#if !narrowP}{#each levels as l, i (i)}<line class="level" x1={l.x0} x2={l.x1} y1={y(l.v)} y2={y(l.v)} />{/each}{/if}
         {#each ownPaths.singles as s (s.year)}<circle class="own-dot" cx={x(s.year)} cy={y(s.v)} r="2.5" />{/each}
 
         {#if drag.active}<rect class="zsel" x={x(drag.lo)} width={Math.max(0, x(drag.hi) - x(drag.lo))} y="0" height={ih} />{/if}
@@ -240,6 +243,7 @@
   .own { stroke: var(--ink); stroke-width: 2.2; }
   /* period means: the same thick translucent ink bar as the word detail's observed mean */
   .level { stroke: var(--ink); stroke-width: 5; stroke-opacity: 0.55; stroke-linecap: butt; shape-rendering: crispEdges; }
+  .level.thin { stroke-width: 3; stroke-opacity: 0.45; }
   .dotted { stroke-dasharray: 1.5 3; }
   .avg.dotted { stroke-dasharray: 1.5 3; }
   .own-dot { fill: var(--ink); }

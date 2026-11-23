@@ -15,6 +15,10 @@
   --petrol-deep: #163f4f;      /* header band */
   --petrol-tint: #d9e6ea;
   --on-petrol: #f6f4ee;
+  /* selected / pressed state, by role: light fills with petrol; dark uses a tint with an ink edge,
+     so selection never shares a hue with the blue data colours beside it */
+  --sel-bg: #1f5468; --sel-ink: #f6f4ee; --sel-edge: #1f5468; --sel-mark: #1f5468;
+  --prev-edge: transparent;   /* earlier-period bars: outlined in dark, where quiet grade 1 meets the page */
 
   /* masthead band (independent of the selection colour) */
   --band-ink: #f6f4ee;
@@ -79,6 +83,7 @@
     --ink: #e9e6df; --ink-2: #bdbab3; --ink-3: #9a978f;
     --rule: #3b4047; --rule-soft: #2a2f35;
     --petrol: #93b8d4; --petrol-deep: #173a46; --petrol-tint: #1c2f3d; --on-petrol: #0e1820;
+    --sel-bg: #1c2f3d; --sel-ink: #e9e6df; --sel-edge: #e9e6df; --sel-mark: #e9e6df; --prev-edge: #9a978f;
     --rise: #6aaeea; --fall: #e8925a; --avg: #9a978f; --context: #555a61; --warn: #e2b450;
     --grade-1: #34424d; --grade-2: #5f7f96; --grade-3: #e6ac5e; --grade-4: #d33a33;
     --shadow: rgb(0 0 0 / 0.5); --swatch-edge: rgb(255 255 255 / 0.2);
@@ -91,6 +96,7 @@
   --ink: #e9e6df; --ink-2: #bdbab3; --ink-3: #9a978f;
   --rule: #3b4047; --rule-soft: #2a2f35;
   --petrol: #93b8d4; --petrol-deep: #173a46; --petrol-tint: #1c2f3d; --on-petrol: #0e1820;
+    --sel-bg: #1c2f3d; --sel-ink: #e9e6df; --sel-edge: #e9e6df; --sel-mark: #e9e6df; --prev-edge: #9a978f;
   --rise: #6aaeea; --fall: #e8925a; --avg: #9a978f; --context: #555a61; --warn: #e2b450;
     --grade-1: #34424d; --grade-2: #5f7f96; --grade-3: #e6ac5e; --grade-4: #d33a33;
   --shadow: rgb(0 0 0 / 0.5); --swatch-edge: rgb(255 255 255 / 0.2);

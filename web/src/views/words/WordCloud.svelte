@@ -8,12 +8,23 @@
   let { rising, falling, ramp, sizes, selected, onpick, forms = null, mode = 'gap', gloss = null }: Props = $props();
 
   const FONT = 'Source Sans 3';
-  let width = $state(800);
+  // 0 until measured: a first layout at a guessed width would slide into place on phones
+  let width = $state(0);
   const height = $derived(width < 640 ? 460 : 400);
 
   interface Placed { text: string; x: number; y: number; size: number; rise: boolean; s: WordScore }
   let placed: Placed[] = $state.raw([]);
   let ready = $state(false);
+  // word moves animate only after the first layout is on screen (the first layout places words directly)
+  let settled = $state(false);
+  /** text width at a given size, measured with the loaded face (for the selected word's rule) */
+  let measureCtx: CanvasRenderingContext2D | null = null;
+  function textW(t: string, size: number, bold: boolean) {
+    measureCtx ??= document.createElement('canvas').getContext('2d');
+    if (!measureCtx) return t.length * size * 0.5;
+    measureCtx.font = `${bold ? 700 : 400} ${size}px "${FONT}"`;
+    return measureCtx.measureText(t).width;
+  }
 
   function mulberry32(a: number) {
     return () => {
@@ -36,6 +47,7 @@
   $effect(() => {
     const w = width, h = height;
     void fontEpoch;
+    if (!w) return;
     const input = [
       ...rising.map((s) => ({ text: s.word, size: sizes[rampStep(rankValue(s, mode), ramp)], rise: true, s })),
       ...falling.map((s) => ({ text: s.word, size: sizes[rampStep(rankValue(s, mode), ramp)], rise: false, s })),
@@ -58,6 +70,7 @@
         .spiral('rectangular')
         .on('end', (out) => {
           if (cancelled) return;
+          if (!ready) requestAnimationFrame(() => requestAnimationFrame(() => (settled = true)));
           placed = out.map((d) => {
             const o = d as unknown as Placed;
             return { text: o.text, x: o.x, y: o.y, size: o.size, rise: o.rise, s: o.s };
@@ -104,7 +117,7 @@
 </script>
 
 <div class="wrap" bind:clientWidth={width}>
-  <svg bind:this={svgEl} {width} height={bounds.h} class:ready role="group" aria-label="{L.t['words.more']} / {L.t['words.less']}" aria-describedby="cloud-keys">
+  <svg bind:this={svgEl} {width} height={bounds.h} class:ready class:settled role="group" aria-label="{L.t['words.more']} / {L.t['words.less']}" aria-describedby="cloud-keys">
     <g transform="translate({width / 2},{-bounds.top})">
       {#each placed as p (p.text)}
         <text
@@ -122,6 +135,12 @@
           onfocus={(e) => { active = order.indexOf(p.text); showAt(p.s, e.currentTarget); }}
           onblur={() => (hover = null)}
         >{p.text}</text>
+        {#if selected === p.text}
+          <!-- the selection rule: ink, whatever the word's colour (SVG text ignores text-decoration-color) -->
+          {@const w = textW(p.text, p.size, p.rise)}
+          <line class="sel-rule" aria-hidden="true" style:transform="translate({p.x}px, {p.y}px)"
+            x1={-w / 2} x2={w / 2} y1={p.size * 0.2} y2={p.size * 0.2} />
+        {/if}
       {/each}
     </g>
   </svg>
@@ -145,13 +164,17 @@
   .wrap { width: 100%; position: relative; }
   svg { display: block; opacity: 0; transition: opacity 200ms var(--ease), height 500ms var(--ease); }
   svg.ready { opacity: 1; }
-  .w { cursor: pointer; font-family: var(--font); transition: opacity var(--t) var(--ease), transform 700ms var(--ease), font-size 700ms var(--ease); animation: word-in 500ms var(--ease) both; }
+  .w { cursor: pointer; font-family: var(--font); transition: opacity var(--t) var(--ease); animation: word-in 500ms var(--ease) both; }
+  .settled .w { transition: opacity var(--t) var(--ease), transform 700ms var(--ease), font-size 700ms var(--ease); }
+  .sel-rule { stroke: var(--ink); stroke-width: 3; pointer-events: none; }
+  .settled .sel-rule { transition: transform 700ms var(--ease); }
   @keyframes word-in { from { opacity: 0; } }
   .w.rise { fill: var(--rise); font-weight: 700; }
   .w.fall { fill: var(--fall); font-weight: 400; }
   .w:hover, .w:focus-visible { text-decoration: underline; text-decoration-thickness: 1.5px; outline: none; }
   /* selected word keeps its rise/fall colour; selection is a thick ink underline, not another blue */
-  .w.sel { text-decoration: underline; text-decoration-thickness: 3px; text-decoration-color: var(--ink); text-underline-offset: 4px; }
+  /* the selected word keeps its rise/fall colour; selection is the ink rule drawn under it (.sel-rule) */
+  .w.sel, .w.sel:hover { text-decoration: none; }
   svg:has(.w:hover) .w:not(:hover):not(.sel) { opacity: 0.55; }
   :global(.tt-gloss) { font-weight: 400; color: var(--ink-2); }
   :global(.tt-forms) { font-size: var(--fs-xs); color: var(--ink-3); margin: -1px 0 4px; font-style: italic; }

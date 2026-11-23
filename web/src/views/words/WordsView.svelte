@@ -460,7 +460,7 @@
   .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
   .seg button { border: 0; background: transparent; padding: 3px 10px; font-size: var(--fs-sm); cursor: pointer; color: var(--ink-2); }
   .seg button + button { border-left: 1px solid var(--rule); }
-  .seg button[aria-pressed='true'] { background: var(--petrol); color: var(--on-petrol); }
+  .seg button[aria-pressed='true'] { background: var(--sel-bg); color: var(--sel-ink); box-shadow: inset 0 0 0 1px var(--sel-edge); font-weight: 600; }
 
   :global(td.forms) { text-align: left !important; white-space: normal; max-width: 32ch; }
   :global(th.forms-h) { text-align: left !important; }

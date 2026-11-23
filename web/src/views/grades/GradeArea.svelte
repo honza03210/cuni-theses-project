@@ -181,8 +181,8 @@
   .marker { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 3; }
   /* the label sits on the saturated grade-1 band: a paper halo keeps it legible in both themes */
   .mlabel { font-size: 12px; fill: var(--ink); font-weight: 600; paint-order: stroke; stroke: var(--paper); stroke-width: 3.5px; stroke-linejoin: round; }
-  .sel { stroke: var(--petrol); stroke-width: 2.5; }
-  .sel-label { fill: var(--paper); font-weight: 700; paint-order: stroke; stroke: var(--petrol); stroke-width: 14px; stroke-linejoin: round; }
+  .sel { stroke: var(--sel-mark); stroke-width: 2.5; }
+  .sel-label { fill: var(--paper); font-weight: 700; paint-order: stroke; stroke: var(--sel-mark); stroke-width: 14px; stroke-linejoin: round; }
   .blabel { font-size: 12px; fill: var(--ink-2); }
   .mlabel.ai { fill: var(--warn); }
   .thin-note { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: var(--fs-xs); color: var(--ink-2); }

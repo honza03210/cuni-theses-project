@@ -142,5 +142,6 @@
   .more-btn { margin: 6px 0 0; border: 0; background: none; padding: 4px 0; cursor: pointer; font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
   .more-btn:hover { color: var(--ink); text-decoration-color: var(--ink); }
   @media (pointer: coarse), (max-width: 639px) { .more-btn { min-height: 44px; } }
-  .mk { stroke: var(--ink); stroke-width: 1.1; }
+  /* an ink edge on every marker: the quiet grade 1 ("excellent") must stay findable */
+  .mk { stroke: var(--ink); stroke-width: 1.5; }
 </style>
