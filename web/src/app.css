@@ -29,12 +29,15 @@
   /* data */
   --rise: #0b5fa5;
   --fall: #a8430d;
-  --avg: #c43c14;
+  --avg: #5f646b;               /* = ink-3: the average is a quiet dashed reference, not a data colour */
   --context: #b8b2a4;
-  --grade-1: #2c7bb6;
-  --grade-2: #abd9e9;
-  --grade-3: #fdae61;
-  --grade-4: #d7191c;
+  /* grades: the common grades are quiet steel, the rare ones (3, 4) carry the colour, so the eye
+     goes where change would show. Validated (dataviz validate_palette.js): CVD and normal-vision
+     separation pass in both themes; the low-chroma steps are quiet on purpose. Grade 4 is also hatched. */
+  --grade-1: #c9d6df;
+  --grade-2: #8aa6ba;
+  --grade-3: #e3894a;
+  --grade-4: #b52a1e;
   --warn: #8a5a00;
 
   --font: 'Source Sans 3', 'Source Sans Pro', system-ui, sans-serif;
@@ -75,8 +78,9 @@
     --paper: #16191d; --paper-2: #1d2126; --paper-3: #272c32;
     --ink: #e9e6df; --ink-2: #bdbab3; --ink-3: #9a978f;
     --rule: #3b4047; --rule-soft: #2a2f35;
-    --petrol: #8fc1bd; --petrol-deep: #173a46; --petrol-tint: #1f3634; --on-petrol: #0f1d1c;
-    --rise: #6aaeea; --fall: #e8925a; --avg: #f2724a; --context: #555a61; --warn: #e2b450;
+    --petrol: #93b8d4; --petrol-deep: #173a46; --petrol-tint: #1c2f3d; --on-petrol: #0e1820;
+    --rise: #6aaeea; --fall: #e8925a; --avg: #9a978f; --context: #555a61; --warn: #e2b450;
+    --grade-1: #34424d; --grade-2: #5f7f96; --grade-3: #e6ac5e; --grade-4: #d33a33;
     --shadow: rgb(0 0 0 / 0.5); --swatch-edge: rgb(255 255 255 / 0.2);
     --plate-head: var(--paper-2); --band-edge: #070809;
     color-scheme: dark;
@@ -86,8 +90,9 @@
   --paper: #16191d; --paper-2: #1d2126; --paper-3: #272c32;
   --ink: #e9e6df; --ink-2: #bdbab3; --ink-3: #9a978f;
   --rule: #3b4047; --rule-soft: #2a2f35;
-  --petrol: #8fc1bd; --petrol-deep: #173a46; --petrol-tint: #1f3634; --on-petrol: #0f1d1c;
-  --rise: #6aaeea; --fall: #e8925a; --avg: #f2724a; --context: #555a61; --warn: #e2b450;
+  --petrol: #93b8d4; --petrol-deep: #173a46; --petrol-tint: #1c2f3d; --on-petrol: #0e1820;
+  --rise: #6aaeea; --fall: #e8925a; --avg: #9a978f; --context: #555a61; --warn: #e2b450;
+    --grade-1: #34424d; --grade-2: #5f7f96; --grade-3: #e6ac5e; --grade-4: #d33a33;
   --shadow: rgb(0 0 0 / 0.5); --swatch-edge: rgb(255 255 255 / 0.2);
   --plate-head: var(--paper-2); --band-edge: #070809;
   color-scheme: dark;

@@ -257,7 +257,8 @@
   .marker { stroke: var(--ink-3); stroke-dasharray: 2 3; }
   .mlabel { font-size: 12px; font-weight: 600; fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 3.5px; stroke-linejoin: round; }
   .base { fill: var(--paper-2); }
-  .target { fill: var(--petrol-tint); opacity: 0.7; }
+  /* the compared period: a neutral paper band (petrol is for selections only) */
+  .target { fill: var(--paper-3); }
   .span { stroke-width: 2; }
   .exp-span { stroke: var(--ink-2); stroke-dasharray: 4 3; }
   /* the block's observed mean: a thick translucent ink bar, so it is not read as the word's own line (petrol stays 'selected' only) */

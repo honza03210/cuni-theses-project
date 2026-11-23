@@ -52,7 +52,11 @@ export function yearTicks(from: number, to: number, width: number, minGap = 38):
 }
 
 export const GRADE_VARS = ['var(--grade-1)', 'var(--grade-2)', 'var(--grade-3)', 'var(--grade-4)'];
-export const GRADE_HEX = ['#2c7bb6', '#abd9e9', '#fdae61', '#d7191c'];
+/** The grade colours as resolved for the current theme (canvas cannot read CSS variables). */
+export function gradeHex(): string[] {
+  const cs = getComputedStyle(document.documentElement);
+  return [1, 2, 3, 4].map((g) => cs.getPropertyValue(`--grade-${g}`).trim());
+}
 /** Non-colour grade channels, shared by every Grades chart and its one legend */
 export const GRADE_DASH = ['', '9 3', '5 3', '2 3'];
 export const GRADE_SHAPES = [

@@ -17,12 +17,12 @@ colors:
   on-petrol-2: "#c5d6dc"
   rise: "#0b5fa5"
   fall: "#a8430d"
-  avg: "#c43c14"
+  avg: "#5f646b"
   context: "#b8b2a4"
-  grade-1: "#2c7bb6"
-  grade-2: "#abd9e9"
-  grade-3: "#fdae61"
-  grade-4: "#d7191c"
+  grade-1: "#c9d6df"
+  grade-2: "#8aa6ba"
+  grade-3: "#e3894a"
+  grade-4: "#b52a1e"
   warn: "#8a5a00"
 typography:
   headline:
@@ -182,8 +182,9 @@ The ground is warm paper and the text is near-black ink. The single structural c
 ### Secondary (data)
 - **Rise Blue** (rise): words used more than their trend predicts. It is the bold half of the word cloud and its tables.
 - **Fall Rust** (fall): words used less than their trend predicts.
-- **Average Vermilion** (avg): the selection average and the university reference. It is always drawn as a 2.1px dashed line (5 3) and never as a solid line.
-- **Grade ramp** (grade-1 Excellent Blue, grade-2 Pale Sky, grade-3 Apricot, grade-4 Fail Red): a diverging blue-to-red ramp for grades 1 to 4. Grade 4 is also hatched (45° stripes, 5px pitch), so it does not depend on hue alone. The canvas parallel plot reuses the same hex values through `GRADE_HEX`.
+- **Average Ink** (avg, = ink-3): the selection average and the university reference. It is a quiet reference, not a data colour: always a 2.1px dashed line (5 3), never solid, so the faculty's own line stays the loudest mark.
+- **Grade ramp** (grade-1 Quiet Steel, grade-2 Steel, grade-3 Ochre, grade-4 Fail Red): the common grades are quiet, low-chroma steel and the rare grades carry the colour, so attention goes where change would show rather than to the large grade-1 block. Grade 4 is also hatched (45° stripes, 5px pitch). Dark has its own steps (#34424d / #5f7f96 / #e6ac5e / #d33a33). Both themes pass the CVD and normal-vision separation checks of the dataviz validator; the steel steps fail its categorical chroma/lightness checks on purpose. The canvas parallel plot reads the live values through `gradeHex()`.
+- **One colour budget per view:** blue and rust belong to Words (rise / fall); the grade ramp belongs to Grades; Trends is ink with an ink-3 dashed average. A compared period (the word chart's 2023–2025 band) is a neutral paper-3 band with a label, never petrol.
 - **Caution Ochre** (warn): small-sample and data-caveat warnings (600 weight), and the AI-declaration marker line in trends.
 
 ### Neutral
@@ -318,7 +319,7 @@ A paper box with a 1px ink border and the float shadow, at most 280px wide. It h
 
 ## Themes
 
-A light theme (the paper sheet) and a dark theme (charcoal sheet, light ink) share every rule above. The dark theme follows the OS preference until the viewer picks one with the sun/moon switch in the masthead; the pick is stored in `localStorage` (`cuni-theses-theme`) and applied before first paint by an inline script in `index.html`. Dark overrides live in `web/src/app.css` under `@media (prefers-color-scheme: dark)` (guarded by `:root:not([data-theme='light'])`) and `:root[data-theme='dark']`: paper #16191d / #1d2126 / #272c32, ink #e9e6df / #bdbab3 / #9a978f, petrol #6fb3cd (with dark `--on-petrol`), rise #6aaeea, fall #e8925a, avg #f2724a. Grade colours are shared by both themes. Masthead text uses its own `--band-ink` tokens so the selection colour can change per theme without touching the band.
+A light theme (the paper sheet) and a dark theme (charcoal sheet, light ink) share every rule above. The dark theme follows the OS preference until the viewer picks one with the sun/moon switch in the masthead; the pick is stored in `localStorage` (`cuni-theses-theme`) and applied before first paint by an inline script in `index.html`. Dark overrides live in `web/src/app.css` under `@media (prefers-color-scheme: dark)` (guarded by `:root:not([data-theme='light'])`) and `:root[data-theme='dark']`: paper #16191d / #1d2126 / #272c32, ink #e9e6df / #bdbab3 / #9a978f, petrol #93b8d4 (kept in the blue family; dark `--on-petrol`), rise #6aaeea, fall #e8925a, avg #9a978f, grades #34424d / #5f7f96 / #e6ac5e / #d33a33. Masthead text uses its own `--band-ink` tokens so the selection colour can change per theme without touching the band.
 
 ## Answer line (Lede)
 

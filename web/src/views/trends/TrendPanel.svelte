@@ -43,7 +43,8 @@
   const zf = $derived(span[0]);
   const zt = $derived(span[1]);
   const x = $derived(scaleLinear().domain([zf - 0.25, Math.max(zt, zf + 1) + 0.25]).range([0, iw]));
-  const y = $derived(scaleLinear().domain(yDomain).range([ih, 0]).nice(4));
+  // clamped: a wide interval in a small faculty stops at the plot edge (and never below 0)
+  const y = $derived(scaleLinear().domain(yDomain).range([ih, 0]).nice(4).clamp(true));
   const yTicks = $derived(y.ticks(large ? 6 : 4));
   const tickDec = $derived(yTicks.length > 1 ? precisionFixed(yTicks[1] - yTicks[0]) : metric.decimals);
   const xTicks = $derived(yearTicks(zf, zt, iw, large ? 44 : 40));

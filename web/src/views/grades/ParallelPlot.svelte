@@ -1,7 +1,7 @@
 <script lang="ts">
   import { brushY, scaleLinear, scaleSymlog, select, type BrushBehavior } from 'd3';
   import type { Theses } from '../../lib/data/types';
-  import { GRADE_DASH, GRADE_HEX, GRADE_VARS } from '../../lib/chart';
+  import { GRADE_DASH, GRADE_VARS, gradeHex } from '../../lib/chart';
   import { density01 } from '../../lib/data/aggregate';
   const CONTEXT_HEX = '#8f897b';
   import { app } from '../../lib/state/app.svelte';
@@ -148,6 +148,16 @@
   });
 
   let canvas: HTMLCanvasElement | undefined = $state();
+  // the canvas is painted with resolved colours: repaint when the theme changes
+  let themeEpoch = $state(0);
+  $effect(() => {
+    const bump = () => themeEpoch++;
+    const mo = new MutationObserver(bump);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    const mq = matchMedia('(prefers-color-scheme: dark)');
+    mq.addEventListener('change', bump);
+    return () => { mo.disconnect(); mq.removeEventListener('change', bump); };
+  });
   let raf = 0;
 
   function draw() {
@@ -201,10 +211,11 @@
     const a2 = any ? Math.min(0.6, alpha * 1.6) : alpha;
     // Every thesis gets the same ink, so the cloud shows the true proportions of grades.
     // Lines sit under the median/quartile bands (SVG), which carry the comparison.
+    const hex = gradeHex();
     for (let g = 1; g <= 4; g++) {
-      // light blue (grade 2) needs extra weight against the paper ground
-      const ga = g === 2 ? a2 * 1.6 : a2;
-      layer((r) => grade[r] === g && sel[r] === 1, ga, GRADE_HEX[g - 1], 0.55);
+      // the quiet grade 1 needs extra weight against the paper ground
+      const ga = g === 1 ? a2 * 1.6 : a2;
+      layer((r) => grade[r] === g && sel[r] === 1, ga, hex[g - 1], 0.55);
     }
   }
   const offs: HTMLCanvasElement[] = [];
@@ -219,7 +230,7 @@
   }
   $effect(() => {
     // dependencies
-    void data; void selection; void width; void canvas; void showLines;
+    void data; void selection; void width; void canvas; void showLines; void themeEpoch;
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
@@ -349,12 +360,12 @@
           {@const xs = AXES.map((_, a) => ax(a))}
           <path class="band" class:hatched={b.g === 4}
             d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.q3[a])}`).join('L') + 'L' + xs.map((x, a) => `${x},${ih * (1 - b.q1[a])}`).reverse().join('L') + 'Z'} />
-          <path class="median-halo" class:pale={b.g === 2} d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.med[a])}`).join('L')} />
-          <path class="median" stroke={GRADE_HEX[b.g - 1]} stroke-dasharray={['', '9 3', '5 3', '2 3'][b.g - 1]} d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.med[a])}`).join('L')} />
+          <path class="median-halo" class:pale={b.g === 1} d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.med[a])}`).join('L')} />
+          <path class="median" stroke={GRADE_VARS[b.g - 1]} stroke-dasharray={['', '9 3', '5 3', '2 3'][b.g - 1]} d={'M' + xs.map((x, a) => `${x},${ih * (1 - b.med[a])}`).join('L')} />
         {/each}
         <!-- distributions beside each axis, rare grades first like the bands -->
         {#each [...curves].reverse() as c (c.g * 100 + c.a)}
-          <path class="dist" class:pale={c.g === 2} fill={GRADE_HEX[c.g - 1]} stroke={GRADE_HEX[c.g - 1]} stroke-dasharray={GRADE_DASH[c.g - 1]} d={c.d} />
+          <path class="dist" class:pale={c.g === 1} fill={GRADE_VARS[c.g - 1]} stroke={GRADE_VARS[c.g - 1]} stroke-dasharray={GRADE_DASH[c.g - 1]} d={c.d} />
         {/each}
         {#each AXES as k, a (k)}
           {@const lines = splitLabel(axisLabel(k), iw / (AXES.length - 1))}

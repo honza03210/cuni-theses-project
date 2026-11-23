@@ -66,7 +66,9 @@
     for (const p of uniRef ?? []) { lo = Math.min(lo, p.mean); hi = Math.max(hi, p.mean); }
     // one faculty: keep the scale of the all-faculty small multiples, so its change is not magnified
     if (uniAll) for (const pts of uniAll.byFac.values()) for (const p of pts) { lo = Math.min(lo, p.mean); hi = Math.max(hi, p.mean); }
-    return padDomain(lo, hi, 0.08);
+    const [a, b] = padDomain(lo, hi, 0.08);
+    // every measure is a count, share or length: a domain padded below 0 would draw impossible values
+    return [lo >= 0 ? Math.max(0, a) : a, b];
   });
 
   const aiOn = $derived(aiFilterActive(app.ai) && app.yearTo >= meta.aiYear);

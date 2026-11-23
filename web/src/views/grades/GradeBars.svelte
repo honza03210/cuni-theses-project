@@ -165,7 +165,7 @@
   svg { display: block; overflow: visible; }
   .bar rect { stroke-width: 0; }
   /* small faculties: hollow bars (outline + faint fill) read as weaker in both themes; label stays readable */
-  .bar.small rect { fill-opacity: 0.14; stroke-width: 1; stroke-opacity: 0.8; }
+  .bar.small rect { fill-opacity: 0.14; stroke: var(--ink-3); stroke-width: 1; stroke-opacity: 0.7; }
   .bar.small .yl { font-weight: 400; fill: var(--ink-3); }
   .seg-row:hover rect { stroke: var(--ink); stroke-width: 1; stroke-opacity: 1; }
   .yl { font-size: 12px; fill: var(--ink); font-weight: 600; }
@@ -175,7 +175,7 @@
   .yn.delta { fill: var(--ink-2); font-weight: 600; }
   .ytag.cur { fill: var(--ink); font-weight: 600; }
   /* the earlier period is the thinner, lighter bar */
-  .bar:not(.small) .seg-row.prev rect { fill-opacity: 0.6; }
+  .bar:not(.small) .seg-row.prev rect { fill-opacity: 0.8; }
   .sep { stroke: var(--rule); stroke-dasharray: 2 2; }
   .note { margin: 4px 0 0; font-size: var(--fs-xs); color: var(--ink-3); text-wrap: pretty; }
   .cut { margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); text-wrap: pretty; }
@@ -183,7 +183,7 @@
   /* the keys are miniature bars, drawn like the marks: the earlier period thin and paler, the later one full */
   .pk { display: inline-block; width: 22px; border-radius: 1px;
     background: linear-gradient(90deg, var(--grade-1) 0 52%, var(--grade-2) 52% 82%, var(--grade-3) 82% 94%, var(--grade-4) 94%); }
-  .pk.prev { height: 5px; opacity: 0.6; }
+  .pk.prev { height: 5px; opacity: 0.8; }
   .pk.cur { height: 9px; margin-left: 12px; }
   .more-btn { margin: 6px 0 0; border: 0; background: none; padding: 4px 0; cursor: pointer; font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
   @media (pointer: coarse), (max-width: 639px) { .more-btn { min-height: 44px; } }
