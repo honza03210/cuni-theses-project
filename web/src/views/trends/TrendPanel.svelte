@@ -8,6 +8,7 @@
   import { app } from '../../lib/state/app.svelte';
   import { FAC_SHORT } from '../../lib/faculties';
   import { YearDrag, resetZoom, zoomed } from '../../lib/state/zoom.svelte';
+  import { POST_FROM, PRE } from '../../lib/data/answers';
 
   interface Props {
     fac: number;
@@ -55,6 +56,19 @@
   const uniPaths = $derived(uniRef ? seriesPaths(toV(uniRef), x, y, yearMax) : null);
   const others = $derived(facs.filter((f) => f !== fac).map((f) => ({ f, p: seriesPaths(toV(series.byFac.get(f) ?? []), x, y, yearMax) })));
   const band = $derived(bandPath(own.filter(inZ), x, y));
+  // The comparison the answer line states: this faculty's thesis-weighted mean before (2018–22) and
+  // after ChatGPT (2023 to the last complete year), as two level bars over their years.
+  const levels = $derived.by(() => {
+    const lv = (a: number, b: number) => {
+      const pts = own.filter((p) => p.year >= a && p.year <= b);
+      const n = pts.reduce((s, p) => s + p.n, 0);
+      if (!n) return null;
+      const lo = Math.max(a, zf), hi = Math.min(b, zt);
+      return hi < lo ? null : { v: pts.reduce((s, p) => s + p.mean * p.n, 0) / n, x0: x(lo - 0.4), x1: x(hi + 0.4) };
+    };
+    const pre = lv(PRE[0], PRE[1]), post = lv(POST_FROM, Math.min(yearTo, yearMax - 1));
+    return pre && post ? [pre, post] : [];
+  });
 
   const hoverOther = $derived(ui.hoverFac !== null && ui.hoverFac !== fac && facs.includes(ui.hoverFac) ? ui.hoverFac : null);
   const hoverPaths = $derived(hoverOther !== null ? others.find((o) => o.f === hoverOther)?.p ?? null : null);
@@ -172,6 +186,7 @@
           <path class="hover dotted" d={hoverPaths.dotted} />
           {#if hoverEnd && hoverOther !== null}<text class="hlabel" x={x(hoverEnd.year) - 2} y={y(hoverEnd.mean) - 6} text-anchor="end">{faculties[hoverOther].abbr}</text>{/if}
         {/if}
+        {#each levels as l, i (i)}<line class="level" x1={l.x0} x2={l.x1} y1={y(l.v)} y2={y(l.v)} />{/each}
         <path class="own" d={ownPaths.solid} />
         <path class="own dotted" d={ownPaths.dotted} />
         {#each ownPaths.singles as s (s.year)}<circle class="own-dot" cx={x(s.year)} cy={y(s.v)} r="2.5" />{/each}
@@ -221,6 +236,8 @@
   .hover { stroke: var(--ink-2); stroke-width: 1.8; }
   .hlabel { font-size: 11px; font-weight: 600; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
   .own { stroke: var(--ink); stroke-width: 2.2; }
+  /* period means: the same thick translucent ink bar as the word detail's observed mean */
+  .level { stroke: var(--ink); stroke-width: 5; stroke-opacity: 0.32; stroke-linecap: butt; }
   .dotted { stroke-dasharray: 1.5 3; }
   .avg.dotted { stroke-dasharray: 1.5 3; }
   .own-dot { fill: var(--ink); }

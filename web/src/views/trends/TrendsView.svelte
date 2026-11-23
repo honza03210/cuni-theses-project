@@ -35,7 +35,6 @@
   }
   // phones get two narrower columns, so 15 faculties are not a 15-screen scroll
   const colMin = $derived(gridW < 600 ? 150 : 220);
-  const cols = $derived(Math.max(1, Math.floor((gridW + 16) / (colMin + 16))));
   const series = $derived(metricSeries(theses, mask, metric.key, [...app.fac].sort((a, b) => a - b), app.yearFrom, app.yearTo));
   /** change after ChatGPT per faculty: mean of 2023+ points minus mean of 2018–2022 points */
   const change = (f: number) => {
@@ -95,6 +94,7 @@
 {#snippet legend()}
         <ul class="legend" aria-label={L.t['common.legend']}>
           <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--ink)" stroke-width="2.25"/></svg>{L.t['trends.this']}</li>
+          <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--ink)" stroke-width="5" stroke-opacity="0.32"/></svg>{L.t['trends.levels']}</li>
           {#if facs.length === 1}
             <li><svg width="22" height="10" aria-hidden="true"><line x1="0" x2="22" y1="5" y2="5" stroke="var(--avg)" stroke-width="2.25" stroke-dasharray="5 3"/></svg>{L.t['trends.uni']}</li>
           {:else}
@@ -157,7 +157,7 @@
       {#if facs.length && hasData}
         <div class="grid" class:single={facs.length === 1} bind:this={grid} bind:clientWidth={gridW} style:--col-min="{colMin}px">
           {#each shown as f, fi (f)}
-            <TrendPanel first={fi < cols} tabStop={fi === Math.min(activePanel, shown.length - 1)} onnav={(k) => nav(fi, k)} showOthers={showOthers && app.detailed}
+            <TrendPanel first={fi === 0} tabStop={fi === Math.min(activePanel, shown.length - 1)} onnav={(k) => nav(fi, k)} showOthers={showOthers && app.detailed}
               fac={f} faculty={meta.faculties[f]} {series} {facs} {yDomain} {metric} {aiOn}
               yearFrom={app.yearFrom} yearTo={app.yearTo} yearMax={meta.yearMax} aiYear={meta.aiYear}
               faculties={meta.faculties} uniRef={uniRef} large={facs.length === 1}

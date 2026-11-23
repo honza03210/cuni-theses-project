@@ -139,6 +139,7 @@ const cs = {
   'gender.2': 'muži',
   'filters.noAi': 'Vyberte alespoň jednu možnost.',
   'filters.open': 'Filtry',
+  'filters.active': (n: number) => `, ${n} ${n === 1 ? 'skupina zúžena' : n < 5 ? 'skupiny zúženy' : 'skupin zúženo'}`,
   'filters.close': 'Zavřít filtry',
   'filters.done': 'Hotovo',
 
@@ -251,6 +252,7 @@ const cs = {
   'trends.sorted': 'řazeno podle změny po roce 2022',
   'trends.sortedNone': 'řazeno podle fakulty',
   'trends.avg': 'průměr výběru',
+  'trends.levels': 'průměr fakulty 2018–22 a od 2023',
   'trends.uni': 'celá univerzita (průměr)',
   'trends.foot': 'Roční průměry prací s čistě vyříznutým tělem textu. Body s méně než 20 pracemi nejsou vykresleny. Průměr výběru je vážený počtem prací. Stín = 95% interval spolehlivosti.',
   'trends.mixedLang': 'Vybráno více jazyků práce: stylové ukazatele nejsou mezi jazyky srovnatelné.',
@@ -431,6 +433,7 @@ const en: Dict = {
   'gender.2': 'Men',
   'filters.noAi': 'Select at least one option.',
   'filters.open': 'Filters',
+  'filters.active': (n: number) => `, ${n} ${n === 1 ? 'group narrowed' : 'groups narrowed'}`,
   'filters.close': 'Close filters',
   'filters.done': 'Done',
 
@@ -543,6 +546,7 @@ const en: Dict = {
   'trends.sorted': 'sorted by change after 2022',
   'trends.sortedNone': 'in faculty order',
   'trends.avg': 'selection average',
+  'trends.levels': 'faculty average 2018–22 and from 2023',
   'trends.uni': 'whole university (average)',
   'trends.foot': 'Yearly means of theses whose body text was cut cleanly. Points with fewer than 20 theses are not drawn. The selection average is weighted by thesis count. Band = 95 % confidence interval.',
   'trends.mixedLang': 'More than one thesis language selected: style measures are not comparable across languages.',

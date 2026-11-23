@@ -54,8 +54,8 @@
   const x = $derived(scaleLinear().domain([0, 1]).range([0, iw]));
   // A–F faculties are marked: a change there can also come from their grading scale
   const AF = ['etf', 'fsv'];
-  // the † and its note belong to the detailed version
-  const isAF = (f: number) => app.detailed && f >= 0 && AF.includes(faculties[f].code);
+  // the † and its note stay in both versions: these rows are graded on another scale
+  const isAF = (f: number) => f >= 0 && AF.includes(faculties[f].code);
   const facName = (f: number) => (!app.detailed && FAC_SHORT[faculties[f].code] ? L.pick(FAC_SHORT[faculties[f].code]) : faculties[f].abbr);
   const label = (f: number) => (f < 0 ? L.t['filters.all'] : facName(f) + (isAF(f) ? '†' : ''));
   const anyAF = $derived(bars.some((b) => isAF(b.fac)));
@@ -130,7 +130,7 @@
   {/if}
   <!-- the detailed version explains outlined bars in the plate foot -->
   {#if !app.detailed && bars.some((b) => isSmall(b))}<p class="note">{L.t['grades.bars.smallShort']}</p>{/if}
-  {#if anyAF}<p class="note full-only">{L.t['grades.bars.af']}</p>{/if}
+  {#if anyAF}<p class="note">{L.t['grades.bars.af']}</p>{/if}
   {#if missing.length || hidden.length}<p class="note full-only">{L.t['grades.bars.notShown'](missing.join(', '), hidden.join(', '))}</p>{/if}
   {#if hover}
     <Tooltip x={hover.cx} y={hover.cy}>
@@ -163,8 +163,9 @@
   .note { margin: 4px 0 0; font-size: var(--fs-xs); color: var(--ink-3); text-wrap: pretty; }
   .cut { margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); text-wrap: pretty; }
   .pkey { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--s2); font-size: var(--fs-sm); color: var(--ink-2); }
-  /* the period is encoded by thickness, so the key is ink: grade colours stay for grades */
-  .pk { display: inline-block; width: 18px; background: var(--ink-2); border-radius: 1px; }
+  /* the keys are miniature bars, drawn like the marks: the earlier period thin and paler, the later one full */
+  .pk { display: inline-block; width: 22px; border-radius: 1px;
+    background: linear-gradient(90deg, var(--grade-1) 0 52%, var(--grade-2) 52% 82%, var(--grade-3) 82% 94%, var(--grade-4) 94%); }
   .pk.prev { height: 5px; opacity: 0.6; }
   .pk.cur { height: 9px; margin-left: 12px; }
   .more-btn { margin: 6px 0 0; border: 0; background: none; padding: 4px 0; cursor: pointer; font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }

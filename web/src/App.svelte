@@ -5,7 +5,7 @@
   import { countMask, filterMask } from './lib/data/select';
   import type { Theses } from './lib/data/types';
   import { app, assign, domainOf } from './lib/state/app.svelte';
-  import { decode, encode, type View } from './lib/state/url';
+  import { decode, defaults, encode, type View } from './lib/state/url';
   import { L } from './lib/locale.svelte';
   import { zoom, resetZoom, applyZoom } from './lib/state/zoom.svelte';
   import FilterPanel from './lib/ui/FilterPanel.svelte';
@@ -58,6 +58,19 @@
     const f = (e: MediaQueryListEvent) => (sysDark = e.matches);
     systemDark?.addEventListener('change', f);
     return () => systemDark?.removeEventListener('change', f);
+  });
+
+  /** Filter groups that differ from the defaults (and apply to this view): shown on the phone's Filters
+   *  button, so a shared, narrowed link never passes for the whole university. */
+  const activeFilters = $derived.by(() => {
+    if (!theses) return 0;
+    const d = defaults(domainOf(theses));
+    const same = (a: number[], b: number[]) => a.length === b.length && [...a].sort().join() === [...b].sort().join();
+    const words = app.view === 'words';
+    return [
+      !same(app.fac, d.fac), !words && (app.yearFrom !== d.yearFrom || app.yearTo !== d.yearTo), !same(app.langs, d.langs),
+      !same(app.ai, d.ai), !same(app.genders, d.genders), !words && !same(app.grades, d.grades),
+    ].filter(Boolean).length;
   });
 
   async function load() {
@@ -152,7 +165,7 @@
       <button type="button" class="drawer-btn" bind:this={drawerBtn} aria-expanded={drawerOpen} aria-controls="filters"
         onclick={() => (drawerOpen = !drawerOpen)}>
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        {L.t['filters.open']}
+        {L.t['filters.open']}{#if activeFilters}<span class="active-n" aria-hidden="true">{activeFilters}</span><span class="sr-only">{L.t['filters.active'](activeFilters)}</span>{/if}
       </button>
       <div class="prefs band-prefs">{@render prefsCtl()}</div>
     </div>
@@ -288,6 +301,8 @@
   .mode-toggle:hover { color: var(--band-ink); text-decoration-color: var(--band-ink); }
   .mode-toggle:focus-visible { outline-color: var(--band-ink); }
   .drawer-prefs .mode-toggle { color: var(--ink-2); text-decoration-color: var(--rule); }
+  /* count of narrowed filter groups: a small paper disc on the petrol band (a count, not a selection) */
+  .active-n { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 2px; border-radius: 9px; background: var(--band-ink); color: var(--petrol-deep); font-size: var(--fs-xs); font-weight: 700; line-height: 1; }
   .drawer-btn {
     display: none;
     align-items: center; gap: 6px;

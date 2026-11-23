@@ -79,8 +79,12 @@
   {/snippet}
 
   {#if widest}<p class="lead-line">{L.t['grades.dots.widest'](widest.label, widest.a, widest.b, widest.unit)}</p>{/if}
-  <ul class="key" aria-hidden="true">
-    <li><svg width="26" height="10"><line x1="1" x2="25" y1="5" y2="5" stroke="var(--ink-2)" stroke-width="1.5"/><path d="M1,2v6M25,2v6" stroke="var(--ink-2)" stroke-width="1.5"/></svg>{L.t['grades.dots.iqr']}</li>
+  <!-- the grade key sits with the chart (the view legend can be a screen away on a phone) -->
+  <ul class="key" aria-label={L.t['common.legend']}>
+    {#each [1, 2, 3, 4] as g (g)}
+      <li><svg width="12" height="12" aria-hidden="true"><path d={SHAPES[g - 1](4.2)} transform="translate(6,6)" fill={GRADE_VARS[g - 1]} stroke="var(--ink)" stroke-width="1.1" /></svg>{g} {L.t[`grade.${g}` as 'grade.1']}</li>
+    {/each}
+    <li><svg width="26" height="10" aria-hidden="true"><line x1="1" x2="25" y1="5" y2="5" stroke="var(--ink-2)" stroke-width="1.5"/><path d="M1,2v6M25,2v6" stroke="var(--ink-2)" stroke-width="1.5"/></svg>{L.t['grades.dots.iqr']}</li>
   </ul>
   <div class="wrap" bind:clientWidth={width}>
     <svg {width} height={rowH * rows.length} role="img" aria-label={L.t['grades.dots.title']}>

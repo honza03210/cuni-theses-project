@@ -333,7 +333,7 @@ filter counts and notes, faculty full names (a 3-column abbreviation grid instea
 (the default 2023+ vs 2018–2022 comparison stays), and faculty context lines in Trends and the word detail.
 Mark anything detail-only with the class `full-only` (hidden under `.simple` in `app.css`).
 Only two caveats stay in both versions, because they say the numbers on screen describe a different or thin group:
-the AI-filter note and small-sample hedges. Interpretive qualifiers are Detailed-only by decision, so Simple stays
+the AI-filter note, small-sample hedges, and the † on faculties graded on the A–F scale (with its one-line note). Interpretive qualifiers are Detailed-only by decision, so Simple stays
 clean: the Words "AI-like vocabulary, but the cloud does not prove it" line, the Trends "most of the change is in one
 year" note, and the dot plot's "compare positions within a row only". Detailed is where the full honesty layer lives.
 
