@@ -110,6 +110,9 @@
   }
   // AI filter on: the year from which the selection is a different group (lines break there)
   const seam = $derived(aiFilterActive(app.ai) && yearTo >= aiYear ? aiYear : 0);
+  // the incomplete last year: dotted, keyed in the legend and named at its end in both versions,
+  // so a partial year's jump never reads as a finding
+  const tail = $derived(tailPart(total));
   const diffPP = $derived(Number.isFinite(observed) && Number.isFinite(expected) ? (observed - expected) * 100 : NaN);
 </script>
 
@@ -125,6 +128,7 @@
       <span><i class="k fit"></i>{L.t['words.detail.fit']} {result.baseline[0]}–{result.baseline[result.baseline.length - 1]}</span>
       <span><i class="k dot hollow"></i>{L.t['words.detail.expected']}</span>
       <span><i class="k dot"></i>{L.t['words.detail.observedAvg'](blockLabel)}</span>
+      {#if tail.length}<span><i class="k sofar"></i>{L.t['words.detail.soFar'](yearMax)}</span>{/if}
     {/if}
   </div>
   <div class="chart" bind:clientWidth={width}>
@@ -188,7 +192,7 @@
         {:else}
           <path class="own" d={gen(solidPart(total))} />
         {/if}
-        {#if tailPart(total).length}<path class="own dotted" d={gen(tailPart(total))} />{/if}
+        {#if tail.length}<path class="own dotted" d={gen(tail)} />{/if}
         </g>
 
         {#if Number.isFinite(observed) && Number.isFinite(expected) && T1 <= zt && T1 >= zf}
@@ -209,6 +213,11 @@
             </text>
             <text class="lbl" x={x0 + 22} y={(y(observed) + y(expected)) / 2} dy="1.6em">{L.f.pct(expected, 1)} → {L.f.pct(observed, 1)}</text>
           {/if}
+        {/if}
+        <!-- phones: the steep last stretch leaves no room for the label; the legend key names it -->
+        {#if tail.length && yearMax <= zt && !narrow}
+          {@const e = tail[tail.length - 1]}
+          <text class="sofar-l" x={x(e.year) - 6} y={y(e.v)} dy="0.32em" text-anchor="end">{L.t['words.detail.soFar'](yearMax)}</text>
         {/if}
         {#if drag.active}<rect class="zsel" x={x(drag.lo)} width={Math.max(0, x(drag.hi) - x(drag.lo))} y="0" height={ih} />{/if}
         {#if hoverYear !== null}
@@ -239,6 +248,7 @@
   .k { display: inline-block; width: 16px; height: 2px; background: var(--ink); }
   .k.ctx { background: var(--context); height: 1px; }
   .k.fit { background: repeating-linear-gradient(90deg, var(--ink-2) 0 4px, transparent 4px 7px); }
+  .k.sofar { background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 5px); }
   .k.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ink); }
   .k.dot.hollow { background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--ink); }
   svg { display: block; overflow: visible; cursor: crosshair; }
@@ -263,6 +273,7 @@
   .diff { font-size: 13px; font-weight: 700; fill: var(--ink); }
   .diff.up { fill: var(--rise); }
   .diff.down { fill: var(--fall); }
+  .sofar-l { font-size: 11px; font-weight: 600; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3.5px; stroke-linejoin: round; }
   .lbl { font-size: 11px; fill: var(--ink-3); }
   .band-l { font-size: 11px; font-weight: 600; fill: var(--ink-2); paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
   .cursor { stroke: var(--ink-3); shape-rendering: crispEdges; }

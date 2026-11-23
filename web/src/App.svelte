@@ -138,6 +138,10 @@
       <span class="sr-only">{L.t['theme.dark']}</span>
     </button>
   </div>
+  {@render localeCtl()}
+{/snippet}
+
+{#snippet localeCtl()}
   <div class="locale" role="group" aria-label={L.t['lang.switch']}>
     <button type="button" lang="cs" aria-pressed={app.locale === 'cs'} onclick={() => (app.locale = 'cs')}>CS</button>
     <button type="button" lang="en" aria-pressed={app.locale === 'en'} onclick={() => (app.locale = 'en')}>EN</button>
@@ -168,6 +172,8 @@
         {L.t['filters.open']}{#if activeFilters}<span class="active-n" aria-hidden="true">{activeFilters}</span><span class="sr-only">{L.t['filters.active'](activeFilters)}</span>{/if}
       </button>
       <div class="prefs band-prefs">{@render prefsCtl()}</div>
+      <!-- phones: the language stays in the band (theme and details also sit in the drawer) -->
+      <div class="band-locale">{@render localeCtl()}</div>
     </div>
   </header>
 
@@ -219,6 +225,11 @@
       {:else}
         <GradesView {theses} {mask} />
       {/if}
+      <!-- the end of every view says where the rest is: Detailed holds the help, caveats and tables -->
+      <p class="mode-foot">
+        <button type="button" class="mode-foot-btn" onclick={() => { app.detailed = !app.detailed; scrollTo({ top: 0 }); }}>{app.detailed ? L.t['mode.hide'] : L.t['mode.show']}</button>
+        <span>{app.detailed ? L.t['mode.foot.hide'] : L.t['mode.foot.show']}</span>
+      </p>
     {/if}
   </div>
   </main>
@@ -342,6 +353,11 @@
   .scrim { display: none; }
   .prefs { display: flex; align-items: center; gap: var(--s3); }
   .drawer-prefs { display: none; }
+  .band-locale { display: none; }
+  .mode-foot { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: var(--s6) 0 0; padding-top: var(--s3); border-top: 1px solid var(--rule); font-size: var(--fs-sm); color: var(--ink-3); }
+  .mode-foot-btn { border: 0; background: none; padding: 4px 0; cursor: pointer; font-weight: 600; color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+  .mode-foot-btn:hover { color: var(--ink); text-decoration-color: var(--ink); }
+  @media (pointer: coarse) { .mode-foot-btn { min-height: 44px; } }
   .drawer-head { display: none; }
   #view-panel:focus { outline: none; }
   .skip {
@@ -384,6 +400,9 @@
   }
   @media (max-width: 639px) {
     .band-prefs { display: none; }
+    .band-locale { display: flex; }
+    .band-locale :global(button) { min-height: 44px; min-width: 40px; }
+    .right { gap: var(--s2); }
     .brand { white-space: normal; }
     h1 { font-size: var(--fs-md); }
     /* in the drawer the switches sit on paper, not on the band */

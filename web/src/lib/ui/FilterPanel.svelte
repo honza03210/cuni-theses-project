@@ -123,7 +123,8 @@
 
   <fieldset disabled={!gradeApplies}>
     <legend><span>{L.t['filters.grade']}</span></legend>
-    <ul class="checks">
+    <!-- Simple, where grades do not apply: just the group name and one line (the boxes would be dead UI) -->
+    <ul class="checks" class:full-only={!gradeApplies}>
       {#each GRADE_ALL as g (g)}
         <li>
           <label>
@@ -135,7 +136,7 @@
       {/each}
     </ul>
     <!-- not full-only: a disabled filter must say why, in both versions -->
-    {#if !gradeApplies}<p class="note">{L.t['filters.gradeWords']}</p>{/if}
+    {#if !gradeApplies}<p class="note"><span class="full-only">{L.t['filters.gradeWords']}</span><span class="simple-only">{L.t['filters.gradeWordsShort']}</span></p>{/if}
     {#if gradeApplies && !app.grades.length}<p class="warn" role="status">{L.t['filters.noGrade']}</p>{/if}
   </fieldset>
 

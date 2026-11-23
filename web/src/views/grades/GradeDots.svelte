@@ -4,6 +4,7 @@
   import { GRADE_SHAPES, GRADE_VARS } from '../../lib/chart';
   import { L } from '../../lib/locale.svelte';
   import Plate from '../../lib/ui/Plate.svelte';
+  import { app } from '../../lib/state/app.svelte';
 
   /** Per-measure dot plot: each grade's median (marker) and middle half (whisker).
    *  Each row has its own zoomed axis, so read positions within a row only. */
@@ -35,16 +36,20 @@
 
   /** The measure where the median excellent and failed thesis differ most (relative to the middle half). */
   const widest = $derived.by(() => {
-    let best: { label: string; a: string; b: string; unit: string; r: number } | null = null;
+    let best: { k: string; label: string; a: string; b: string; unit: string; r: number } | null = null;
     for (const row of rows) {
       const s1 = row.stats.find((s) => s.g === 1), s4 = row.stats.find((s) => s.g === 4);
       if (!s1 || !s4) continue;
       const iqr = Math.max(1e-9, (s1.q3 - s1.q1 + s4.q3 - s4.q1) / 2);
       const r = Math.abs(s1.med - s4.med) / iqr;
-      if (!best || r > best.r) best = { label: L.pick(row.m.label), a: L.f.num(s1.med, row.m.decimals), b: L.f.num(s4.med, row.m.decimals), unit: L.pick(row.m.unit).replace(/\s*\(.*\)$/, ''), r }; // the sentence already has brackets
+      if (!best || r > best.r) best = { k: row.k, label: L.pick(row.m.label), a: L.f.num(s1.med, row.m.decimals), b: L.f.num(s4.med, row.m.decimals), unit: L.pick(row.m.unit).replace(/\s*\(.*\)$/, ''), r }; // the sentence already has brackets
     }
     return best;
   });
+
+  // Simple: only the measure the sentence names; the rest on request (as "Show all 15 faculties")
+  let showAll = $state(false);
+  const shown = $derived(app.detailed || showAll || !widest ? rows : rows.filter((r) => r.k === widest!.k));
 
   let width = $state(900);
   const narrow = $derived(width < 640);
@@ -87,8 +92,8 @@
     <li><svg width="26" height="10" aria-hidden="true"><line x1="1" x2="25" y1="5" y2="5" stroke="var(--ink-2)" stroke-width="1.5"/><path d="M1,2v6M25,2v6" stroke="var(--ink-2)" stroke-width="1.5"/></svg>{L.t['grades.dots.iqr']}</li>
   </ul>
   <div class="wrap" bind:clientWidth={width}>
-    <svg {width} height={rowH * rows.length} role="img" aria-label={L.t['grades.dots.title']}>
-      {#each rows as row, ri (row.k)}
+    <svg {width} height={rowH * shown.length} role="img" aria-label={L.t['grades.dots.title']}>
+      {#each shown as row, ri (row.k)}
         {@const sc = row.stats.length ? scaleFor(row.stats) : null}
         <g transform="translate(0,{ri * rowH})">
           {#if ri}<line class="sep" x1="0" x2={width} y1="0" y2="0" />{/if}
@@ -115,6 +120,9 @@
       {/each}
     </svg>
   </div>
+  {#if !app.detailed && rows.length > 1}
+    <button type="button" class="more-btn" onclick={() => (showAll = !showAll)}>{showAll ? L.t['grades.dots.fewer'] : L.t['grades.dots.all'](rows.length)}</button>
+  {/if}
 </Plate>
 
 <style>
@@ -130,5 +138,9 @@
   .tick { font-size: 11px; fill: var(--ink-3); font-variant-numeric: tabular-nums; }
   .iqr { stroke: var(--ink-2); stroke-width: 1.5; }
   .cap { stroke: var(--ink-2); stroke-width: 1.5; fill: none; }
+  /* same quiet text action as "Show all 15 faculties" */
+  .more-btn { margin: 6px 0 0; border: 0; background: none; padding: 4px 0; cursor: pointer; font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+  .more-btn:hover { color: var(--ink); text-decoration-color: var(--ink); }
+  @media (pointer: coarse), (max-width: 639px) { .more-btn { min-height: 44px; } }
   .mk { stroke: var(--ink); stroke-width: 1.1; }
 </style>

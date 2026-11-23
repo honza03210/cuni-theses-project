@@ -310,6 +310,8 @@
       <span class="lk fall">{L.t['words.less']}</span>
       <!-- simple version: what size means, in words; the detailed version has the size ramp -->
       {#if listRows.length}<span class="size-key simple-only">{L.t['words.legend.size']}</span>{/if}
+      <!-- the cloud is the way in to the word chart below: say so once -->
+      {#if listRows.length}<span class="size-key">{L.t['words.legend.click']}</span>{/if}
       {#if listRows.length}
         <span class="ramp full-only">
           {#each SIZES as sz, i (i)}<span aria-hidden="true" style:font-size="{Math.max(11, sz * 0.75)}px">Aa</span>{/each}
