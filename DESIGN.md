@@ -34,7 +34,7 @@ typography:
     fontFeature: "'tnum' 1, 'lnum' 1"
   title:
     fontFamily: "'Source Sans 3', 'Source Sans Pro', system-ui, sans-serif"
-    fontSize: "1.0625rem"
+    fontSize: "1.25rem"
     fontWeight: 700
     lineHeight: 1.25
     fontFeature: "'tnum' 1, 'lnum' 1"
@@ -155,7 +155,7 @@ components:
 
 **Creative North Star: "The Steerable Yearbook"**
 
-The explorer is printed, not rendered. It takes its material from the two-colour Czech Statistical Yearbook: a warm paper ground, near-black ink, and one petrol-blue second colour. Restraint is the rule: petrol is spent only on choices the reader made (never on defaults such as ticked filters), each view carries at most one ochre caveat, and a view shows each grade key once. Every chart is set as a yearbook plate, with a tinted header band (paper-2, 4px top corners) holding a bold figure title, a grey unit line, the figure itself, and a small footer that ends in an italic source line. Each plate can flip into its ruled table. Below the header band, separation comes from 1px hairline rules, never from boxes or card backgrounds, so the page reads as a ruled sheet rather than a grid of floating widgets.
+The explorer is printed, not rendered. It takes its material from the two-colour Czech Statistical Yearbook: a warm paper ground, near-black ink, and one petrol-blue second colour. Restraint is the rule: petrol is spent only on choices the reader made (never on defaults such as ticked filters), each view carries at most one ochre caveat, and a view shows its grade key once at the top (a chart far below it, like the dot plot, may repeat a compact key beside itself). Every chart is set as a yearbook plate, with a tinted header band (paper-2, 4px top corners) holding a bold figure title, a grey unit line, the figure itself, and a small footer that ends in an italic source line. Each plate can flip into its ruled table. Below the header band, separation comes from 1px hairline rules, never from boxes or card backgrounds, so the page reads as a ruled sheet rather than a grid of floating widgets.
 
 The density is high and deliberate: small faceted multiples, a 13 px control size, tabular numerals in every place a number appears, and a persistent filter column that shows its live count at the top. Colour is spent with care. Petrol marks what the reader has selected or activated, and the darker petrol-deep is used only for the masthead band. All other colour is data colour, and each data colour has one fixed meaning.
 
@@ -163,7 +163,7 @@ Motion is small and practical. State changes use a 180 ms ease-out, the mobile f
 
 **Key Characteristics:**
 - Warm paper ground, near-black ink, and one petrol second colour that means "selected / active".
-- The yearbook plate: a tinted header band, title, unit line, figure, and source footer, with a Chart / Table toggle.
+- The yearbook plate: a tinted header band, title, unit line, figure, and source footer, with a quiet "Show table" text toggle.
 - Hairline rules instead of boxes, and crisp 1px axes.
 - One family (Source Sans 3) with tabular, lining numerals everywhere.
 - Data colours with fixed meanings that stay readable for colour-blind readers, backed up by line style or hatching.
@@ -183,7 +183,7 @@ The ground is warm paper and the text is near-black ink. The single structural c
 - **Rise Blue** (rise): words used more than their trend predicts. It is the bold half of the word cloud and its tables.
 - **Fall Rust** (fall): words used less than their trend predicts.
 - **Average Ink** (avg, = ink-3): the selection average and the university reference. It is a quiet reference, not a data colour: always a 2.1px dashed line (5 3), never solid, so the faculty's own line stays the loudest mark.
-- **Grade ramp** (grade-1 Quiet Steel, grade-2 Steel, grade-3 Ochre, grade-4 Fail Red): the common grades are quiet, low-chroma steel and the rare grades carry the colour, so attention goes where change would show rather than to the large grade-1 block. Grade 4 is also hatched (45° stripes, 5px pitch). Dark has its own steps (#34424d / #5f7f96 / #e6ac5e / #d33a33). Both themes pass the CVD and normal-vision separation checks of the dataviz validator; the steel steps fail its categorical chroma/lightness checks on purpose. The canvas parallel plot reads the live values through `gradeHex()`.
+- **Grade ramp** (grade-1 Quiet Steel, grade-2 Steel, grade-3 Ochre, grade-4 Fail Red): the common grades are quiet, low-chroma steel and the rare grades carry the colour, so attention goes where change would show rather than to the large grade-1 block. Grade 4 is also hatched (45° stripes, 5px pitch). Dark has its own steps (#4a5d70 / #6b8ca3 / #e6ac5e / #d33a33; grade 1 kept findable against the charcoal page). Both themes pass the CVD and normal-vision separation checks of the dataviz validator; the steel steps fail its categorical chroma/lightness checks on purpose. The canvas parallel plot reads the live values through `gradeHex()`.
 - **One colour budget per view:** blue and rust belong to Words (rise / fall); the grade ramp belongs to Grades; Trends is ink with an ink-3 dashed average. A compared period (the word chart's 2023–2025 band) is a neutral paper-3 band with a label, never petrol.
 - **Caution Ochre** (warn): small-sample and data-caveat warnings (600 weight), and the AI-declaration marker line in trends.
 
@@ -214,7 +214,7 @@ The ground is warm paper and the text is near-black ink. The single structural c
 
 ### Hierarchy
 - **Headline** (700, 1.5rem, -0.01em): the live count at the top of the filter column. It is the only large number on the page.
-- **Title** (700, 1.0625rem, 1.25, balanced wrap): plate titles and the masthead wordmark.
+- **Title** (700, 1.25rem, 1.25, balanced wrap): plate titles. The masthead wordmark uses the same weight at 1.0625rem (compact on purpose).
 - **Tab** (600, 0.9375rem): view tabs in the masthead, and metric names in the trends picker.
 - **Body** (400, 1rem, 1.45): messages and empty states, kept to 60 to 70ch.
 - **Control** (400, 0.8125rem): filter rows, segmented controls, legends, tables, tooltips, and plate unit lines (unit lines are in ink-3).
@@ -263,11 +263,11 @@ Borders are hairlines: 1px rule for controls and tables, and 1px ink under table
 
 ### Yearbook Plate (signature)
 - **Structure:** a tinted header band (`--plate-head`, paper-2, 10px × 16px padding, 4px top radius, hairline below). The band holds the title (Title role) and the unit line (Control role, ink-3) on the left and the tools on the right. The chart/table flip is a quiet underlined text toggle ("Show table" / "Show chart"), not a petrol segmented control: it is a viewing preference, not a selection. Below that come the figure, then a caption footer with an optional note (at most 110ch) and an italic source line.
-- **Table mode:** a Chart / Table segmented toggle swaps the figure for a ruled table. Headers are 600 weight in ink-2 with a 1px ink rule underneath and stay fixed while scrolling. Rows are 3px × 10px with soft-rule dividers and a paper-2 hover. Numbers are right-aligned and the first column is left-aligned. The table scrolls inside a 560px maximum height.
+- **Table mode:** the "Show table" text toggle swaps the figure for a ruled table. Headers are 600 weight in ink-2 with a 1px ink rule underneath and stay fixed while scrolling. Rows are 3px × 10px with soft-rule dividers and a paper-2 hover. Numbers are right-aligned and the first column is left-aligned. The table scrolls inside a 560px maximum height.
 
 ### Buttons
 - **Shape:** squared-off (3px radius).
-- **Segmented toggle:** 1px rule border, transparent segments in ink-2, paper-2 on hover, petrol with on-petrol text when pressed. Used for Chart / Table and for view modes.
+- **Segmented toggle:** 1px rule border, transparent segments in ink-2, paper-2 on hover, petrol with on-petrol text when pressed. Used for view modes (e.g. "Before vs after ChatGPT / 2025 only"); dark mode presses with the `--sel-*` tint and ink edge.
 - **Quiet button** (reset): paper ground, 1px rule border that turns ink-3 on hover.
 - **Ink button** (retry): solid ink with paper text. It is the strongest neutral action, and it does not use petrol.
 - **Quick links** (All / None): 600 weight, 0.75rem ink text with a rule-coloured underline that turns ink on hover over a paper-3 wash.
@@ -319,7 +319,7 @@ A paper box with a 1px ink border and the float shadow, at most 280px wide. It h
 
 ## Themes
 
-A light theme (the paper sheet) and a dark theme (charcoal sheet, light ink) share every rule above. The dark theme follows the OS preference until the viewer picks one with the sun/moon switch in the masthead; the pick is stored in `localStorage` (`cuni-theses-theme`) and applied before first paint by an inline script in `index.html`. Dark overrides live in `web/src/app.css` under `@media (prefers-color-scheme: dark)` (guarded by `:root:not([data-theme='light'])`) and `:root[data-theme='dark']`: paper #16191d / #1d2126 / #272c32, ink #e9e6df / #bdbab3 / #9a978f, petrol #93b8d4 (kept in the blue family; dark `--on-petrol`; pressed and selected states use the `--sel-*` tokens: a petrol-tint fill with an ink edge and ink marks, so selection never shares a hue with the blue data colours), rise #6aaeea, fall #e8925a, avg #9a978f, grades #34424d / #5f7f96 / #e6ac5e / #d33a33. Masthead text uses its own `--band-ink` tokens so the selection colour can change per theme without touching the band.
+A light theme (the paper sheet) and a dark theme (charcoal sheet, light ink) share every rule above. The dark theme follows the OS preference until the viewer picks one with the sun/moon switch in the masthead; the pick is stored in `localStorage` (`cuni-theses-theme`) and applied before first paint by an inline script in `index.html`. Dark overrides live in `web/src/app.css` under `@media (prefers-color-scheme: dark)` (guarded by `:root:not([data-theme='light'])`) and `:root[data-theme='dark']`: paper #16191d / #1d2126 / #272c32, ink #e9e6df / #bdbab3 / #9a978f, petrol #93b8d4 (kept in the blue family; dark `--on-petrol`; pressed and selected states use the `--sel-*` tokens: a petrol-tint fill with an ink edge and ink marks, so selection never shares a hue with the blue data colours), rise #6aaeea, fall #e8925a, avg #9a978f, grades #4a5d70 / #6b8ca3 / #e6ac5e / #d33a33. Masthead text uses its own `--band-ink` tokens so the selection colour can change per theme without touching the band.
 
 ## Answer line (Lede)
 
@@ -333,7 +333,7 @@ Simple keeps each view's answer line, one legend and the charts, and drops what 
 filter counts and notes, faculty full names (a 3-column abbreviation grid instead), the Words year/option controls
 (the default 2023+ vs 2018–2022 comparison stays), and faculty context lines in Trends and the word detail.
 Mark anything detail-only with the class `full-only` (hidden under `.simple` in `app.css`).
-Only two caveats stay in both versions, because they say the numbers on screen describe a different or thin group:
+Only these caveats stay in both versions, because they say the numbers on screen describe a different or thin group:
 the AI-filter note, small-sample hedges, and the † on faculties graded on the A–F scale (with its one-line note). Interpretive qualifiers are Detailed-only by decision, so Simple stays
 clean: the Words "AI-like vocabulary, but the cloud does not prove it" line, the Trends "most of the change is in one
 year" note, and the dot plot's "compare positions within a row only". Detailed is where the full honesty layer lives.

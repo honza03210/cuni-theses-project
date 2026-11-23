@@ -99,6 +99,11 @@
     </fieldset>
   {:else}
     <p class="note years-moved full-only">{L.t['filters.yearsOnTimeline']}</p>
+    <!-- Simple: say why the Years group (and the count's base) changed, like the Grade line -->
+    <fieldset class="simple-only">
+      <legend><span>{L.t['filters.years']}</span></legend>
+      <p class="note">{L.t['filters.yearsFixed']}</p>
+    </fieldset>
     <!-- years chosen on Trends or Grades do not apply here: say so instead of ignoring them silently -->
     {#if app.yearFrom !== meta.yearMin || app.yearTo !== meta.yearMax - 1}
       <p class="note years-other">{L.t['filters.yearsElsewhere'](app.yearFrom, app.yearTo)}</p>

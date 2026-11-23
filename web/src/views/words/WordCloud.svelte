@@ -56,7 +56,15 @@
     // Load the font for the actual words: the Czech letters (č, ř, ů…) live in a separate latin-ext
     // subset, and measuring before it arrives lays words out with fallback widths, so they overlap.
     const sample = input.map((d) => d.text).join(' ');
-    Promise.all([document.fonts.load(`700 20px "${FONT}"`, sample), document.fonts.load(`400 20px "${FONT}"`, sample)]).then(() => {
+    // "loaded" is not always "usable for drawing yet" under load: wait (a few frames at most) until
+    // both faces report ready for these exact words, so the layout measures the real glyph widths
+    const usable = () => document.fonts.check(`700 20px "${FONT}"`, sample) && document.fonts.check(`400 20px "${FONT}"`, sample);
+    const whenUsable = () => new Promise<void>((res) => {
+      let n = 0;
+      const tick = () => (usable() || ++n > 60 ? res() : requestAnimationFrame(tick));
+      tick();
+    });
+    Promise.all([document.fonts.load(`700 20px "${FONT}"`, sample), document.fonts.load(`400 20px "${FONT}"`, sample)]).then(whenUsable).then(() => {
       if (cancelled) return;
       const layout = cloud<(typeof input)[number]>()
         .size([w, h])
@@ -70,7 +78,6 @@
         .spiral('rectangular')
         .on('end', (out) => {
           if (cancelled) return;
-          if (!ready) requestAnimationFrame(() => requestAnimationFrame(() => (settled = true)));
           placed = out.map((d) => {
             const o = d as unknown as Placed;
             return { text: o.text, x: o.x, y: o.y, size: o.size, rise: o.rise, s: o.s };
@@ -80,6 +87,25 @@
       layout.start();
     });
     return () => { cancelled = true; };
+  });
+
+  // Self-check: once a layout is on screen, measure the drawn words; if any two overlap (a layout
+  // measured with the wrong metrics), lay out again, at most twice per data change, without the slide.
+  let relayouts = 0;
+  $effect(() => { void rising; void falling; void width; relayouts = 0; });
+  $effect(() => {
+    // only unsettled layouts are checked: they are drawn in place (no slide), so boxes are final
+    if (!ready || !placed.length || !svgEl || settled) return;
+    const svg = svgEl;
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => {
+      const boxes = Array.from(svg.querySelectorAll<SVGTextElement>('text.w')).map((t) => t.getBoundingClientRect());
+      const hit = boxes.some((a, i) => boxes.some((b, j) => j > i
+        && Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2
+        && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 0.35 * Math.min(a.height, b.height)));
+      if (hit && relayouts < 2) { relayouts++; fontEpoch++; }
+      else settled = true;
+    }));
+    return () => cancelAnimationFrame(id);
   });
 
   let hover: { s: WordScore; box: DOMRect } | null = $state(null);
