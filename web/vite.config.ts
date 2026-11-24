@@ -5,5 +5,11 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   base: process.env.BASE_PATH ?? './',
   plugins: [svelte()],
+  build: {
+    rollupOptions: {
+      // the explorer, plus a scratch page for ad-hoc charts
+      input: { main: 'index.html', playground: 'playground.html' },
+    },
+  },
   test: { include: ['src/**/*.test.ts'] },
 })

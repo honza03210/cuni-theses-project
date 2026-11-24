@@ -4,6 +4,7 @@ import { gradesByYear, metricSeries } from './aggregate';
 import { buildWordContext, cellIndex, clampComparison, wordCounts, fitLine, isNoise, rampFor, rampStep, scoreWords, topMovers } from './excess';
 import { decode, encode, defaults, type Domain } from '../state/url';
 import type { Theses, WordCube } from './types';
+import { MISSING, shareAtLeast, wilson } from './playground';
 
 // Tiny synthetic table: 2 faculties, years 2006..2026, 1 language.
 function makeTheses(rows: { fac: number; year: number; lang?: number; ai?: number; gender?: number; grade?: number; v?: number }[]): Theses {
@@ -260,5 +261,25 @@ describe('chart zoom', async () => {
     applyZoom();
     expect([app.yearFrom, app.yearTo]).toEqual([2012, 2019]);
     expect(zoom.range).toBeNull();
+  });
+});
+
+describe('shareAtLeast', () => {
+  it('counts theses with at least n, skips missing rows and small years', () => {
+    const rows = [...Array(20)].map((_, i) => ({ fac: i % 2, year: 2010 })).concat([{ fac: 0, year: 2011 }]);
+    const t = makeTheses(rows);
+    const counts = Uint16Array.from(rows.map((_, i) => (i < 5 ? 3 : i < 8 ? 2 : 0)));
+    const pts = shareAtLeast(t, counts, 3, 0, null);
+    expect(pts).toHaveLength(1);
+    expect(pts[0]).toMatchObject({ year: 2010, k: 5, n: 20, share: 0.25 });
+    expect(shareAtLeast(t, counts, 2, 0, null)[0].k).toBe(8);
+    counts[0] = MISSING;
+    expect(shareAtLeast(t, counts, 3, 0, null)).toHaveLength(0); // 19 < MIN_CELL_N
+    expect(shareAtLeast(t, counts, 3, 1, null)).toHaveLength(0); // other language
+  });
+  it('wilson interval brackets the share', () => {
+    const [lo, hi] = wilson(5, 20);
+    expect(lo).toBeLessThan(0.25); expect(hi).toBeGreaterThan(0.25);
+    expect(wilson(0, 50)[0]).toBe(0);
   });
 });

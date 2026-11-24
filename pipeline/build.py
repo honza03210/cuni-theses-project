@@ -107,7 +107,8 @@ def build_theses(con: duckdb.DuckDBPyConnection) -> dict:
                COALESCE(CAST(grade_points AS INTEGER), 0) AS grade,
                CAST(COALESCE(usable, false) AS INTEGER) AS usable,
                CAST(COALESCE(usable, false) AND body_method = 'intro-back' AS INTEGER) AS clean,
-               {metric_cols}
+               {metric_cols},
+               round(em_dash_per_1000w * prose_n_words / 1000) AS em_dash_n
         FROM read_parquet('{DATA / "theses.parquet"}')
         WHERE year BETWEEN {YEAR_MIN} AND {YEAR_MAX}
         ORDER BY year, fac, item_id
@@ -146,6 +147,7 @@ def build_theses(con: duckdb.DuckDBPyConnection) -> dict:
             "p01": float(np.percentile(finite, 1)), "p99": float(np.percentile(finite, 99)),
         })
     size = write_gz(OUT / "theses.bin.gz", b"".join(parts))
+    write_playground(df)
 
     meta = {
         "rows": n,
@@ -160,6 +162,21 @@ def build_theses(con: duckdb.DuckDBPyConnection) -> dict:
     (OUT / "theses.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1))
     print(f"theses: {n} rows, {size / 1e6:.2f} MB gz")
     return meta
+
+
+PLAY_MISSING = 65535
+
+
+def write_playground(df) -> None:
+    """Extra per-thesis columns for the playground page (playground.html), in theses.bin row order:
+    u16 em-dash count (65535 = no clean body)."""
+    n = df["em_dash_n"].to_numpy(np.float64)
+    ok = (df["clean"].to_numpy() == 1) & np.isfinite(n)
+    arr = np.where(ok, np.clip(n, 0, PLAY_MISSING - 1), PLAY_MISSING).astype(np.uint16)
+    size = write_gz(OUT / "playground.bin.gz", arr.tobytes())
+    (OUT / "playground.json").write_text(json.dumps(
+        {"rows": len(df), "columns": [{"name": "em_dash_n", "type": "u16", "offset": 0, "missing": PLAY_MISSING}]}))
+    print(f"playground: {len(df)} rows, {size / 1e3:.0f} kB gz")
 
 
 def build_words(con: duckdb.DuckDBPyConnection) -> None:
